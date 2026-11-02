@@ -1,0 +1,242 @@
+{
+  "report_version": 1,
+  "prompt_version": "7.2",
+  "status": "instrumentation_implemented; live_inference_not_run",
+  "report_created_utc": "2026-11-02T07:00:31.830897+00:00",
+  "changed_files": [
+    "agents/llm_runtime.py",
+    "tests/live_agent_evaluation.py",
+    "tests/test_llm_runtime.py",
+    "tests/test_live_agent_evaluation.py",
+    "reports/prompt_7_2_measurement_instrumentation.md",
+    "reports/prompt_7_2_measurement_instrumentation.json",
+    "reports/prompt_7_2_controlled_evaluation_plan.md"
+  ],
+  "offline_validation": [
+    {
+      "command": "python -m py_compile agents/llm_runtime.py tests/live_agent_evaluation.py tests/test_llm_runtime.py tests/test_live_agent_evaluation.py",
+      "executable": "D:\\devops-agents-six-model-agents\\devops-agents\\.venv\\Scripts\\python.exe",
+      "return_code": 0,
+      "summary": "compiled successfully"
+    },
+    {
+      "command": "python -m pytest -q tests/test_llm_runtime.py tests/test_live_agent_evaluation.py",
+      "executable": "D:\\devops-agents-six-model-agents\\devops-agents\\.venv\\Scripts\\python.exe",
+      "return_code": 0,
+      "counts": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0
+      },
+      "summary": "49 passed, 0 failed, 0 skipped"
+    },
+    {
+      "command": "python -m pytest -q",
+      "executable": "D:\\devops-agents-six-model-agents\\devops-agents\\.venv\\Scripts\\python.exe",
+      "return_code": 0,
+      "counts": {
+        "passed": 151,
+        "failed": 0,
+        "skipped": 0
+      },
+      "summary": "151 passed, 0 failed, 0 skipped"
+    },
+    {
+      "command": "python -m pytest -q tests/test_live_agent_evaluation.py",
+      "executable": "D:\\devops-agents-six-model-agents\\devops-agents\\.venv\\Scripts\\python.exe",
+      "return_code": 0,
+      "counts": {
+        "passed": 28,
+        "failed": 0,
+        "skipped": 0
+      },
+      "summary": "28 passed, 0 failed, 0 skipped"
+    }
+  ],
+  "preflight_configuration": {
+    "persistent_models_enabled": false,
+    "max_parallel_models": 1,
+    "configured_num_ctx": 2048,
+    "configured_num_predict": 384,
+    "model_mappings": {
+      "monitoring": "qwen2.5:3b",
+      "incident": "llama3.2:3b",
+      "code": "qwen2.5-coder:3b",
+      "cicd": "stablelm-zephyr:3b",
+      "infrastructure": "phi3.5:3.8b",
+      "security": "granite3.1-dense:2b"
+    },
+    "ollama_inference": "not_run",
+    "live_authorization_required": true,
+    "config_file_modified": false,
+    "runtime_matches_prompt6_for_context_and_output": true
+  },
+  "ollama_measurements": {
+    "captured_per_attempt": [
+      "prompt_eval_count",
+      "eval_count",
+      "done_reason",
+      "total_duration",
+      "load_duration",
+      "prompt_eval_duration",
+      "eval_duration"
+    ],
+    "additional_fields": [
+      "attempt",
+      "model",
+      "agent",
+      "configured_num_ctx",
+      "configured_num_predict",
+      "inference_status",
+      "wall_duration_seconds",
+      "prompt_character_count",
+      "prompt_character_delta",
+      "context_budget"
+    ],
+    "missing_numeric_values": null,
+    "missing_done_reason": null
+  },
+  "context_budget": {
+    "status_labels": [
+      "within_budget",
+      "potential_context_pressure",
+      "context_pressure",
+      "measurement_unavailable"
+    ],
+    "remaining_budget_formula": "configured_num_ctx - prompt_eval_count - configured_num_predict",
+    "status_calculation": {
+      "within_budget": "Prompt count, context size, and output budget are known; prompt count is below context size and estimated remainder is non-negative.",
+      "potential_context_pressure": "Prompt count is below context size but reserving the full configured output budget makes estimated remainder negative.",
+      "context_pressure": "Ollama-reported prompt_eval_count is greater than or equal to configured context size.",
+      "measurement_unavailable": "A required count/configuration value is missing or invalid."
+    },
+    "truncation_caveat": "A negative estimate is a risk indicator only. prompt_eval_count + num_predict does not prove truncation; done_reason=length is recorded separately and is not proof of context exhaustion."
+  },
+  "historical_prompt_7_1_observations": {
+    "source": "reports/prompt_7_1_live_evaluation.json",
+    "attempt_count": 7,
+    "measurement_availability": {
+      "prompt_eval_count": 0,
+      "eval_count": 0,
+      "done_reason": 7,
+      "total_duration": 7,
+      "load_duration": 0,
+      "prompt_eval_duration": 0,
+      "eval_duration": 0
+    },
+    "done_reason_length_attempts": 1,
+    "context_pressure_status": "measurement_unavailable",
+    "context_pressure_reason": "The historical attempts did not persist prompt_eval_count; their context pressure cannot be reconstructed.",
+    "exact_verified_deterministic_overlap": {
+      "verified_observation_count": 75,
+      "deterministic_observation_count": 45,
+      "exact_verified_deterministic_overlap_count": 0,
+      "shared_verified_deterministic_source_timestamp_count": 45,
+      "raw_source_paths_resolved": 27,
+      "raw_source_value_match_count": 23,
+      "raw_verified_deterministic_overlap_count": 23
+    },
+    "overlap_method": "Raw-value overlap requires the deterministic source_path to resolve in graph-shaped evidence and its value to occur exactly within that source subtree. The three-section count additionally requires a verified observation with the same source path and timestamp; this is reference/value overlap, not semantic equivalence.",
+    "retry_prompt_growth": "Not measured per historical attempt. New attempts record prompt character count and delta, and Ollama prompt_eval_count when returned."
+  },
+  "rubric_diagnostic": {
+    "requirement": "P95 latency",
+    "equivalent_candidate": "The p95 latency is 850 milliseconds.",
+    "current_automated_pattern_matches": false,
+    "interpretation": "This unit-equivalent phrasing is not matched by the current lexical criterion; this is a rubric coverage diagnostic, not a human semantic score."
+  },
+  "evaluation_scores": {
+    "automated_interpretation": {
+      "source": "_grade_agent required-observation lexical criteria",
+      "reported_independently": true
+    },
+    "grounding_validator": {
+      "source": "existing graph finding validator",
+      "reported_independently": true
+    },
+    "manual_semantic_audit": {
+      "status": "not_performed",
+      "score": null,
+      "reported_independently": true
+    }
+  },
+  "historical_score_baselines": {
+    "automated_interpretation": {
+      "source": "Prompt 7.1 JSON comparison summary",
+      "prompt_6_0": 0.6190476190476191,
+      "prompt_7_1": 0.12698412698412698
+    },
+    "grounding_validator": {
+      "source": "Prompt 7.1 JSON comparison summary",
+      "prompt_6_0": 0.9292929292929294,
+      "prompt_7_1": 0.8333333333333334
+    },
+    "manual_semantic_audit": {
+      "status": "manual audit values recorded in historical Prompt 7.1 report",
+      "source": "Prompt 7.1 JSON manual_review.summary",
+      "criteria_total": 35,
+      "prompt_6_0_matched": 21,
+      "prompt_6_0_score": 0.6,
+      "prompt_7_1_matched": 10,
+      "prompt_7_1_score": 0.2857142857142857
+    }
+  },
+  "repetitions": {
+    "minimum_supported": 3,
+    "default": 3,
+    "execution": "single serial loop; llm_runtime retains process lock",
+    "aggregates": [
+      "mean",
+      "minimum",
+      "maximum",
+      "sample standard deviation when at least two valid values exist"
+    ],
+    "failure_accounting": "Failed/incomplete runs and excluded score measurements are reported separately; failures are not replaced with zero."
+  },
+  "negative_control": {
+    "scenario_id": "negative-control-container-health",
+    "agent": "infrastructure",
+    "evidence": "Docker telemetry and process measurements explicitly unavailable",
+    "query": "Is the specific container checkout-worker-7 healthy?",
+    "unsupported_claim_categories": [
+      "asserted container health/status",
+      "invented container name",
+      "restart count",
+      "CPU usage"
+    ]
+  },
+  "fixture_freshness": {
+    "recorded_reference_time_source": "Prompt 6.0 report environment.run_utc; newly built fixtures record their fixture timestamp once.",
+    "extractor_argument": "evidence_extractor.extract_evidence(now=reference_timestamp)",
+    "scenario_evidence_changed": false,
+    "freshness_logic_changed": false
+  },
+  "historical_report_paths": [
+    "reports/six_agent_live_evaluation.md",
+    "reports/six_agent_live_evaluation.json",
+    "reports/six_agent_grounding_improvement.md",
+    "reports/six_agent_grounding_improvement.json",
+    "reports/prompt_7_evidence_extraction.md",
+    "reports/prompt_7_evidence_extraction.json",
+    "reports/prompt_7_1_live_evaluation.md",
+    "reports/prompt_7_1_live_evaluation.json"
+  ],
+  "historical_report_sha256": {
+    "reports/six_agent_live_evaluation.md": "3249ec1059e09c468d13885641b56e615ca61dd31ed9a4f9ed18cd6ef3b23bb9",
+    "reports/six_agent_live_evaluation.json": "b74d25942b16eb47af27956763cbcf4d63f7fd6c8924ddca53d0164f5b6b3a07",
+    "reports/six_agent_grounding_improvement.md": "1542816080d54397f961085da8811e53479315564214c7a912c38f4047308a91",
+    "reports/six_agent_grounding_improvement.json": "63bdf05ce3361aa0393f310656dac72b16b626368d60a3bf8462a200cff2a287",
+    "reports/prompt_7_evidence_extraction.md": "37774d5c0c52631373c258618d36cd715a68386afff1ef6d2e973fedc15cf2ec",
+    "reports/prompt_7_evidence_extraction.json": "6d96f7784f195b87c36ee185ab415b1b017991bc81b0ce6296cb8c9f806a7281",
+    "reports/prompt_7_1_live_evaluation.md": "8c87a82f75b38cfbe055fb3f27cd3264addad1c42173d6d57efae7340012f7ee",
+    "reports/prompt_7_1_live_evaluation.json": "23eba384aa03e735900c7c311d7fa7d4d0f8c1040b3cae23fe2406baa74d49a1"
+  },
+  "limitations": [
+    "No live Ollama inference was run; current context pressure is not measured.",
+    "The historical Prompt 7.1 attempts lack token counts, so the historical truncation cause cannot be assigned to context exhaustion.",
+    "The rubric diagnostic is one explicitly known unit-equivalent example, not a general semantic evaluation.",
+    "Manual semantic audit remains unperformed and has no score.",
+    "Exact source-path/value overlap does not quantify semantic equivalence or facts whose source paths cannot be resolved."
+  ],
+  "historical_reports_preserved": true
+}

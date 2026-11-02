@@ -227,6 +227,7 @@ def test_prompt71_rehydrates_prompt6_evidence_and_existing_graph_inputs(
     source = live_evaluation._scenario_data()
     report_path = tmp_path / "prompt6.json"
     report_path.write_text(json.dumps({
+        "environment": {"run_utc": "2026-11-01T21:00:00+00:00"},
         "agents": [
             {
                 "agent": name,
@@ -246,6 +247,11 @@ def test_prompt71_rehydrates_prompt6_evidence_and_existing_graph_inputs(
         assert scenarios[name]["task"] == source[name]["task"]
         assert scenarios[name]["query"] == source[name]["query"]
         assert scenarios[name]["comparison"] == source[name]["comparison"]
+        assert scenarios[name]["reference_timestamp"] == (
+            live_evaluation.datetime.fromisoformat(
+                "2026-11-01T21:00:00+00:00"
+            ).timestamp()
+        )
 
 
 def test_prompt71_extraction_counts_stale_facts_but_marks_them_unusable():
@@ -428,6 +434,405 @@ def test_prompt71_live_entry_captures_deterministic_evidence_with_mocked_model(
     assert observed_evidence[0]["deterministic_evidence"]["role"] == "monitoring"
     assert entry["response_categories"]["verified_observations"]
     assert entry["response_categories"]["hypothesis_promoted_to_verified"] is False
+
+
+def test_prompt_hash_is_reproducible_for_identical_messages():
+    messages = [
+        {"role": "system", "content": "synthetic"},
+        {"role": "user", "content": '{"evidence":{"value":1}}'},
+    ]
+
+    assert live_evaluation._prompt_sha256(messages) == (
+        live_evaluation._prompt_sha256(messages)
+    )
+    assert live_evaluation._prompt_sha256(messages) != (
+        live_evaluation._prompt_sha256([
+            *messages[:-1],
+            {"role": "user", "content": '{"evidence":{"value":2}}'},
+        ])
+    )
+
+
+def test_fixture_reference_time_makes_extraction_freshness_deterministic(
+    monkeypatch,
+):
+    scenario = live_evaluation._scenario_data()["monitoring"]
+    scenario["reference_timestamp"] = 1001.0
+    prometheus = scenario["evidence"]["prometheus"]
+    prometheus["timestamp"] = 1000.0
+    for metric in prometheus["metrics"].values():
+        for observation in metric["observations"]:
+            observation["latest_timestamp"] = 1000.0
+            for value in observation.get("values", []):
+                value["timestamp"] = 1000.0
+
+    def fake_analyze(agent, task, evidence):
+        analysis = {
+            "summary": "Insufficient evidence to determine additional conditions.",
+            "findings": [],
+            "confidence": 0.5,
+            "recommended_checks": [],
+        }
+        return {
+            "status": "ok",
+            "agent": agent,
+            "model": live_evaluation.EXPECTED_MODELS[agent],
+            "analysis": analysis,
+            "raw_content": json.dumps(analysis),
+            "attempts": [],
+        }
+
+    monkeypatch.setattr(live_evaluation, "_ollama_processes", lambda _url: None)
+    monkeypatch.setattr(live_evaluation.llm_runtime, "analyze", fake_analyze)
+    config = live_evaluation.llm_runtime.load_config()
+    config["_installed_models"] = list(live_evaluation.EXPECTED_MODELS.values())
+
+    first, _ = live_evaluation._evaluate_one(
+        "monitoring",
+        scenario,
+        config,
+        "http://127.0.0.1:11434",
+        None,
+        include_prompt7_evidence=True,
+        prompt_version=live_evaluation.PROMPT7_2_VERSION,
+    )
+    second, _ = live_evaluation._evaluate_one(
+        "monitoring",
+        scenario,
+        config,
+        "http://127.0.0.1:11434",
+        None,
+        include_prompt7_evidence=True,
+        prompt_version=live_evaluation.PROMPT7_2_VERSION,
+    )
+
+    first_statuses = [
+        item["status"] for item in first["deterministic_evidence"]["observations"]
+    ]
+    second_statuses = [
+        item["status"] for item in second["deterministic_evidence"]["observations"]
+    ]
+    assert first_statuses == second_statuses
+    assert first_statuses
+    assert set(first_statuses) == {"observed"}
+    assert first["reproducibility"]["scenario_reference_timestamp"].endswith("Z")
+    assert first["reproducibility"]["prompt_sha256"] == (
+        second["reproducibility"]["prompt_sha256"]
+    )
+    assert first["reproducibility"]["attempt_count"] == 0
+    assert first["reproducibility"]["manual_semantic_audit"] == {
+        "status": "not_performed",
+        "score": None,
+    }
+    assert "messages" not in first["prompt_diagnostics"]
+
+
+def test_repeated_runs_aggregate_valid_scores_and_report_failures():
+    runs = [
+        {
+            "agent": "monitoring",
+            "scenario_id": "prompt6-monitoring",
+            "repetition": 1,
+            "inference_status": "ok",
+            "json_schema_valid": True,
+            "latency_seconds": 2.0,
+            "ollama_inference_seconds": 1.0,
+            "required_observations": [{"identified": True}],
+            "claims": [{"text": "supported"}],
+            "material_unsupported_claims": [],
+        },
+        {
+            "agent": "monitoring",
+            "scenario_id": "prompt6-monitoring",
+            "repetition": 2,
+            "inference_status": "ok",
+            "json_schema_valid": True,
+            "latency_seconds": 4.0,
+            "ollama_inference_seconds": 3.0,
+            "required_observations": [{"identified": True}],
+            "claims": [{"text": "supported"}],
+            "material_unsupported_claims": [],
+        },
+        {
+            "agent": "monitoring",
+            "scenario_id": "prompt6-monitoring",
+            "repetition": 3,
+            "inference_status": "unavailable",
+            "json_schema_valid": False,
+            "latency_seconds": 6.0,
+            "ollama_inference_seconds": None,
+            "reproducibility": {"failure_reasons": ["Ollama unavailable"]},
+        },
+    ]
+
+    aggregate = live_evaluation._aggregate_repeated_runs(runs)["per_agent"][
+        "monitoring"
+    ]
+
+    assert aggregate["run_count"] == 3
+    assert aggregate["failed_or_incomplete_count"] == 1
+    assert aggregate["failed_or_incomplete_runs"][0]["repetition"] == 3
+    assert aggregate["wall_time_seconds"]["mean"] == 4.0
+    assert aggregate["wall_time_seconds"]["minimum"] == 2.0
+    assert aggregate["wall_time_seconds"]["maximum"] == 6.0
+    assert aggregate["wall_time_seconds"]["standard_deviation"] == 2.0
+    assert aggregate["ollama_total_duration_seconds"]["excluded_count"] == 1
+    assert aggregate["automated_interpretation_score"]["mean"] == 1.0
+    assert aggregate["grounding_validator_score"]["mean"] == 1.0
+    assert aggregate["manual_semantic_audit_score"]["mean"] is None
+
+
+def test_repeat_runner_uses_identical_fixtures_in_a_serial_three_pass_loop():
+    definitions = live_evaluation._scenario_data()
+    scenarios = {
+        name: definitions[name] for name in live_evaluation.AGENT_ORDER
+    }
+    scenarios["negative-control-container-health"] = definitions[
+        "negative-control-container-health"
+    ]
+    calls = []
+
+    def evaluate(agent, scenario, previous_end):
+        calls.append((
+            scenario["scenario_id"],
+            json.dumps(scenario["evidence"], sort_keys=True),
+            scenario["reference_timestamp"],
+        ))
+        return {
+            "agent": agent,
+            "inference_status": "ok",
+            "json_schema_valid": True,
+            "no_overlap_with_previous": True,
+            "analysis": {
+                "summary": (
+                    "Cannot establish container health because Docker evidence "
+                    "is unavailable."
+                ),
+                "findings": [],
+            } if scenario.get("negative_control") else {},
+        }, float(len(calls))
+
+    entries, overlap = live_evaluation._run_repetitions(scenarios, 3, evaluate)
+
+    assert len(entries) == 21
+    assert not overlap
+    assert [item["repetition"] for item in entries[:7]] == [1] * 7
+    assert [item["repetition"] for item in entries[7:14]] == [2] * 7
+    assert [item["repetition"] for item in entries[14:]] == [3] * 7
+    for scenario_id in scenarios:
+        repeated_inputs = [
+            item[1:] for item in calls if item[0] == scenario_id
+        ]
+        assert repeated_inputs[0] == repeated_inputs[1] == repeated_inputs[2]
+    control = entries[6]
+    assert control["negative_control_score"]["score"] == 1.0
+    assert control["negative_control_score"]["unsupported_claims"] == []
+
+
+def test_repeat_runner_rejects_fewer_than_three_repetitions():
+    try:
+        live_evaluation._run_repetitions({}, 2, lambda *args: ({}, None))
+    except ValueError as exc:
+        assert "at least 3 repetitions" in str(exc)
+    else:
+        raise AssertionError("Prompt 7.2 must enforce three repetitions.")
+
+
+def test_negative_control_marks_invented_health_restarts_cpu_and_names():
+    result = live_evaluation._negative_control_score({
+        "summary": (
+            "Container checkout-worker-7 is healthy with 0 restarts and 20% CPU. "
+            "Container made-up-worker is running."
+        ),
+        "findings": [],
+    })
+
+    assert result["score"] == 0.0
+    flagged_categories = {
+        category
+        for claim in result["unsupported_claims"]
+        for category in claim["categories"]
+    }
+    assert {
+        "asserted_container_health_or_status",
+        "asserted_restart_count",
+        "asserted_cpu_usage",
+        "invented_container_name",
+    } <= flagged_categories
+
+
+def test_negative_control_requires_explicit_abstention():
+    scenario = live_evaluation._scenario_data()[
+        "negative-control-container-health"
+    ]
+    shaped = live_evaluation.graph._specialist_evidence(
+        "infrastructure",
+        live_evaluation._routing_state("infrastructure", scenario),
+    )
+    result = live_evaluation._negative_control_score({
+        "summary": "Docker evidence is unavailable; container health cannot be established.",
+        "findings": [],
+    })
+
+    assert shaped["docker"]["status"] == "unavailable"
+    assert result["score"] == 1.0
+    assert result["abstention_present"] is True
+    assert "checkout-worker-7" not in json.dumps(shaped)
+
+
+def test_evidence_overlap_diagnostics_measures_raw_verified_and_deterministic_facts():
+    evidence = {
+        "prometheus": {
+            "metrics": {
+                "request_rate": {
+                    "observations": [{"value": 10, "timestamp": 123.0}]
+                }
+            }
+        },
+        "verified_observations": [{
+            "statement": "Prometheus request rate is 10 requests/second.",
+            "source": "prometheus.metrics.request_rate.observations[0]",
+            "timestamp": 123.0,
+        }],
+        "deterministic_evidence": {
+            "observations": [{
+                "source_path": "prometheus.metrics.request_rate.observations[0]",
+                "value": 10,
+                "timestamp": 123.0,
+            }]
+        },
+    }
+
+    result = live_evaluation._evidence_overlap_diagnostics(evidence)
+
+    assert result["raw_source_paths_resolved"] == 1
+    assert result["raw_source_value_match_count"] == 1
+    assert result["shared_verified_deterministic_source_timestamp_count"] == 1
+    assert result["raw_verified_deterministic_overlap_count"] == 1
+
+
+def test_prompt72_reports_use_one_data_object_and_preserve_historical_reports(
+    tmp_path, monkeypatch
+):
+    historical_dir = tmp_path / "historical"
+    historical_dir.mkdir()
+    historical_constants = (
+        "REPORT_PATH",
+        "JSON_REPORT_PATH",
+        "GROUNDING_REPORT_PATH",
+        "GROUNDING_JSON_PATH",
+        "PROMPT7_REPORT_PATH",
+        "PROMPT7_JSON_PATH",
+        "PROMPT7_1_REPORT_PATH",
+        "PROMPT7_1_JSON_PATH",
+    )
+    historical_paths = []
+    for constant in historical_constants:
+        path = historical_dir / (constant + ".json")
+        if constant == "PROMPT7_1_JSON_PATH":
+            path.write_text(
+                json.dumps(json.loads(
+                    live_evaluation.PROMPT7_1_JSON_PATH.read_text(
+                        encoding="utf-8"
+                    )
+                )),
+                encoding="utf-8",
+            )
+        elif constant == "JSON_REPORT_PATH":
+            path.write_text(
+                live_evaluation.JSON_REPORT_PATH.read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+        else:
+            path.write_text("historical\n", encoding="utf-8")
+        monkeypatch.setattr(live_evaluation, constant, path)
+        historical_paths.append(path)
+    markdown_path = tmp_path / "prompt72.md"
+    json_path = tmp_path / "prompt72.json"
+    plan_path = tmp_path / "plan.md"
+    monkeypatch.setattr(live_evaluation, "PROMPT7_2_REPORT_PATH", markdown_path)
+    monkeypatch.setattr(live_evaluation, "PROMPT7_2_JSON_PATH", json_path)
+    monkeypatch.setattr(live_evaluation, "PROMPT7_2_PLAN_PATH", plan_path)
+    before = [path.read_bytes() for path in historical_paths]
+
+    report = live_evaluation._build_prompt7_2_report([{
+        "command": "python -m pytest -q",
+        "return_code": 0,
+        "summary": "12 passed, 0 failed, 0 skipped",
+        "counts": {"passed": 12, "failed": 0, "skipped": 0},
+    }])
+    live_evaluation._write_prompt7_2_reports(report)
+
+    saved = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert saved == report
+    assert "12 passed, 0 failed, 0 skipped" in markdown
+    assert "Live Ollama inference:** not run" in markdown
+    assert report["historical_reports_preserved"] is True
+    assert report["preflight_configuration"]["persistent_models_enabled"] is False
+    assert report["preflight_configuration"]["max_parallel_models"] == 1
+    assert report["preflight_configuration"][
+        "runtime_matches_prompt6_for_context_and_output"
+    ] is True
+    assert report["historical_score_baselines"]["automated_interpretation"][
+        "prompt_7_1"
+    ] == 0.12698412698412698
+    assert report["historical_score_baselines"]["grounding_validator"][
+        "prompt_7_1"
+    ] == 0.8333333333333334
+    assert report["historical_score_baselines"]["manual_semantic_audit"][
+        "prompt_7_1_matched"
+    ] == 10
+    assert "raw_verified_deterministic_overlap_count" in report[
+        "historical_prompt_7_1_observations"
+    ]["exact_verified_deterministic_overlap"]
+    assert "exact source path and value" in markdown
+    assert [path.read_bytes() for path in historical_paths] == before
+    assert plan_path.exists()
+
+
+def test_rubric_equivalence_diagnostic_does_not_change_automated_scores():
+    diagnostic = live_evaluation._rubric_equivalence_diagnostic()
+
+    assert diagnostic["requirement"] == "P95 latency"
+    assert diagnostic["current_automated_pattern_matches"] is False
+    assert "not a human semantic score" in diagnostic["interpretation"]
+
+
+def test_repeated_evaluation_markdown_and_json_share_the_run_report(
+    tmp_path, monkeypatch
+):
+    markdown_path = tmp_path / "repeated.md"
+    json_path = tmp_path / "repeated.json"
+    monkeypatch.setattr(
+        live_evaluation, "PROMPT7_2_RUN_REPORT_PATH", markdown_path
+    )
+    monkeypatch.setattr(live_evaluation, "PROMPT7_2_RUN_JSON_PATH", json_path)
+    report = live_evaluation._build_prompt7_2_repeated_report(
+        [{
+            "agent": "monitoring",
+            "scenario_id": "prompt6-monitoring",
+            "repetition": 1,
+            "inference_status": "unavailable",
+            "json_schema_valid": False,
+            "latency_seconds": 1.0,
+            "ollama_inference_seconds": None,
+            "attempts": [],
+        }],
+        run_utc="2026-11-02T00:00:00+00:00",
+        repetitions=3,
+        sequential_overlap_detected=False,
+    )
+
+    live_evaluation._write_prompt7_2_repeated_reports(report)
+
+    assert json.loads(json_path.read_text(encoding="utf-8")) == report
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert "Runs:** 1; successes: 0; failures: 1" in markdown
+    assert "quality failures: 0" in markdown
+    assert "measurement_unavailable" in markdown
+    assert "Failed/incomplete" in markdown
+    assert "not performed" in markdown
 
 
 def test_prompt71_reports_are_written_from_one_result_object(tmp_path, monkeypatch):

@@ -94,6 +94,18 @@ def test_compose_provisions_grafana_with_local_binding_and_persistent_storage():
     assert any("dashboards" in volume for volume in grafana["volumes"])
 
 
+def test_compose_binds_app_to_loopback_and_persists_baseline_and_audit_logs():
+    compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
+    app = compose["services"]["calculator-app"]
+
+    assert app["ports"] == ["127.0.0.1:8100:8100"]
+    assert "DEVOPS_BASELINE_PATH=/app/data/baseline.json" in app["environment"]
+    assert "DEVOPS_AUDIT_LOG_PATH=/app/logs/incident_audit.jsonl" in app["environment"]
+    assert {"app_data", "app_logs"} <= {
+        volume.split(":", 1)[0] for volume in app["volumes"]
+    }
+
+
 def test_environment_example_uses_development_only_grafana_credentials():
     example = (ROOT / ".env.example").read_text(encoding="utf-8")
 

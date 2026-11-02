@@ -371,15 +371,23 @@ def test_ollama_unavailable_does_not_retry(monkeypatch):
 
     def fail_request(*args, **kwargs):
         calls.append(True)
-        raise requests.ConnectionError("Ollama is unavailable")
+        raise requests.ConnectionError(
+            "Ollama is unavailable at "
+            "https://user:synthetic-secret@localhost/api/chat?token=synthetic-secret"
+        )
 
     monkeypatch.setattr(llm_runtime.requests, "post", fail_request)
     result = llm_runtime.analyze("code", "Review changes", {})
 
     assert result["status"] == "unavailable"
     assert "Ollama is unavailable" in result["detail"]
+    assert "synthetic-secret" not in result["detail"]
     assert result["retry"]["attempted"] is False
     assert len(calls) == 1
+    assert result["attempts"][0]["inference_status"] == "unavailable"
+    assert result["attempts"][0]["context_budget"]["status"] == (
+        "measurement_unavailable"
+    )
 
 
 def test_prompt_evidence_keeps_json_valid_and_bounds_repetitive_logs(monkeypatch):
@@ -435,3 +443,155 @@ def test_truncated_model_response_is_not_reported_as_success(monkeypatch):
     result = llm_runtime.analyze("cicd", "analyze deploy", {})
     assert result["status"] == "invalid_response"
     assert "truncated" in result["detail"]
+
+
+def test_ollama_attempt_captures_response_measurements_and_context(monkeypatch):
+    monkeypatch.setenv("DEVOPS_LLM_ENABLED", "true")
+    body = {
+        "message": {"content": json.dumps(VALID_ANALYSIS)},
+        "prompt_eval_count": 1200,
+        "eval_count": 150,
+        "done_reason": "stop",
+        "total_duration": 2_000_000_000,
+        "load_duration": 100_000_000,
+        "prompt_eval_duration": 800_000_000,
+        "eval_duration": 1_000_000_000,
+    }
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return body
+
+    monkeypatch.setattr(
+        llm_runtime.requests, "post", lambda *args, **kwargs: Response()
+    )
+
+    result = llm_runtime.analyze("monitoring", "Inspect metrics", {})
+
+    attempt = result["attempts"][0]
+    assert {
+        field: attempt[field]
+        for field in llm_runtime.OLLAMA_MEASUREMENT_FIELDS
+    } == {field: body[field] for field in llm_runtime.OLLAMA_MEASUREMENT_FIELDS}
+    assert attempt["attempt"] == 1
+    assert attempt["agent"] == "monitoring"
+    assert attempt["model"] == "qwen2.5:3b"
+    assert attempt["configured_num_ctx"] == 2048
+    assert attempt["configured_num_predict"] == 384
+    assert attempt["inference_status"] == "ok"
+    assert attempt["context_budget"] == {
+        "prompt_tokens_reported": 1200,
+        "configured_context_size": 2048,
+        "configured_output_token_budget": 384,
+        "estimated_remaining_context_budget": 464,
+        "potentially_at_risk_of_context_exhaustion": False,
+        "status": "within_budget",
+    }
+
+
+def test_missing_ollama_measurements_remain_distinct_from_zero(monkeypatch):
+    monkeypatch.setenv("DEVOPS_LLM_ENABLED", "true")
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"message": {"content": json.dumps(VALID_ANALYSIS)}}
+
+    monkeypatch.setattr(
+        llm_runtime.requests, "post", lambda *args, **kwargs: Response()
+    )
+
+    result = llm_runtime.analyze("monitoring", "Inspect metrics", {})
+
+    attempt = result["attempts"][0]
+    assert all(attempt[field] is None for field in llm_runtime.OLLAMA_MEASUREMENT_FIELDS)
+    assert attempt["context_budget"]["status"] == "measurement_unavailable"
+    assert attempt["context_budget"]["estimated_remaining_context_budget"] is None
+    assert attempt["context_budget"][
+        "potentially_at_risk_of_context_exhaustion"
+    ] is None
+    assert result["total_duration"] is None
+
+    class ZeroMeasurementResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "message": {"content": json.dumps(VALID_ANALYSIS)},
+                "prompt_eval_count": 0,
+                "eval_count": 0,
+                "done_reason": "stop",
+                "total_duration": 0,
+                "load_duration": 0,
+                "prompt_eval_duration": 0,
+                "eval_duration": 0,
+            }
+
+    monkeypatch.setattr(
+        llm_runtime.requests, "post",
+        lambda *args, **kwargs: ZeroMeasurementResponse(),
+    )
+    measured_zero = llm_runtime.analyze("monitoring", "Inspect metrics", {})
+    assert measured_zero["attempts"][0]["prompt_eval_count"] == 0
+    assert measured_zero["attempts"][0]["total_duration"] == 0
+    assert measured_zero["total_duration"] == 0
+    assert measured_zero["attempts"][0]["context_budget"]["status"] == (
+        "within_budget"
+    )
+
+
+def test_context_budget_statuses_are_conservative():
+    cases = (
+        (100, 2048, 384, "within_budget", 1564, False),
+        (1800, 2048, 384, "potential_context_pressure", -136, True),
+        (2048, 2048, 384, "context_pressure", -384, True),
+        (None, 2048, 384, "measurement_unavailable", None, None),
+    )
+
+    for prompt_tokens, context_size, output_budget, status, remaining, at_risk in cases:
+        diagnostic = llm_runtime._context_budget_diagnostics(
+            prompt_tokens, context_size, output_budget
+        )
+        assert diagnostic["status"] == status
+        assert diagnostic["estimated_remaining_context_budget"] == remaining
+        assert diagnostic["potentially_at_risk_of_context_exhaustion"] is at_risk
+
+
+def test_attempt_prompt_character_delta_records_retry_growth(monkeypatch):
+    monkeypatch.setenv("DEVOPS_LLM_ENABLED", "true")
+    responses = iter([
+        {
+            "message": {"content": '{"summary":"incomplete'},
+            "done_reason": "length",
+            "prompt_eval_count": 10,
+        },
+        {"message": {"content": json.dumps(VALID_ANALYSIS)}},
+    ])
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return next(responses)
+
+    monkeypatch.setattr(
+        llm_runtime.requests, "post", lambda *args, **kwargs: Response()
+    )
+
+    result = llm_runtime.analyze("monitoring", "Inspect metrics", {})
+
+    first, retry = result["attempts"]
+    assert first["prompt_character_delta"] is None
+    assert retry["prompt_character_count"] > first["prompt_character_count"]
+    assert retry["prompt_character_delta"] == (
+        retry["prompt_character_count"] - first["prompt_character_count"]
+    )
+    assert first["prompt_eval_count"] == 10
+    assert retry["prompt_eval_count"] is None

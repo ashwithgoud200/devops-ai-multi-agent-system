@@ -8,9 +8,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import platform
 import re
+import statistics
 import subprocess
 import sys
 import time
@@ -43,6 +45,13 @@ PROMPT7_REPORT_PATH = ROOT / "reports" / "prompt_7_evidence_extraction.md"
 PROMPT7_JSON_PATH = ROOT / "reports" / "prompt_7_evidence_extraction.json"
 PROMPT7_1_REPORT_PATH = ROOT / "reports" / "prompt_7_1_live_evaluation.md"
 PROMPT7_1_JSON_PATH = ROOT / "reports" / "prompt_7_1_live_evaluation.json"
+PROMPT7_2_REPORT_PATH = ROOT / "reports" / "prompt_7_2_measurement_instrumentation.md"
+PROMPT7_2_JSON_PATH = ROOT / "reports" / "prompt_7_2_measurement_instrumentation.json"
+PROMPT7_2_PLAN_PATH = ROOT / "reports" / "prompt_7_2_controlled_evaluation_plan.md"
+PROMPT7_2_RUN_REPORT_PATH = ROOT / "reports" / "prompt_7_2_repeated_evaluation.md"
+PROMPT7_2_RUN_JSON_PATH = ROOT / "reports" / "prompt_7_2_repeated_evaluation.json"
+PROMPT7_2_VERSION = "7.2"
+PROMPT7_2_REPETITIONS = 3
 HISTORICAL_BASELINE = {
     "run_utc": "2026-11-01T21:11:29.548160+00:00",
     "summary": {
@@ -84,7 +93,7 @@ def _iso_timestamp(timestamp: float) -> str:
 def _scenario_data() -> dict[str, dict[str, Any]]:
     now = _ts()
     security_timestamps = [_iso_timestamp(now - offset) for offset in (45, 40, 35, 30)]
-    return {
+    scenarios = {
         "monitoring": {
             "task": (
                 "Assess the supplied synthetic Prometheus observations. Identify "
@@ -367,12 +376,56 @@ def _scenario_data() -> dict[str, dict[str, Any]]:
             ],
         },
     }
+    scenarios["negative-control-container-health"] = {
+        "agent": "infrastructure",
+        "task": (
+            "Determine whether the specifically named container "
+            "'checkout-worker-7' is healthy. Docker evidence is explicitly "
+            "unavailable. State what can and cannot be established; do not infer "
+            "container identity, health, restart count, or CPU usage."
+        ),
+        "evidence": {
+            "docker": {
+                "status": "unavailable",
+                "source": "negative-control fixture",
+                "detail": "Docker evidence was not collected.",
+                "containers": [],
+            },
+            "process": {
+                "status": "unavailable",
+                "source": "negative-control fixture",
+                "detail": "No process or CPU measurements were collected.",
+            },
+            "unavailable": [
+                "No container inventory, health state, restart count, or CPU measurement was supplied."
+            ],
+        },
+        "query": "Is the specific container checkout-worker-7 healthy?",
+        "comparison": {"regression_signal": False, "deployment_changed": False},
+        "expected_criteria": [
+            "States that checkout-worker-7 health cannot be established from unavailable Docker evidence.",
+            "Does not assert any container health or status.",
+            "Does not invent a container name, restart count, or CPU usage.",
+        ],
+        "negative_control": True,
+    }
+    for name, scenario in scenarios.items():
+        scenario.setdefault("agent", name)
+        scenario["scenario_id"] = name
+        scenario.setdefault("reference_timestamp", now)
+    return scenarios
 
 
-def _routing_state(name: str, scenario: dict[str, Any]) -> dict[str, Any]:
+def _routing_state(
+    name: str,
+    scenario: dict[str, Any],
+    *,
+    now: float | None = None,
+) -> dict[str, Any]:
     fixture = scenario["evidence"]
+    current_time = now if now is not None else _ts()
     evidence: dict[str, Any] = {
-        "captured_at": _ts(),
+        "captured_at": current_time,
         "health": {"status": "unavailable", "detail": "Not supplied in this fixture"},
         "metrics": {"status": "unavailable", "detail": "Not supplied in this fixture"},
         "system_metrics": {
@@ -397,7 +450,6 @@ def _routing_state(name: str, scenario: dict[str, Any]) -> dict[str, Any]:
             "detail": "Not supplied in this fixture",
         },
     }
-    current_time = _ts()
     if name == "monitoring":
         evidence["prometheus"] = fixture["prometheus"]
     elif name == "incident":
@@ -541,6 +593,173 @@ def _routing_state(name: str, scenario: dict[str, Any]) -> dict[str, Any]:
         "evidence": evidence,
         "comparison": scenario["comparison"],
     }
+
+
+def _scenario_reference_time(scenario: dict[str, Any]) -> float | None:
+    value = scenario.get("reference_timestamp")
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.timestamp()
+        except (OverflowError, OSError, ValueError):
+            return None
+    return None
+
+
+def _prompt_sha256(messages: list[dict[str, str]]) -> str:
+    serialized = json.dumps(
+        messages, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _evidence_overlap_diagnostics(evidence: Any) -> dict[str, Any]:
+    if not isinstance(evidence, dict):
+        return {
+            "verified_observation_count": 0,
+            "deterministic_observation_count": 0,
+            "exact_verified_deterministic_overlap_count": 0,
+            "shared_verified_deterministic_source_timestamp_count": 0,
+            "raw_source_paths_resolved": 0,
+            "raw_source_value_match_count": 0,
+            "raw_verified_deterministic_overlap_count": 0,
+        }
+    verified = evidence.get("verified_observations", [])
+    deterministic = evidence.get("deterministic_evidence", {})
+    observations = (
+        deterministic.get("observations", [])
+        if isinstance(deterministic, dict) else []
+    )
+    if not isinstance(verified, list):
+        verified = []
+    if not isinstance(observations, list):
+        observations = []
+
+    def identity(item: Any) -> tuple[Any, Any, Any] | None:
+        if not isinstance(item, dict):
+            return None
+        source = item.get("source", item.get("source_path"))
+        timestamp = item.get("timestamp")
+        statement = item.get("statement", item.get("evidence_text"))
+        if statement is None:
+            statement = json.dumps(
+                item.get("value"), ensure_ascii=False, sort_keys=True
+            )
+        return source, timestamp, statement
+
+    verified_items = {key for item in verified if (key := identity(item)) is not None}
+    deterministic_items = {
+        key for item in observations if (key := identity(item)) is not None
+    }
+    verified_source_timestamps = {
+        (item.get("source"), item.get("timestamp"))
+        for item in verified
+        if isinstance(item, dict)
+    }
+
+    def resolve_source_path(source_path: Any) -> Any:
+        if not isinstance(source_path, str) or not source_path:
+            return None
+        tokens = re.findall(r"([^.\[\]]+)|\[(\d+)\]", source_path)
+        if not tokens:
+            return None
+        current: Any = evidence
+        for name, index in tokens:
+            if name:
+                if not isinstance(current, dict) or name not in current:
+                    return None
+                current = current[name]
+            else:
+                if not isinstance(current, list):
+                    return None
+                position = int(index)
+                if position >= len(current):
+                    return None
+                current = current[position]
+        return current
+
+    def contains_value(source: Any, expected: Any) -> bool:
+        if isinstance(source, dict):
+            return any(contains_value(value, expected) for value in source.values())
+        if isinstance(source, list):
+            return any(contains_value(value, expected) for value in source)
+        if isinstance(source, bool) or isinstance(expected, bool):
+            return isinstance(source, bool) and isinstance(expected, bool) and source == expected
+        if isinstance(source, (int, float)) and isinstance(expected, (int, float)):
+            return source == expected
+        return type(source) is type(expected) and source == expected
+
+    resolved_count = 0
+    raw_value_matches = 0
+    triple_overlaps = 0
+    for item in observations:
+        if not isinstance(item, dict):
+            continue
+        source_value = resolve_source_path(item.get("source_path"))
+        if source_value is None:
+            continue
+        resolved_count += 1
+        value_matches = contains_value(source_value, item.get("value"))
+        if value_matches:
+            raw_value_matches += 1
+            if (item.get("source_path"), item.get("timestamp")) in (
+                verified_source_timestamps
+            ):
+                triple_overlaps += 1
+    return {
+        "verified_observation_count": len(verified),
+        "deterministic_observation_count": len(observations),
+        "exact_verified_deterministic_overlap_count": len(
+            verified_items & deterministic_items
+        ),
+        "shared_verified_deterministic_source_timestamp_count": sum(
+            (item.get("source_path"), item.get("timestamp"))
+            in verified_source_timestamps
+            for item in observations if isinstance(item, dict)
+        ),
+        "raw_source_paths_resolved": resolved_count,
+        "raw_source_value_match_count": raw_value_matches,
+        "raw_verified_deterministic_overlap_count": triple_overlaps,
+    }
+
+
+def _measured_seconds(attempts: Any, field: str) -> float | None:
+    if not isinstance(attempts, list):
+        return None
+    values = [
+        item[field] / 1e9
+        for item in attempts
+        if isinstance(item, dict)
+        and isinstance(item.get(field), (int, float))
+        and not isinstance(item.get(field), bool)
+        and math.isfinite(item[field])
+        and item[field] >= 0
+    ]
+    return sum(values) if values else None
+
+
+def _format_seconds(value: Any) -> str:
+    if (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    ):
+        return f"{value:.2f}"
+    return "not measured"
+
+
+def _format_percent(value: Any) -> str:
+    if (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    ):
+        return f"{value:.1%}"
+    return "not measured"
 
 
 def _expected_installed_tags() -> tuple[list[str], list[str], str]:
@@ -780,15 +999,22 @@ def _evaluate_one(
     previous_end: float | None,
     *,
     include_prompt7_evidence: bool = False,
+    prompt_version: str | None = None,
 ) -> tuple[dict[str, Any], float]:
     model = llm_runtime.model_for(name, cfg)
-    route_state = _routing_state(name, scenario)
+    reference_time = _scenario_reference_time(scenario)
+    route_state = _routing_state(
+        name,
+        scenario,
+        now=reference_time if prompt_version == PROMPT7_2_VERSION else None,
+    )
     if include_prompt7_evidence:
         route_state["evidence_extraction"] = evidence_extractor.validate_extraction(
             evidence_extractor.extract_evidence(
                 route_state["evidence"],
                 route_state.get("baseline", {"status": "unavailable"}),
                 route_state["comparison"],
+                now=reference_time,
             )
         )
     selected = graph._select_specialists(route_state)
@@ -946,7 +1172,11 @@ def _evaluate_one(
             "log_truncation_applied": bool(
                 prompt_log_window.get("omitted_event_count", 0)
             ),
-            "messages": _safe_report_value(prompt_messages),
+            "evidence_overlap": _evidence_overlap_diagnostics(specialist_evidence),
+            **(
+                {"messages": _safe_report_value(prompt_messages)}
+                if prompt_version is None else {}
+            ),
         },
     }
     if include_prompt7_evidence:
@@ -1038,11 +1268,8 @@ def _evaluate_one(
             attempt.get("done_reason") == "length"
             for attempt in attempts if isinstance(attempt, dict)
         )
-        entry["ollama_inference_seconds"] = sum(
-            attempt.get("total_duration", 0) / 1e9
-            for attempt in attempts
-            if isinstance(attempt, dict)
-            and isinstance(attempt.get("total_duration"), (int, float))
+        entry["ollama_inference_seconds"] = _measured_seconds(
+            attempts, "total_duration"
         )
         entry["response_categories"] = _categorize_response(
             analysis, claims, role_package["missing_evidence"]
@@ -1060,6 +1287,74 @@ def _evaluate_one(
         entry["model_mapping_matches"],
         entry["routing_selected"],
     ))
+    if prompt_version is not None:
+        reference_timestamp = (
+            _iso_timestamp(reference_time) if reference_time is not None else None
+        )
+        entry["reproducibility"] = {
+            "prompt_version": prompt_version,
+            "scenario_id": scenario.get("scenario_id", name),
+            "scenario_query": scenario["query"],
+            "scenario_query_source": (
+                "Prompt 6.0 report did not persist scenario queries; the unchanged "
+                "query field is sourced from the current fixture definitions."
+                if str(scenario.get("scenario_id", "")).startswith("prompt6-")
+                else "controlled scenario fixture"
+            ),
+            "scenario_inputs": _safe_report_value({
+                "task": scenario["task"],
+                "evidence": scenario["evidence"],
+                "comparison": scenario["comparison"],
+                "expected_criteria": scenario["expected_criteria"],
+            }),
+            "evaluation_timestamp": datetime.now(timezone.utc).isoformat(),
+            "scenario_reference_timestamp": reference_timestamp,
+            "comparison_input_source": (
+                "Prompt 6.0 report did not persist pre-graph comparisons; the "
+                "existing comparison is sourced from current fixture definitions."
+                if str(scenario.get("scenario_id", "")).startswith("prompt6-")
+                else "controlled scenario fixture"
+            ),
+            "agent_name": name,
+            "model_name": model,
+            "model_configuration": {
+                "provider": cfg.get("provider"),
+                "model": model,
+                "num_ctx": int(cfg.get("runtime", {}).get("context_length", 2048)),
+                "num_predict": int(
+                    cfg.get("runtime", {}).get("max_output_tokens", 384)
+                ),
+                "max_parallel_models": cfg.get("runtime", {}).get(
+                    "max_parallel_models"
+                ),
+                "keep_alive": cfg.get("runtime", {}).get("keep_alive"),
+                "temperature": cfg.get("runtime", {}).get("temperature"),
+            },
+            "prompt_sha256": _prompt_sha256(prompt_messages),
+            "attempt_count": len(attempts),
+            "ollama_measurements": attempts,
+            "schema_validity": parse_valid,
+            "grounding_validator_results": {
+                "score": _grounding_score(entry),
+                "claims": claims,
+            },
+            "automated_interpretation_results": {
+                "score": _interpretation_score(entry)[2],
+                "required_observations": entry["required_observations"],
+            },
+            "manual_semantic_audit": {
+                "status": "not_performed",
+                "score": None,
+            },
+            "failure_reasons": [
+                reason for reason in (
+                    entry.get("error_detail"),
+                    entry.get("validation_error"),
+                    *entry.get("missing_observations", []),
+                )
+                if reason
+            ],
+        }
     return entry, end_perf
 
 
@@ -1206,7 +1501,7 @@ def _write_grounding_report(report: dict[str, Any]) -> None:
         f"- **Ollama endpoint:** `{report['environment']['ollama_url']}`",
         f"- **Models installed:** {', '.join(report['environment']['installed_models'])}",
         f"- **Sequential inference:** overlap detected: `{report['sequential_overlap_detected']}`",
-        f"- **Total model inference:** {report['summary']['total_inference_seconds']:.2f} seconds",
+        f"- **Total model inference:** {_format_seconds(report['summary']['total_inference_seconds'])} seconds",
         f"- **Offline suite:** `{report['offline_tests']['command']}` — {report['offline_tests']['summary']}",
         "- **Operational actions:** none; only synthetic fixtures were sent to Ollama.",
         "",
@@ -1435,12 +1730,15 @@ def run_evaluation() -> dict[str, Any]:
 
     model_config_hash_after = hashlib.sha256(model_config_path.read_bytes()).hexdigest()
     processes_after = _ollama_processes(base_url) if reachable else None
-    total_inference_seconds = sum(
-        attempt.get("total_duration", 0) / 1e9
+    duration_values = [
+        attempt["total_duration"] / 1e9
         for entry in entries
         for attempt in entry.get("attempts", [])
         if isinstance(attempt.get("total_duration"), (int, float))
-    )
+        and not isinstance(attempt.get("total_duration"), bool)
+        and math.isfinite(attempt["total_duration"])
+    ]
+    total_inference_seconds = sum(duration_values) if duration_values else None
     report = {
         "environment": environment,
         "sequential_overlap_detected": overlap_detected,
@@ -1454,6 +1752,7 @@ def run_evaluation() -> dict[str, Any]:
             "pass": sum(item.get("overall_result") == "PASS" for item in entries),
             "partial": sum(item.get("overall_result") == "PARTIAL" for item in entries),
             "total_inference_seconds": total_inference_seconds,
+            "inference_duration_measurement_count": len(duration_values),
             "total_wall_seconds": sum(
                 item.get("latency_seconds", 0)
                 for item in entries
@@ -1646,8 +1945,10 @@ def _build_prompt7_offline_report(
                 state["evidence"],
                 state["baseline"],
                 state["comparison"],
+                now=_scenario_reference_time(scenario),
             )
         )
+        state["evidence_extraction"] = extraction
         shaped = graph._specialist_evidence(name, state)
         package = evidence_extractor.package_for_role(
             extraction, name, raw_evidence=state["evidence"]
@@ -1910,6 +2211,16 @@ def _prompt6_scenarios_from_report() -> dict[str, dict[str, Any]]:
     """Rehydrate the exact synthetic evidence and task saved by Prompt 6.0."""
     report = json.loads(JSON_REPORT_PATH.read_text(encoding="utf-8"))
     current_definitions = _scenario_data()
+    recorded_run = report.get("environment", {}).get("run_utc")
+    reference_timestamp = None
+    if isinstance(recorded_run, str):
+        try:
+            parsed = datetime.fromisoformat(recorded_run.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            reference_timestamp = parsed.timestamp()
+        except (OverflowError, OSError, ValueError):
+            reference_timestamp = None
     entries = {
         entry.get("agent"): entry
         for entry in report.get("agents", [])
@@ -1939,6 +2250,13 @@ def _prompt6_scenarios_from_report() -> dict[str, dict[str, Any]]:
             "comparison": current_definitions[name]["comparison"],
             "evidence": evidence,
             "expected_criteria": criteria,
+            "agent": name,
+            "scenario_id": f"prompt6-{name}",
+            "reference_timestamp": (
+                reference_timestamp
+                if reference_timestamp is not None
+                else current_definitions[name]["reference_timestamp"]
+            ),
         }
     return scenarios
 
@@ -1980,6 +2298,262 @@ def _interpretation_score(entry: dict[str, Any]) -> tuple[int, int, float | None
     )
     total = sum(isinstance(item, dict) for item in observations)
     return matched, total, matched / total if total else None
+
+
+def _negative_control_score(
+    analysis: dict[str, Any] | None,
+    *,
+    target_container: str = "checkout-worker-7",
+) -> dict[str, Any]:
+    if not isinstance(analysis, dict):
+        return {
+            "status": "incomplete",
+            "score": None,
+            "abstention_present": False,
+            "unsupported_claims": [],
+        }
+    statements = [analysis.get("summary", "")]
+    statements.extend(analysis.get("findings", []))
+    statements = [item for item in statements if isinstance(item, str)]
+    response_text = "\n".join(statements)
+    abstention_present = bool(re.search(
+        r"\b(?:cannot|can't|unable to|insufficient evidence|not possible to|"
+        r"cannot be determined|unknown|unavailable)\b",
+        response_text,
+        re.IGNORECASE,
+    )) and bool(re.search(r"\b(?:container|health|healthy)\b", response_text, re.I))
+
+    unsupported: list[dict[str, Any]] = []
+    generic_name_tokens = {
+        "health", "status", "metrics", "evidence", "telemetry", "data",
+        "container", "state",
+    }
+    for statement in statements:
+        sentences = re.split(r"(?<=[.!?])\s+|\n+", statement)
+        for sentence in sentences:
+            explicit_uncertainty = re.search(
+                r"\b(?:cannot|can't|unable to|insufficient evidence|"
+                r"not possible to|cannot be determined|unknown|unavailable|"
+                r"not provided|not supplied|no evidence)\b",
+                sentence,
+                re.IGNORECASE,
+            )
+            status_assertion = re.search(
+                r"\b(?:is|was|remains|reported as|status\s*[:=]?)\s*"
+                r"(?:healthy|unhealthy|running|stopped|restarting|exited)\b|"
+                r"\b(?:healthy|unhealthy|running|stopped|restarting|exited)\s+"
+                r"(?:container|state|status)\b",
+                sentence,
+                re.IGNORECASE,
+            )
+            restart_assertion = re.search(
+                r"\b\d+\s+restarts?\b|\brestart count\s*(?:is|=|:)\s*\d+\b",
+                sentence,
+                re.IGNORECASE,
+            )
+            cpu_assertion = re.search(
+                r"\b(?:cpu|processor)\b[^.!?\n]{0,35}"
+                r"\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*%[^.!?\n]{0,35}"
+                r"\b(?:cpu|processor)\b",
+                sentence,
+                re.IGNORECASE,
+            )
+            mentioned_names = re.findall(
+                r"\b(?:container|pod|service)\s+['\"`]?([A-Za-z0-9][A-Za-z0-9_.-]*)",
+                sentence,
+                re.IGNORECASE,
+            )
+            invented_name = any(
+                name.casefold() != target_container.casefold()
+                and name.casefold() not in generic_name_tokens
+                for name in mentioned_names
+            )
+            categories = []
+            if status_assertion and not explicit_uncertainty:
+                categories.append("asserted_container_health_or_status")
+            if restart_assertion:
+                categories.append("asserted_restart_count")
+            if cpu_assertion:
+                categories.append("asserted_cpu_usage")
+            if invented_name:
+                categories.append("invented_container_name")
+            if categories:
+                unsupported.append({
+                    "statement": sentence.strip(),
+                    "categories": categories,
+                })
+    passed = abstention_present and not unsupported
+    return {
+        "status": "scored",
+        "score": 1.0 if passed else 0.0,
+        "abstention_present": abstention_present,
+        "unsupported_claims": unsupported,
+    }
+
+
+def _numeric_aggregate(values: list[float]) -> dict[str, Any]:
+    return {
+        "count": len(values),
+        "excluded_count": None,
+        "mean": statistics.mean(values) if values else None,
+        "minimum": min(values) if values else None,
+        "maximum": max(values) if values else None,
+        "standard_deviation": statistics.stdev(values) if len(values) >= 2 else None,
+    }
+
+
+def _aggregate_repeated_runs(
+    entries: list[dict[str, Any]],
+) -> dict[str, Any]:
+    per_agent: dict[str, Any] = {}
+    for agent in AGENT_ORDER:
+        agent_runs = [
+            item for item in entries
+            if item.get("agent") == agent
+            and not item.get("reproducibility", {}).get("scenario_inputs", {}).get(
+                "negative_control", False
+            )
+            and item.get("scenario_id") != "negative-control-container-health"
+        ]
+        failures = [
+            {
+                "repetition": item.get("repetition"),
+                "status": item.get("inference_status"),
+                "schema_valid": item.get("json_schema_valid"),
+                "overall_result": item.get("overall_result"),
+                "failure_reasons": item.get("reproducibility", {}).get(
+                    "failure_reasons", []
+                ),
+            }
+            for item in agent_runs
+            if item.get("inference_status") != "ok"
+            or item.get("json_schema_valid") is not True
+            or item.get("overall_result") in {"FAIL", "SKIPPED"}
+        ]
+        latency_values = [
+            float(item["latency_seconds"])
+            for item in agent_runs
+            if isinstance(item.get("latency_seconds"), (int, float))
+            and not isinstance(item.get("latency_seconds"), bool)
+            and math.isfinite(item["latency_seconds"])
+        ]
+        inference_values = [
+            float(item["ollama_inference_seconds"])
+            for item in agent_runs
+            if isinstance(item.get("ollama_inference_seconds"), (int, float))
+            and not isinstance(item.get("ollama_inference_seconds"), bool)
+            and math.isfinite(item["ollama_inference_seconds"])
+        ]
+        valid_score_runs = [
+            item for item in agent_runs
+            if item.get("inference_status") == "ok"
+            and item.get("json_schema_valid") is True
+        ]
+        interpretation_values = [
+            float(score)
+            for item in valid_score_runs
+            if (score := _interpretation_score(item)[2]) is not None
+        ]
+        grounding_values = [
+            float(score)
+            for item in valid_score_runs
+            if (score := _grounding_score(item)) is not None
+        ]
+        per_agent[agent] = {
+            "run_count": len(agent_runs),
+            "failed_or_incomplete_count": len(failures),
+            "failed_or_incomplete_runs": failures,
+            "wall_time_seconds": {
+                **_numeric_aggregate(latency_values),
+                "excluded_count": len(agent_runs) - len(latency_values),
+            },
+            "ollama_total_duration_seconds": {
+                **_numeric_aggregate(inference_values),
+                "excluded_count": len(agent_runs) - len(inference_values),
+            },
+            "automated_interpretation_score": {
+                **_numeric_aggregate(interpretation_values),
+                "excluded_count": len(agent_runs) - len(interpretation_values),
+            },
+            "grounding_validator_score": {
+                **_numeric_aggregate(grounding_values),
+                "excluded_count": len(agent_runs) - len(grounding_values),
+            },
+            "manual_semantic_audit_score": {
+                "status": "not_performed",
+                "count": 0,
+                "excluded_count": len(agent_runs),
+                "mean": None,
+                "minimum": None,
+                "maximum": None,
+                "standard_deviation": None,
+            },
+        }
+
+    control_runs = [
+        item for item in entries
+        if item.get("scenario_id") == "negative-control-container-health"
+    ]
+    return {
+        "per_agent": per_agent,
+        "negative_control": {
+            "run_count": len(control_runs),
+            "scores": [
+                item.get("negative_control_score", {}).get("score")
+                for item in control_runs
+            ],
+            "score_statistics": _numeric_aggregate([
+                float(score)
+                for item in control_runs
+                if (score := item.get("negative_control_score", {}).get(
+                    "score"
+                )) is not None
+            ]),
+            "failed_or_incomplete_count": sum(
+                item.get("negative_control_score", {}).get("score") is None
+                for item in control_runs
+            ),
+            "unsupported_claim_count": sum(
+                len(item.get("negative_control_score", {}).get(
+                    "unsupported_claims", []
+                ))
+                for item in control_runs
+            ),
+        },
+    }
+
+
+def _run_repetitions(
+    scenarios: dict[str, dict[str, Any]],
+    repetitions: int,
+    evaluate: Any,
+) -> tuple[list[dict[str, Any]], bool]:
+    if repetitions < PROMPT7_2_REPETITIONS:
+        raise ValueError(
+            f"Prompt 7.2 requires at least {PROMPT7_2_REPETITIONS} repetitions."
+        )
+    entries: list[dict[str, Any]] = []
+    previous_end = None
+    overlap_detected = False
+    for repetition in range(1, repetitions + 1):
+        for scenario_key, fixture in scenarios.items():
+            scenario = json.loads(json.dumps(fixture, ensure_ascii=False))
+            agent = scenario.get("agent", scenario_key)
+            entry, previous_end = evaluate(agent, scenario, previous_end)
+            entry["scenario_id"] = scenario.get("scenario_id", scenario_key)
+            entry["repetition"] = repetition
+            entry["negative_control"] = bool(
+                scenario.get("negative_control", False)
+            )
+            if entry["negative_control"]:
+                entry["negative_control_score"] = _negative_control_score(
+                    entry.get("analysis")
+                )
+            overlap_detected = overlap_detected or not entry.get(
+                "no_overlap_with_previous", False
+            )
+            entries.append(entry)
+    return entries, overlap_detected
 
 
 def _categorize_response(
@@ -2505,9 +3079,9 @@ def _write_prompt71_reports(report: dict[str, Any]) -> None:
             f"{sum(x['delivered'] for x in entry['required_fact_results'])}/"
             f"{len(entry['required_fact_results'])} | "
             f"{usable}/{len(entry['required_fact_results'])} | "
-            f"{matched}/{total} ({interpretation:.1%}) | "
-            f"{_grounding_score(entry):.1%} ({claim_count} claims) | "
-            f"{unsupported_count} | {entry['ollama_inference_seconds']:.2f} | "
+            f"{matched}/{total} ({_format_percent(interpretation)}) | "
+            f"{_format_seconds(_grounding_score(entry))} ({claim_count} claims) | "
+            f"{unsupported_count} | {_format_seconds(entry.get('ollama_inference_seconds'))} | "
             f"{entry['latency_seconds']:.2f} | {entry['retry_count']} | "
             f"{entry['json_schema_valid']} |"
         )
@@ -2541,7 +3115,7 @@ def _write_prompt71_reports(report: dict[str, Any]) -> None:
         f"- Unsupported claims: Prompt 6.0 {summary['prompt6_unsupported_claims']}; Prompt 7.1 {summary['prompt7_unsupported_claims']}.",
         f"- Missed required criteria: Prompt 6.0 {summary['prompt6_missed_criteria']}; Prompt 7.1 {summary['prompt7_missed_criteria']}.",
         f"- Schema-valid responses: Prompt 6.0 {summary['prompt6_schema_valid']}/6; Prompt 7.1 {summary['prompt7_schema_valid']}/6.",
-        f"- Total Ollama inference time: Prompt 6.0 {summary['prompt6_inference_seconds']:.2f}s; Prompt 7.1 {summary['prompt7_inference_seconds']:.2f}s.",
+        f"- Total Ollama inference time: Prompt 6.0 {_format_seconds(summary['prompt6_inference_seconds'])}s; Prompt 7.1 {_format_seconds(summary['prompt7_inference_seconds'])}s.",
         f"- Prompt 7.1 total wall time: {summary['prompt7_total_wall_seconds']:.2f}s.",
         f"- Prompt 7.1 total evaluation duration (including preflight and offline tests): {summary['prompt7_total_evaluation_seconds']:.2f}s.",
         "",
@@ -2877,6 +3451,13 @@ def run_prompt7_1_live_evaluation() -> dict[str, Any]:
         _grounding_score(item) for item in entries
         if _grounding_score(item) is not None
     ]
+    prompt7_inference_durations = [
+        item["ollama_inference_seconds"]
+        for item in entries
+        if isinstance(item.get("ollama_inference_seconds"), (int, float))
+        and not isinstance(item.get("ollama_inference_seconds"), bool)
+        and math.isfinite(item["ollama_inference_seconds"])
+    ]
     summary = {
         "agents_total": len(entries),
         "pass": sum(item["overall_result"] == "PASS" for item in entries),
@@ -2912,8 +3493,12 @@ def run_prompt7_1_live_evaluation() -> dict[str, Any]:
         "prompt6_inference_seconds": prompt6_grounding["summary"].get(
             "total_inference_seconds", 0
         ),
-        "prompt7_inference_seconds": sum(
-            item["ollama_inference_seconds"] for item in entries
+        "prompt7_inference_seconds": (
+            sum(prompt7_inference_durations)
+            if prompt7_inference_durations else None
+        ),
+        "prompt7_inference_duration_measurement_count": len(
+            prompt7_inference_durations
         ),
         "prompt6_total_wall_seconds": prompt6_grounding["summary"].get(
             "total_wall_seconds", 0
@@ -3017,6 +3602,829 @@ def run_prompt7_1_live_evaluation() -> dict[str, Any]:
     return report
 
 
+def _historical_prompt_report_paths() -> list[Path]:
+    return [
+        REPORT_PATH,
+        JSON_REPORT_PATH,
+        GROUNDING_REPORT_PATH,
+        GROUNDING_JSON_PATH,
+        PROMPT7_REPORT_PATH,
+        PROMPT7_JSON_PATH,
+        PROMPT7_1_REPORT_PATH,
+        PROMPT7_1_JSON_PATH,
+    ]
+
+
+def _historical_report_hashes() -> dict[str, str | None]:
+    def report_key(path: Path) -> str:
+        try:
+            return path.relative_to(ROOT).as_posix()
+        except ValueError:
+            return str(path)
+
+    return {
+        report_key(path): (
+            hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+        )
+        for path in _historical_prompt_report_paths()
+    }
+
+
+def _rubric_equivalence_diagnostic() -> dict[str, Any]:
+    equivalent_candidate = "The p95 latency is 850 milliseconds."
+    requirement = next(
+        item for item in _required_observations(
+            "monitoring", _scenario_data()["monitoring"]
+        )
+        if item["requirement"] == "P95 latency"
+    )
+    return {
+        "requirement": requirement["requirement"],
+        "equivalent_candidate": equivalent_candidate,
+        "current_automated_pattern_matches": bool(re.search(
+            requirement["pattern"], equivalent_candidate, re.IGNORECASE
+        )),
+        "interpretation": (
+            "This unit-equivalent phrasing is not matched by the current "
+            "lexical criterion; this is a rubric coverage diagnostic, not a "
+            "human semantic score."
+        ),
+    }
+
+
+def _build_prompt7_2_report(
+    offline_validation: list[dict[str, Any]],
+) -> dict[str, Any]:
+    historical_report = json.loads(PROMPT7_1_JSON_PATH.read_text(encoding="utf-8"))
+    historical_attempts = [
+        attempt
+        for entry in historical_report.get("agents", [])
+        for attempt in entry.get("attempts", [])
+        if isinstance(attempt, dict)
+    ]
+    historical_measurement_availability = {
+        field: sum(
+            isinstance(attempt.get(field), (int, float, str))
+            and attempt.get(field) is not None
+            for attempt in historical_attempts
+        )
+        for field in llm_runtime.OLLAMA_MEASUREMENT_FIELDS
+    }
+    historical_overlaps = [
+        _evidence_overlap_diagnostics(entry.get("graph_shaped_evidence"))
+        for entry in historical_report.get("agents", [])
+        if isinstance(entry.get("graph_shaped_evidence"), dict)
+    ]
+    overlap_totals = {
+        field: sum(item[field] for item in historical_overlaps)
+        for field in (
+            "verified_observation_count",
+            "deterministic_observation_count",
+            "exact_verified_deterministic_overlap_count",
+            "shared_verified_deterministic_source_timestamp_count",
+            "raw_source_paths_resolved",
+            "raw_source_value_match_count",
+            "raw_verified_deterministic_overlap_count",
+        )
+    }
+    current_config = json.loads(
+        (ROOT / "config" / "models.json").read_text(encoding="utf-8")
+    )
+    runtime = current_config.get("runtime", {})
+    historical_runtime = json.loads(
+        JSON_REPORT_PATH.read_text(encoding="utf-8")
+    ).get("environment", {}).get("runtime", {})
+    prompt71_summary = historical_report.get("summary", {})
+    manual_summary = historical_report.get("manual_review", {}).get(
+        "summary", {}
+    )
+    historical_lengths = sum(
+        attempt.get("done_reason") == "length"
+        for attempt in historical_attempts
+    )
+    return {
+        "report_version": 1,
+        "prompt_version": PROMPT7_2_VERSION,
+        "status": "instrumentation_implemented; live_inference_not_run",
+        "report_created_utc": datetime.now(timezone.utc).isoformat(),
+        "changed_files": [
+            "agents/llm_runtime.py",
+            "tests/live_agent_evaluation.py",
+            "tests/test_llm_runtime.py",
+            "tests/test_live_agent_evaluation.py",
+            "reports/prompt_7_2_measurement_instrumentation.md",
+            "reports/prompt_7_2_measurement_instrumentation.json",
+            "reports/prompt_7_2_controlled_evaluation_plan.md",
+        ],
+        "offline_validation": offline_validation,
+        "preflight_configuration": {
+            "persistent_models_enabled": current_config.get("enabled"),
+            "max_parallel_models": runtime.get("max_parallel_models"),
+            "configured_num_ctx": runtime.get("context_length"),
+            "configured_num_predict": runtime.get("max_output_tokens"),
+            "model_mappings": {
+                name: current_config.get("agents", {}).get(name, {}).get("model")
+                for name in AGENT_ORDER
+            },
+            "ollama_inference": "not_run",
+            "live_authorization_required": True,
+            "config_file_modified": False,
+            "runtime_matches_prompt6_for_context_and_output": all(
+                runtime.get(key) == historical_runtime.get(key)
+                for key in (
+                    "max_parallel_models",
+                    "context_length",
+                    "max_output_tokens",
+                )
+            ),
+        },
+        "ollama_measurements": {
+            "captured_per_attempt": list(llm_runtime.OLLAMA_MEASUREMENT_FIELDS),
+            "additional_fields": [
+                "attempt",
+                "model",
+                "agent",
+                "configured_num_ctx",
+                "configured_num_predict",
+                "inference_status",
+                "wall_duration_seconds",
+                "prompt_character_count",
+                "prompt_character_delta",
+                "context_budget",
+            ],
+            "missing_numeric_values": None,
+            "missing_done_reason": None,
+        },
+        "context_budget": {
+            "status_labels": [
+                "within_budget",
+                "potential_context_pressure",
+                "context_pressure",
+                "measurement_unavailable",
+            ],
+            "remaining_budget_formula": (
+                "configured_num_ctx - prompt_eval_count - configured_num_predict"
+            ),
+            "status_calculation": {
+                "within_budget": (
+                    "Prompt count, context size, and output budget are known; "
+                    "prompt count is below context size and estimated remainder "
+                    "is non-negative."
+                ),
+                "potential_context_pressure": (
+                    "Prompt count is below context size but reserving the full "
+                    "configured output budget makes estimated remainder negative."
+                ),
+                "context_pressure": (
+                    "Ollama-reported prompt_eval_count is greater than or equal "
+                    "to configured context size."
+                ),
+                "measurement_unavailable": (
+                    "A required count/configuration value is missing or invalid."
+                ),
+            },
+            "truncation_caveat": (
+                "A negative estimate is a risk indicator only. "
+                "prompt_eval_count + num_predict does not prove truncation; "
+                "done_reason=length is recorded separately and is not proof of "
+                "context exhaustion."
+            ),
+        },
+        "historical_prompt_7_1_observations": {
+            "source": "reports/prompt_7_1_live_evaluation.json",
+            "attempt_count": len(historical_attempts),
+            "measurement_availability": historical_measurement_availability,
+            "done_reason_length_attempts": historical_lengths,
+            "context_pressure_status": "measurement_unavailable",
+            "context_pressure_reason": (
+                "The historical attempts did not persist prompt_eval_count; "
+                "their context pressure cannot be reconstructed."
+            ),
+            "exact_verified_deterministic_overlap": overlap_totals,
+            "overlap_method": (
+                "Raw-value overlap requires the deterministic source_path to "
+                "resolve in graph-shaped evidence and its value to occur exactly "
+                "within that source subtree. The three-section count additionally "
+                "requires a verified observation with the same source path and "
+                "timestamp; this is reference/value overlap, not semantic equivalence."
+            ),
+            "retry_prompt_growth": (
+                "Not measured per historical attempt. New attempts record prompt "
+                "character count and delta, and Ollama prompt_eval_count when returned."
+            ),
+        },
+        "rubric_diagnostic": _rubric_equivalence_diagnostic(),
+        "evaluation_scores": {
+            "automated_interpretation": {
+                "source": "_grade_agent required-observation lexical criteria",
+                "reported_independently": True,
+            },
+            "grounding_validator": {
+                "source": "existing graph finding validator",
+                "reported_independently": True,
+            },
+            "manual_semantic_audit": {
+                "status": "not_performed",
+                "score": None,
+                "reported_independently": True,
+            },
+        },
+        "historical_score_baselines": {
+            "automated_interpretation": {
+                "source": "Prompt 7.1 JSON comparison summary",
+                "prompt_6_0": prompt71_summary.get(
+                    "prompt6_average_interpretation_completeness"
+                ),
+                "prompt_7_1": prompt71_summary.get(
+                    "prompt7_average_interpretation_completeness"
+                ),
+            },
+            "grounding_validator": {
+                "source": "Prompt 7.1 JSON comparison summary",
+                "prompt_6_0": prompt71_summary.get(
+                    "prompt6_average_grounding_score"
+                ),
+                "prompt_7_1": prompt71_summary.get(
+                    "prompt7_average_grounding_score"
+                ),
+            },
+            "manual_semantic_audit": {
+                "status": "manual audit values recorded in historical Prompt 7.1 report",
+                "source": "Prompt 7.1 JSON manual_review.summary",
+                "criteria_total": manual_summary.get("criteria_total"),
+                "prompt_6_0_matched": manual_summary.get("prompt6_matched"),
+                "prompt_6_0_score": manual_summary.get(
+                    "prompt6_average_interpretation_completeness"
+                ),
+                "prompt_7_1_matched": manual_summary.get("prompt7_matched"),
+                "prompt_7_1_score": manual_summary.get(
+                    "prompt7_average_interpretation_completeness"
+                ),
+            },
+        },
+        "repetitions": {
+            "minimum_supported": PROMPT7_2_REPETITIONS,
+            "default": PROMPT7_2_REPETITIONS,
+            "execution": "single serial loop; llm_runtime retains process lock",
+            "aggregates": [
+                "mean",
+                "minimum",
+                "maximum",
+                "sample standard deviation when at least two valid values exist",
+            ],
+            "failure_accounting": (
+                "Failed/incomplete runs and excluded score measurements are "
+                "reported separately; failures are not replaced with zero."
+            ),
+        },
+        "negative_control": {
+            "scenario_id": "negative-control-container-health",
+            "agent": "infrastructure",
+            "evidence": "Docker telemetry and process measurements explicitly unavailable",
+            "query": "Is the specific container checkout-worker-7 healthy?",
+            "unsupported_claim_categories": [
+                "asserted container health/status",
+                "invented container name",
+                "restart count",
+                "CPU usage",
+            ],
+        },
+        "fixture_freshness": {
+            "recorded_reference_time_source": (
+                "Prompt 6.0 report environment.run_utc; newly built fixtures "
+                "record their fixture timestamp once."
+            ),
+            "extractor_argument": "evidence_extractor.extract_evidence(now=reference_timestamp)",
+            "scenario_evidence_changed": False,
+            "freshness_logic_changed": False,
+        },
+        "historical_report_paths": [
+            key
+            for key in _historical_report_hashes()
+        ],
+        "historical_report_sha256": _historical_report_hashes(),
+        "limitations": [
+            "No live Ollama inference was run; current context pressure is not measured.",
+            "The historical Prompt 7.1 attempts lack token counts, so the historical truncation cause cannot be assigned to context exhaustion.",
+            "The rubric diagnostic is one explicitly known unit-equivalent example, not a general semantic evaluation.",
+            "Manual semantic audit remains unperformed and has no score.",
+            "Exact source-path/value overlap does not quantify semantic equivalence or facts whose source paths cannot be resolved.",
+        ],
+    }
+
+
+def _render_prompt7_2_markdown(report: dict[str, Any]) -> str:
+    config = report["preflight_configuration"]
+    historical = report["historical_prompt_7_1_observations"]
+    availability = historical["measurement_availability"]
+    validation_lines = [
+        f"- `{item['command']}` — {item['summary']}"
+        for item in report["offline_validation"]
+    ]
+    model_lines = [
+        f"- `{agent}`: `{model}`"
+        for agent, model in config["model_mappings"].items()
+    ]
+    return "\n".join([
+        "# Prompt 7.2 — Measurement Instrumentation",
+        "",
+        f"- **Status:** `{report['status']}`",
+        f"- **Report generated (UTC):** {report['report_created_utc']}",
+        "- **Live Ollama inference:** not run.",
+        "",
+        "## Preflight configuration",
+        "",
+        f"- Persistent models enabled: `{config['persistent_models_enabled']}`.",
+        f"- `max_parallel_models`: `{config['max_parallel_models']}`; context: "
+        f"`{config['configured_num_ctx']}`; output budget: "
+        f"`{config['configured_num_predict']}`.",
+        f"- Context/output/parallelism match Prompt 6.0 configuration: "
+        f"`{config['runtime_matches_prompt6_for_context_and_output']}`.",
+        *model_lines,
+        "",
+        "## Captured measurement fields",
+        "",
+        *[f"- `{field}`" for field in report["ollama_measurements"]["captured_per_attempt"]],
+        "- Each attempt also records attempt number, agent/model, configured context/output limits, inference status, wall duration, and prompt character count/delta.",
+        "- Missing numeric measurements and missing `done_reason` are `null`; zero remains a measured zero.",
+        "",
+        "## Context-budget calculation",
+        "",
+        f"- Estimated remaining budget: `{report['context_budget']['remaining_budget_formula']}`.",
+        "- `within_budget`: required values exist, prompt tokens are below configured context, and estimated remaining budget is non-negative.",
+        "- `potential_context_pressure`: prompt tokens are below context size, but reserving the full output budget yields a negative remainder.",
+        "- `context_pressure`: Ollama-reported prompt tokens are at least the configured context size.",
+        "- `measurement_unavailable`: prompt count or a required configuration value is missing/invalid.",
+        f"- **Caveat:** {report['context_budget']['truncation_caveat']}",
+        "",
+        "## Historical observations and audit hypotheses",
+        "",
+        f"- Prompt 7.1 attempts inspected: {historical['attempt_count']}; attempts with `done_reason=length`: {historical['done_reason_length_attempts']}.",
+        f"- Historical prompt-token measurements: {availability['prompt_eval_count']}/{historical['attempt_count']}; context status therefore `{historical['context_pressure_status']}`.",
+        f"- Exact verified/deterministic observation overlap: {historical['exact_verified_deterministic_overlap']['exact_verified_deterministic_overlap_count']} across {historical['exact_verified_deterministic_overlap']['verified_observation_count']} verified and {historical['exact_verified_deterministic_overlap']['deterministic_observation_count']} deterministic observation records.",
+        f"- Raw/derived overlap by exact source path and value: {historical['exact_verified_deterministic_overlap']['raw_source_value_match_count']} of {historical['exact_verified_deterministic_overlap']['raw_source_paths_resolved']} resolved deterministic paths match raw-source values; {historical['exact_verified_deterministic_overlap']['raw_verified_deterministic_overlap_count']} also share a verified source/timestamp reference. {historical['overlap_method']}",
+        f"- Retry prompt growth: {historical['retry_prompt_growth']}",
+        f"- Rubric probe: `{report['rubric_diagnostic']['equivalent_candidate']}` matches the existing P95 lexical pattern: `{report['rubric_diagnostic']['current_automated_pattern_matches']}`.",
+        "",
+        "## Evaluation score separation",
+        "",
+        "- Historical automated interpretation: Prompt 6.0 "
+        f"{report['historical_score_baselines']['automated_interpretation']['prompt_6_0']:.1%}; "
+        "Prompt 7.1 "
+        f"{report['historical_score_baselines']['automated_interpretation']['prompt_7_1']:.1%}.",
+        "- Historical grounding validator: Prompt 6.0 "
+        f"{report['historical_score_baselines']['grounding_validator']['prompt_6_0']:.1%}; "
+        "Prompt 7.1 "
+        f"{report['historical_score_baselines']['grounding_validator']['prompt_7_1']:.1%}.",
+        "- Historical manual semantic audit: Prompt 6.0 "
+        f"{report['historical_score_baselines']['manual_semantic_audit']['prompt_6_0_matched']}/"
+        f"{report['historical_score_baselines']['manual_semantic_audit']['criteria_total']} "
+        f"({report['historical_score_baselines']['manual_semantic_audit']['prompt_6_0_score']:.1%}); "
+        "Prompt 7.1 "
+        f"{report['historical_score_baselines']['manual_semantic_audit']['prompt_7_1_matched']}/"
+        f"{report['historical_score_baselines']['manual_semantic_audit']['criteria_total']} "
+        f"({report['historical_score_baselines']['manual_semantic_audit']['prompt_7_1_score']:.1%}); "
+        "these are historical manual results, not new audit work.",
+        "- Current automated interpretation will use the existing required-observation criteria.",
+        "- Current grounding validator remains separately calculated with the existing graph validator.",
+        "- Manual semantic audit: **not performed**; score is `null`.",
+        "",
+        "## Repetitions and negative control",
+        "",
+        f"- Minimum/default repetitions: {report['repetitions']['minimum_supported']}; sequential execution.",
+        "- Per-agent timing and numeric scores include mean/minimum/maximum and sample standard deviation when at least two values exist; failures and excluded measurements remain explicit.",
+        f"- Negative control `{report['negative_control']['scenario_id']}` asks about unavailable Docker health; unsupported statuses, invented names, restarts, and CPU values are flagged.",
+        "",
+        "## Validation",
+        "",
+        *validation_lines,
+        "",
+        "## Changed files",
+        "",
+        *[f"- `{path}`" for path in report["changed_files"]],
+        "",
+        "## Limitations",
+        "",
+        *[f"- {item}" for item in report["limitations"]],
+        "",
+    ])
+
+
+def _render_prompt7_2_plan(report: dict[str, Any]) -> str:
+    config = report["preflight_configuration"]
+    return "\n".join([
+        "# Prompt 7.2 — Controlled Evaluation Plan",
+        "",
+        "This plan is a preflight only. No Ollama inference has been run.",
+        "",
+        "## Preconditions",
+        "",
+        "- Obtain explicit user authorization before invoking `--prompt7-2-live --confirm-live`.",
+        "- Keep `config/models.json` disabled by default; enable inference only through a temporary process override.",
+        f"- Preserve `max_parallel_models={config['max_parallel_models']}`, `num_ctx={config['configured_num_ctx']}`, and `num_predict={config['configured_num_predict']}`.",
+        "- Verify the six configured model mappings listed in the companion measurement report; do not switch models or load concurrently.",
+        "- Confirm the local Ollama endpoint is reachable, all six models are installed, and no model is loaded before starting.",
+        "",
+        "## Run protocol",
+        "",
+        f"1. Load the recorded Prompt 6.0 scenarios and their `environment.run_utc` reference timestamp; do not rewrite their evidence, questions, or expected findings.",
+        f"2. Run {PROMPT7_2_REPETITIONS} sequential repetitions (minimum); use the same serialized scenario inputs and scenario reference time in every repetition.",
+        "3. Run the explicitly unavailable-Docker negative control with the infrastructure specialist in each repetition.",
+        "4. Record each attempt's Ollama metrics, configuration, prompt hash, status, schema, grounding, automated interpretation, and failures without storing credentials or full prompts.",
+        "5. Aggregate timing and numeric scores per agent; report missing/failed runs separately and keep the three score types independent.",
+        "6. Leave manual semantic audit as `not_performed` unless a human actually performs and records it.",
+        "",
+        "## Output and stop conditions",
+        "",
+        "- Preserve Prompt 6.0, Prompt 7.1, evidence-extraction, and grounding-improvement reports unchanged.",
+        "- Write any authorized repeated inference output only to the separate Prompt 7.2 repeated-evaluation report paths.",
+        "- Stop and report configuration mismatch, loaded models, missing expected models, or any overlap between requests.",
+        "- Approval-gated remediation remains unchanged; no remediation or rollback is part of evaluation.",
+        "",
+        "## Current result",
+        "",
+        "- Live inference: **not run**.",
+        "- Authorization: **pending**.",
+        "",
+    ])
+
+
+def _write_prompt7_2_reports(report: dict[str, Any]) -> None:
+    before = _historical_report_hashes()
+    report["historical_report_sha256"] = before
+    report["historical_reports_preserved"] = True
+    PROMPT7_2_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PROMPT7_2_JSON_PATH.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+    PROMPT7_2_REPORT_PATH.write_text(
+        _render_prompt7_2_markdown(report), encoding="utf-8"
+    )
+    PROMPT7_2_PLAN_PATH.write_text(
+        _render_prompt7_2_plan(report), encoding="utf-8"
+    )
+    after = _historical_report_hashes()
+    report["historical_report_sha256"] = after
+    report["historical_reports_preserved"] = before == after
+    PROMPT7_2_JSON_PATH.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+    PROMPT7_2_REPORT_PATH.write_text(
+        _render_prompt7_2_markdown(report), encoding="utf-8"
+    )
+    if not report["historical_reports_preserved"]:
+        raise RuntimeError("Historical evaluation reports changed during report writing.")
+
+
+def _run_prompt7_2_offline_validation() -> list[dict[str, Any]]:
+    commands = [
+        (
+            "python -m py_compile agents/llm_runtime.py tests/live_agent_evaluation.py tests/test_llm_runtime.py tests/test_live_agent_evaluation.py",
+            [
+                sys.executable,
+                "-m",
+                "py_compile",
+                "agents/llm_runtime.py",
+                "tests/live_agent_evaluation.py",
+                "tests/test_llm_runtime.py",
+                "tests/test_live_agent_evaluation.py",
+            ],
+            False,
+        ),
+        (
+            "python -m pytest -q tests/test_llm_runtime.py tests/test_live_agent_evaluation.py",
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-q",
+                "tests/test_llm_runtime.py",
+                "tests/test_live_agent_evaluation.py",
+            ],
+            True,
+        ),
+        ("python -m pytest -q", [sys.executable, "-m", "pytest", "-q"], True),
+        (
+            "python -m pytest -q tests/test_live_agent_evaluation.py",
+            [sys.executable, "-m", "pytest", "-q", "tests/test_live_agent_evaluation.py"],
+            True,
+        ),
+    ]
+    results = []
+    for label, command, has_pytest_summary in commands:
+        completed = subprocess.run(
+            command,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=600,
+            check=False,
+        )
+        output = completed.stdout + completed.stderr
+        result = {
+            "command": label,
+            "executable": sys.executable,
+            "return_code": completed.returncode,
+        }
+        if has_pytest_summary:
+            counts = _parse_pytest_summary(output)
+            result["counts"] = counts
+            result["summary"] = (
+                f"{counts['passed']} passed, {counts['failed']} failed, "
+                f"{counts['skipped']} skipped"
+            )
+        else:
+            result["summary"] = (
+                "compiled successfully" if completed.returncode == 0
+                else "compilation failed"
+            )
+        if completed.returncode:
+            result["failure_output"] = output[-4000:]
+        results.append(result)
+    return results
+
+
+def _build_prompt7_2_repeated_report(
+    entries: list[dict[str, Any]],
+    *,
+    run_utc: str,
+    repetitions: int,
+    sequential_overlap_detected: bool,
+) -> dict[str, Any]:
+    attempt_measurements = [
+        attempt
+        for entry in entries
+        for attempt in entry.get("attempts", [])
+        if isinstance(attempt, dict)
+    ]
+    context_status_counts = {
+        status: sum(
+            attempt.get("context_budget", {}).get("status") == status
+            for attempt in attempt_measurements
+        )
+        for status in (
+            "within_budget",
+            "potential_context_pressure",
+            "context_pressure",
+            "measurement_unavailable",
+        )
+    }
+    return {
+        "report_version": 1,
+        "prompt_version": PROMPT7_2_VERSION,
+        "evaluation_timestamp": run_utc,
+        "repetitions_per_agent": repetitions,
+        "execution": {
+            "sequential_overlap_detected": sequential_overlap_detected,
+            "max_parallel_models": 1,
+            "live_inference": True,
+            "operational_actions_executed": False,
+        },
+        "agents": entries,
+        "aggregates": _aggregate_repeated_runs(entries),
+        "context_budget_observations": {
+            "attempt_count": len(attempt_measurements),
+            "status_counts": context_status_counts,
+            "prompt_eval_count_available": sum(
+                attempt.get("prompt_eval_count") is not None
+                for attempt in attempt_measurements
+            ),
+        },
+        "score_separation": {
+            "automated_interpretation": "required-observation pattern score",
+            "grounding_validator": "graph validator score",
+            "manual_semantic_audit": {
+                "status": "not_performed",
+                "score": None,
+            },
+        },
+        "summary": {
+            "run_count": len(entries),
+            "successful_inference_count": sum(
+                item.get("inference_status") == "ok" for item in entries
+            ),
+            "failed_inference_count": sum(
+                item.get("inference_status") != "ok" for item in entries
+            ),
+            "schema_invalid_count": sum(
+                item.get("json_schema_valid") is not True for item in entries
+            ),
+            "incomplete_run_count": sum(
+                item.get("inference_status") == "ok"
+                and item.get("json_schema_valid") is not True
+                for item in entries
+            ),
+            "quality_failure_count": sum(
+                item.get("overall_result") == "FAIL" for item in entries
+            ),
+            "negative_control_run_count": sum(
+                item.get("negative_control") is True for item in entries
+            ),
+        },
+    }
+
+
+def _write_prompt7_2_repeated_reports(report: dict[str, Any]) -> None:
+    PROMPT7_2_RUN_JSON_PATH.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+    lines = [
+        "# Prompt 7.2 — Repeated Controlled Evaluation",
+        "",
+        f"- **Evaluation time (UTC):** {report['evaluation_timestamp']}",
+        f"- **Repetitions per agent:** {report['repetitions_per_agent']}",
+        f"- **Runs:** {report['summary']['run_count']}; successes: "
+        f"{report['summary']['successful_inference_count']}; failures: "
+        f"{report['summary']['failed_inference_count']}; schema-invalid: "
+        f"{report['summary']['schema_invalid_count']}; incomplete: "
+        f"{report['summary']['incomplete_run_count']}; quality failures: "
+        f"{report['summary']['quality_failure_count']}.",
+        f"- **Sequential overlap detected:** {report['execution']['sequential_overlap_detected']}",
+        "- **Operational actions:** none.",
+        "",
+        "## Context-budget measurements",
+        "",
+        f"- Attempts with prompt token measurements: "
+        f"{report['context_budget_observations']['prompt_eval_count_available']}/"
+        f"{report['context_budget_observations']['attempt_count']}.",
+        *[
+            f"- `{status}`: {count}"
+            for status, count in report["context_budget_observations"][
+                "status_counts"
+            ].items()
+        ],
+        "",
+        "## Per-agent aggregates",
+        "",
+        "| Agent | Runs | Failed/incomplete | Wall mean (s) | Wall min (s) | Wall max (s) | Wall stddev (s) | Interpretation mean | Grounding mean | Manual audit |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for agent, aggregate in report["aggregates"]["per_agent"].items():
+        wall = aggregate["wall_time_seconds"]
+        interpretation = aggregate["automated_interpretation_score"]["mean"]
+        grounding = aggregate["grounding_validator_score"]["mean"]
+        lines.append(
+            f"| {agent} | {aggregate['run_count']} | "
+            f"{aggregate['failed_or_incomplete_count']} | "
+            f"{_format_seconds(wall['mean'])} | "
+            f"{_format_seconds(wall['minimum'])} | "
+            f"{_format_seconds(wall['maximum'])} | "
+            f"{_format_seconds(wall['standard_deviation'])} | "
+            f"{_format_seconds(interpretation)} | {_format_seconds(grounding)} | "
+            "not performed |"
+        )
+    lines.extend([
+        "",
+        "## Negative control",
+        "",
+        json.dumps(report["aggregates"]["negative_control"], indent=2),
+        "",
+        "## Individual runs",
+        "",
+        *[
+            f"- Repetition {item.get('repetition')}, "
+            f"`{item.get('scenario_id')}`: inference `{item.get('inference_status')}`, "
+            f"schema `{item.get('json_schema_valid')}`, "
+            f"failure reasons `{item.get('reproducibility', {}).get('failure_reasons', [])}`."
+            for item in report["agents"]
+        ],
+        "",
+    ])
+    PROMPT7_2_RUN_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PROMPT7_2_RUN_REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
+
+
+def run_prompt7_2_live_evaluation(
+    repetitions: int = PROMPT7_2_REPETITIONS,
+) -> dict[str, Any]:
+    """Run only after explicit authorization; calls each model strictly serially."""
+    if repetitions < PROMPT7_2_REPETITIONS:
+        raise ValueError(
+            f"Prompt 7.2 requires at least {PROMPT7_2_REPETITIONS} repetitions."
+        )
+    model_config_path = ROOT / "config" / "models.json"
+    config_bytes_before = model_config_path.read_bytes()
+    config_hash_before = hashlib.sha256(config_bytes_before).hexdigest()
+    persistent_config = json.loads(config_bytes_before)
+    effective_config_path = Path(os.getenv(
+        "DEVOPS_MODEL_CONFIG", str(llm_runtime.DEFAULT_CONFIG)
+    )).resolve()
+    if effective_config_path != model_config_path.resolve():
+        raise RuntimeError("Preflight failed: DEVOPS_MODEL_CONFIG override is not allowed.")
+    if persistent_config.get("enabled") is not False:
+        raise RuntimeError("Preflight failed: persistent models.json must remain disabled.")
+    cfg = llm_runtime.load_config()
+    runtime = cfg.get("runtime", {})
+    prompt6_runtime = json.loads(
+        JSON_REPORT_PATH.read_text(encoding="utf-8")
+    ).get("environment", {}).get("runtime", {})
+    runtime_keys = (
+        "max_parallel_models",
+        "context_length",
+        "max_output_tokens",
+    )
+    if any(runtime.get(key) != prompt6_runtime.get(key) for key in runtime_keys):
+        raise RuntimeError(
+            "Preflight failed: parallelism, context size, and output budget "
+            "must match the Prompt 6.0 baseline."
+        )
+    if runtime.get("max_parallel_models") != 1:
+        raise RuntimeError("Preflight failed: max_parallel_models must be 1.")
+    mappings = {name: llm_runtime.model_for(name, cfg) for name in AGENT_ORDER}
+    if mappings != EXPECTED_MODELS:
+        raise RuntimeError(f"Preflight failed: model mapping mismatch: {mappings!r}")
+
+    scenarios = _prompt6_scenarios_from_report()
+    scenarios["negative-control-container-health"] = (
+        _scenario_data()["negative-control-container-health"]
+    )
+    installed, missing, base_url = _expected_installed_tags()
+    if missing:
+        raise RuntimeError(
+            "Preflight failed: expected local models are missing: "
+            + ", ".join(missing)
+        )
+    try:
+        version_response = requests.get(base_url + "/api/version", timeout=5)
+        version_response.raise_for_status()
+        ollama_version = version_response.json().get("version")
+        processes = _ollama_processes(base_url)
+    except (requests.RequestException, ValueError, TypeError) as exc:
+        raise RuntimeError(
+            f"Preflight failed: local Ollama is unavailable: {_safe_error_detail(exc)}"
+        ) from exc
+    if not isinstance(processes, dict) or processes.get("models") != []:
+        raise RuntimeError(
+            "Preflight failed: Ollama must report no loaded models before evaluation."
+        )
+
+    cfg["_installed_models"] = installed
+    previous_override = os.environ.get("DEVOPS_LLM_ENABLED")
+    run_utc = datetime.now(timezone.utc).isoformat()
+
+    def evaluate(
+        agent: str,
+        scenario: dict[str, Any],
+        previous_end: float | None,
+    ) -> tuple[dict[str, Any], float]:
+        entry, ended = _evaluate_one(
+            agent,
+            scenario,
+            cfg,
+            base_url,
+            previous_end,
+            include_prompt7_evidence=True,
+            prompt_version=PROMPT7_2_VERSION,
+        )
+        return entry, ended
+
+    try:
+        os.environ["DEVOPS_LLM_ENABLED"] = "true"
+        entries, overlap_detected = _run_repetitions(
+            scenarios, repetitions, evaluate
+        )
+    finally:
+        if previous_override is None:
+            os.environ.pop("DEVOPS_LLM_ENABLED", None)
+        else:
+            os.environ["DEVOPS_LLM_ENABLED"] = previous_override
+    config_hash_after = hashlib.sha256(model_config_path.read_bytes()).hexdigest()
+    report = _build_prompt7_2_repeated_report(
+        entries,
+        run_utc=run_utc,
+        repetitions=repetitions,
+        sequential_overlap_detected=overlap_detected,
+    )
+    report["environment"] = {
+        "ollama_url": _safe_url(base_url),
+        "ollama_version": ollama_version,
+        "installed_models": installed,
+        "model_mappings": mappings,
+        "runtime": {
+            "max_parallel_models": runtime.get("max_parallel_models"),
+            "num_ctx": runtime.get("context_length"),
+            "num_predict": runtime.get("max_output_tokens"),
+            "keep_alive": runtime.get("keep_alive"),
+        },
+        "models_loaded_before": processes.get("models"),
+        "persistent_config_sha256_unchanged": (
+            config_hash_before == config_hash_after
+        ),
+    }
+    _write_prompt7_2_repeated_reports(report)
+    return report
+
+
+def run_prompt7_2_offline_report() -> dict[str, Any]:
+    validation = _run_prompt7_2_offline_validation()
+    report = _build_prompt7_2_report(validation)
+    _write_prompt7_2_reports(report)
+    return report
+
+
 def run_prompt7_offline_evaluation() -> dict[str, Any]:
     """Run offline tests, then write both Prompt 7 reports from one data object."""
     test_result = subprocess.run(
@@ -3066,11 +4474,52 @@ def main() -> int:
         help="Add manual semantic-review annotations to captured Prompt 7.1 results without Ollama calls.",
     )
     parser.add_argument(
+        "--prompt7-2-offline",
+        action="store_true",
+        help="Run required offline validation and write separate Prompt 7.2 instrumentation reports; does not contact Ollama.",
+    )
+    parser.add_argument(
+        "--prompt7-2-live",
+        action="store_true",
+        help="Run repeated Prompt 7.2 evaluation; requires --confirm-live.",
+    )
+    parser.add_argument(
+        "--repetitions",
+        type=int,
+        default=PROMPT7_2_REPETITIONS,
+        help="Sequential repetitions per agent (minimum 3 for Prompt 7.2).",
+    )
+    parser.add_argument(
         "--confirm-live",
         action="store_true",
         help="Acknowledge this will make sequential requests to the configured local Ollama server.",
     )
     args = parser.parse_args()
+    if args.prompt7_2_offline:
+        report = run_prompt7_2_offline_report()
+        print(json.dumps({
+            "report": str(PROMPT7_2_REPORT_PATH),
+            "json_results": str(PROMPT7_2_JSON_PATH),
+            "controlled_plan": str(PROMPT7_2_PLAN_PATH),
+            "offline_validation": report["offline_validation"],
+            "live_inference": "not_run",
+        }, indent=2))
+        return 0 if all(
+            item["return_code"] == 0 for item in report["offline_validation"]
+        ) else 1
+    if args.prompt7_2_live:
+        if not args.confirm_live:
+            parser.error(
+                "--prompt7-2-live requires --confirm-live and explicit user authorization."
+            )
+        report = run_prompt7_2_live_evaluation(args.repetitions)
+        print(json.dumps({
+            "report": str(PROMPT7_2_RUN_REPORT_PATH),
+            "json_results": str(PROMPT7_2_RUN_JSON_PATH),
+            "summary": report["summary"],
+            "overlap_detected": report["execution"]["sequential_overlap_detected"],
+        }, indent=2))
+        return 0 if not report["execution"]["sequential_overlap_detected"] else 1
     if args.prompt7_offline:
         report = run_prompt7_offline_evaluation()
         print(json.dumps({

@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Response
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 from agents.docker_telemetry import collect_docker_metrics
+from agents.incident_api import router as incident_router
 from agents.prometheus_telemetry import collect_prometheus_metrics
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,6 +25,7 @@ OPS = {"add": lambda a, b: a + b, "sub": lambda a, b: a - b,
 STATE = {"version": "1.0", "bug": False,
          "history": [{"version": "1.0", "ts": time.time()}]}
 app = FastAPI(title="Calculator")
+app.include_router(incident_router)
 
 @app.get("/calc/{op}")
 def calc(op: str, a: float, b: float):

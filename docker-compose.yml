@@ -6,12 +6,18 @@ services:
       dockerfile: Dockerfile
     container_name: devops-calculator
     ports:
-      - "8100:8100"
+      - "127.0.0.1:8100:8100"
     environment:
       - PYTHONUNBUFFERED=1
       - DEVOPS_LLM_ENABLED=${DEVOPS_LLM_ENABLED:-false}
+      - DEVOPS_BASELINE_PATH=/app/data/baseline.json
+      - DEVOPS_LOG_PATH=/app/logs/app.log
+      - DEVOPS_AUDIT_LOG_PATH=/app/logs/incident_audit.jsonl
       - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
       - PROMETHEUS_URL=${PROMETHEUS_URL:-http://prometheus:9090}
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2)"]
@@ -57,5 +63,7 @@ services:
       start_period: 20s
 
 volumes:
+  app_data:
+  app_logs:
   prometheus_data:
   grafana_data:

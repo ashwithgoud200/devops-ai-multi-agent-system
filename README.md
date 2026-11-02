@@ -1,43 +1,70 @@
 # devops-ai-multi-agent-system
 
-## AI-powered DevOps agents — Phase 2: CI/CD
+## AI DevOps Multi-Agent System
 
-This repository contains a FastAPI calculator service and a LangGraph incident-response demo. Phase 2 adds a repeatable CI/CD path around the application without replacing the existing agent workflow.
+This project combines a FastAPI sample service with a LangGraph incident-response workflow, deterministic evidence extraction, six sequential Ollama specialists, Prometheus/Grafana observability, optional read-only Docker telemetry, and human-approved remediation. Specialist output is advisory; only observed evidence supports diagnosis, and rollback cannot run without an explicit decision.
+
+The local API is documented in [docs/api.md](./docs/api.md), roles and model configuration in [docs/agents.md](./docs/agents.md), and the workflow diagram in [docs/architecture.md](./docs/architecture.md). FastAPI's interactive API reference is available at `http://127.0.0.1:8100/docs`.
 
 ## Phase 2 capabilities
 
 - GitHub Actions runs API regression tests on Python 3.11 and 3.12 for pull requests and pushes.
 - Docker builds a small, non-root application image with a container health check.
 - Successful builds on `main`/`master` and version tags are published to GitHub Container Registry (GHCR).
-- A server deployment runs automatically after a push to `main` when the deployment secrets are configured. Otherwise, the deployment job safely skips the server steps.
+- An optional server deployment runs after a push to `main` when deployment secrets are configured. Failed health checks stop the job; no image rollback is automatic, and an operator must investigate/recover.
 - `/health` is used by Docker and the deployment workflow for readiness verification.
 
-## Run locally
+## Windows PowerShell setup
 
-```bash
-python -m venv .venv
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-# macOS/Linux: source .venv/bin/activate
+Use Python 3.11 or 3.12. These commands install only Python dependencies; they do not download LLM models or enable inference.
+
+```powershell
+py -3.12 --version
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m pytest -q
 ```
 
-Run the calculator API:
+If PowerShell blocks environment activation, either allow it for the current process with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` or call `.\.venv\Scripts\python.exe` and `.\.venv\Scripts\uvicorn.exe` directly.
 
-```bash
-uvicorn calculator_app.app:app --host 127.0.0.1 --port 8100 --reload
+Start the local API (keep this terminal open):
+
+```powershell
+python -m uvicorn calculator_app.app:app --host 127.0.0.1 --port 8100
 ```
 
-Useful endpoints: `/health`, `/metrics`, `/calc/add?a=2&b=3`, `/admin/version`.
+In another PowerShell terminal, verify readiness and open the interactive API documentation:
 
-Build and run with Docker Compose:
+```powershell
+Invoke-RestMethod http://127.0.0.1:8100/health
+Start-Process http://127.0.0.1:8100/docs
+```
 
-```bash
+Save a baseline and start a diagnosis using the endpoints documented in [docs/api.md](./docs/api.md). `/health`, `/metrics`, `/telemetry/docker`, `/telemetry/prometheus`, `/baseline`, and `/incidents` are useful entry points.
+
+## Synthetic end-to-end demo
+
+The demo generates healthy traffic, saves a baseline, injects a synthetic v1.1 division regression, collects evidence, and pauses for the operator's decision before rollback. The default is interactive; it does not auto-approve.
+
+```powershell
+python run_demo.py
+```
+
+To explicitly choose a path without the interactive prompt, run `python run_demo.py --reject` or `python run_demo.py --approve`. The demo API binds to loopback. If port 8100 is in use, select an unused port, for example `$env:DEVOPS_DEMO_PORT = "18100"` before running it.
+
+## Docker Compose observability stack
+
+```powershell
 docker compose up --build -d
 docker compose ps
-curl http://localhost:8100/health
+Invoke-RestMethod http://127.0.0.1:8100/health
+Invoke-RestMethod http://127.0.0.1:9090/-/healthy
+Invoke-RestMethod http://127.0.0.1:3000/api/health
 docker compose down
 ```
+
+The app, Prometheus, and Grafana ports bind to loopback. Compose persists its baseline and audit/log files in named volumes. The app container has no Docker Engine socket/CLI, so its Docker telemetry endpoint correctly reports `unavailable`; run the app on the host to use Docker Desktop telemetry. Grafana's `.env.example` credentials are development placeholders; change them before local shared use.
 
 ## GitHub Actions and GHCR setup
 
@@ -58,7 +85,7 @@ The `deploy` job runs only on pushes to `main`. Add these repository **Actions s
 | `DEPLOY_SSH_KEY` | Private SSH key; install its public key in `authorized_keys` |
 | `DEPLOY_KNOWN_HOSTS` | Recommended pinned `known_hosts` entry for the host |
 
-The deploy job uses the workflow's temporary `GITHUB_TOKEN` to log in to GHCR, pulls the newly built `latest` image, runs `scripts/deploy_remote.sh`, checks `/health`, and attempts to restore the previous image if the new container fails its health checks. Ensure the server has Docker Engine installed and allows inbound SSH plus TCP port 8100. Restrict port 8100 with a firewall or reverse proxy in real deployments; do not expose the sample admin endpoints publicly.
+The deploy job uses the workflow's temporary `GITHUB_TOKEN` to log in to GHCR, pulls the newly built `latest` image, runs `scripts/deploy_remote.sh`, and checks `/health`. On failed health checks the workflow stops without automatically restoring an image; inspect the failed container and manually deploy a known-good immutable image if needed. The GitHub Actions job itself runs automatically on pushes to `main` when deployment secrets are present. Ensure the server has Docker Engine installed and allows inbound SSH plus TCP port 8100. Restrict port 8100 with a firewall or reverse proxy in real deployments; do not expose the sample admin endpoints publicly.
 
 For a private production deployment, prefer a dedicated read-only GHCR token on the server rather than relying on a broadly privileged personal token. Also use a staging environment and approval protection before production.
 
@@ -70,14 +97,13 @@ This phase delivers CI, test automation, Docker image build/publish, and an opti
 
 The LangGraph demo runs the calculator service itself. It collects available health, metrics, version-history, host CPU/memory, and local JSONL-log evidence; compares it with `data/baseline.json`; and writes the baseline atomically when `save_baseline()` is called. The baseline records the log file identity and byte cursor so comparisons examine appended events, including entries without timestamps; if the file is replaced or truncated, the incremental window is marked unavailable rather than misclassifying old entries as new. Legacy baselines without a cursor use timestamps conservatively. Unavailable integrations and a missing baseline are reported rather than treated as empty or healthy evidence.
 
-```bash
+```powershell
 python run_demo.py
-python run_demo.py --reject
 ```
 
 The demo verifies that its own API subprocess starts and becomes ready before generating traffic; it fails instead of using an unrelated service if startup fails. On a host where port 8100 is already in use, choose a free port, for example in PowerShell: `$env:DEVOPS_DEMO_PORT = "18100"` before running the commands.
 
-For a version change accompanied by new request errors or error logs, the workflow may recommend the existing rollback endpoint. Rollback pauses for explicit human approval, then verifies both application health and the expected baseline version. Rejection never sends a rollback request. Specialist findings are recorded as hypotheses and cannot authorize actions.
+For a version change accompanied by new request errors or error logs, the workflow may propose rollback. It pauses for an explicit human decision; the demo prompts interactively by default, while `--approve` is an explicit opt-in and `--reject` exercises rejection. Approval is followed by health/version verification. Rejection never sends a rollback request. Specialist findings are recorded as hypotheses and cannot authorize actions.
 
 ## Six specialized local-model agents (RTX 3050 8GB profile)
 
@@ -94,39 +120,32 @@ The LangGraph workflow routes relevant evidence to these specialist roles throug
 
 **Parameter-size note:** this practical six-model set is in the compact ~2B–3.8B class; it is not six models that are each exactly 3.0B parameters. The exact model tags are configurable in `config/models.json`. Check Ollama's model library for tag availability before pulling; replace a tag in that file if a tag is unavailable in your Ollama version.
 
-### Install and enable on Windows
+### Optional Ollama setup on Windows
 
-1. Install Ollama for Windows and start the Ollama service.
-2. From PowerShell at the repository root, pull the configured models:
+Local model inference is opt-in. The application starts with `enabled: false`; no models are downloaded automatically. Install Ollama separately and verify `ollama --version` and `ollama list`. Only if you choose to download the configured models, run this explicit command from the repository root:
 
 ```powershell
 .\scripts\pull_models.ps1
 ```
 
-3. Copy `.env.example` to `.env` (or set the variables in your terminal). Enable model calls for the current PowerShell session:
+The script downloads the six configured model tags. Review [docs/agents.md](./docs/agents.md) and `config/models.json` first. Do not edit the mappings, parallelism, or context/output settings as part of setup.
+
+To opt into local inference for the current PowerShell session only:
 
 ```powershell
 $env:DEVOPS_LLM_ENABLED = "true"
 $env:OLLAMA_HOST = "http://127.0.0.1:11434"
 ```
 
-4. Install Python dependencies and run the demo:
+Then run the service or synthetic demo in that same session. Return to deterministic-only behavior by setting `$env:DEVOPS_LLM_ENABLED = "false"` or closing the terminal. Do not enable inference in a permanent config file.
 
-```powershell
-python -m pip install -r requirements.txt
-python -m pytest -q
-python run_demo.py
-```
-
-Use `python run_demo.py --reject` to exercise the human rejection path. Keep the Ollama service running in another process. To return to deterministic-only mode, set `$env:DEVOPS_LLM_ENABLED = "false"` or open a new terminal without that variable.
-
-### Why this fits an 8GB GPU
+### Sequential inference configuration
 
 - The six agents have separate model assignments and role instructions, but **do not load six models simultaneously**.
 - Ollama requests are serialized by a process-wide lock; the default `keep_alive: "0s"` asks Ollama to unload each model after its response.
-- Inference calls are made sequentially. Context is capped at 2,048 tokens and generated output at 384 tokens by default.
+- `max_parallel_models` is fixed at `1`; `context_length` is `2048`; `max_output_tokens` is `384`. See [docs/agents.md](./docs/agents.md) for all settings.
 - Actual GPU placement depends on Ollama's installed build, runtime defaults, and available VRAM.
-- If memory pressure or latency is high, lower `context_length` to 1024 in `config/models.json`, or change a model to a smaller quantized tag supported by Ollama.
+- No model-to-agent mappings, context length, or output budget are changed by this project setup.
 
 ### LLM response reliability (implemented)
 

@@ -7,6 +7,7 @@ responsible for all actions.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import threading
@@ -41,6 +42,15 @@ RESPONSE_SCHEMA: dict[str, Any] = {
 MAX_LOG_EVENTS_IN_PROMPT = 12
 MAX_DIAGNOSTIC_CONTENT = 2000
 REQUIRED_FIELDS = {"summary", "findings", "confidence", "recommended_checks"}
+OLLAMA_MEASUREMENT_FIELDS = (
+    "prompt_eval_count",
+    "eval_count",
+    "done_reason",
+    "total_duration",
+    "load_duration",
+    "prompt_eval_duration",
+    "eval_duration",
+)
 
 
 def load_config() -> dict[str, Any]:
@@ -216,6 +226,127 @@ def _prompt_evidence(evidence: Any) -> Any:
     return bounded
 
 
+def _context_budget_diagnostics(
+    prompt_eval_count: Any,
+    num_ctx: Any,
+    num_predict: Any,
+) -> dict[str, Any]:
+    """Estimate context headroom without treating the estimate as truncation proof."""
+    prompt_tokens = (
+        prompt_eval_count
+        if isinstance(prompt_eval_count, int)
+        and not isinstance(prompt_eval_count, bool)
+        and prompt_eval_count >= 0
+        else None
+    )
+    context_size = (
+        num_ctx
+        if isinstance(num_ctx, int) and not isinstance(num_ctx, bool) and num_ctx > 0
+        else None
+    )
+    output_budget = (
+        num_predict
+        if isinstance(num_predict, int)
+        and not isinstance(num_predict, bool)
+        and num_predict >= 0
+        else None
+    )
+    if prompt_tokens is None or context_size is None or output_budget is None:
+        status = "measurement_unavailable"
+        remaining = None
+        at_risk = None
+    else:
+        remaining = context_size - prompt_tokens - output_budget
+        if prompt_tokens >= context_size:
+            status = "context_pressure"
+            at_risk = True
+        elif remaining < 0:
+            status = "potential_context_pressure"
+            at_risk = True
+        else:
+            status = "within_budget"
+            at_risk = False
+    return {
+        "prompt_tokens_reported": prompt_tokens,
+        "configured_context_size": context_size,
+        "configured_output_token_budget": output_budget,
+        "estimated_remaining_context_budget": remaining,
+        "potentially_at_risk_of_context_exhaustion": at_risk,
+        "status": status,
+    }
+
+
+def _measurement_number(value: Any) -> int | float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if isinstance(value, float) and math.isfinite(value) and value >= 0:
+        return value
+    return None
+
+
+def _attempt_diagnostics(
+    body: Any,
+    *,
+    attempt_number: int,
+    agent: str,
+    model: str,
+    num_ctx: int,
+    num_predict: int,
+    inference_status: str,
+    wall_duration_seconds: float,
+    prompt_character_count: int,
+    previous_prompt_character_count: int | None,
+) -> dict[str, Any]:
+    response_body = body if isinstance(body, dict) else {}
+    measurements = {}
+    for field in OLLAMA_MEASUREMENT_FIELDS:
+        value = response_body.get(field)
+        measurements[field] = (
+            value if isinstance(value, str) else None
+        ) if field == "done_reason" else _measurement_number(value)
+    return {
+        "attempt": attempt_number,
+        "agent": agent,
+        "model": model,
+        "configured_num_ctx": num_ctx,
+        "configured_num_predict": num_predict,
+        "inference_status": inference_status,
+        **measurements,
+        "context_budget": _context_budget_diagnostics(
+            measurements["prompt_eval_count"], num_ctx, num_predict
+        ),
+        "prompt_character_count": prompt_character_count,
+        "prompt_character_delta": (
+            prompt_character_count - previous_prompt_character_count
+            if previous_prompt_character_count is not None
+            else None
+        ),
+        "wall_duration_seconds": wall_duration_seconds,
+    }
+
+
+def _safe_runtime_error(error: Exception) -> str:
+    detail = _redact_sensitive_content(error)
+    return re.sub(
+        r"(?i)https?://[^\s'\"<>]+",
+        "[OLLAMA_ENDPOINT]",
+        detail,
+    )
+
+
+def _sum_attempt_measurement(
+    attempts: list[dict[str, Any]], field: str
+) -> int | float | None:
+    values = [
+        value
+        for attempt in attempts
+        if (value := _measurement_number(attempt.get(field))) is not None
+    ]
+    return sum(values) if values else None
+
+
 def _build_messages(
     agent: str, task: str, evidence: Any, config: dict[str, Any]
 ) -> list[dict[str, str]]:
@@ -316,14 +447,16 @@ def analyze(agent: str, task: str, evidence: Any) -> dict[str, Any]:
         return {"status": "disabled", "agent": agent, "model": model}
 
     runtime = cfg.get("runtime", {})
+    num_ctx = int(runtime.get("context_length", 2048))
+    num_predict = int(runtime.get("max_output_tokens", 384))
     base_payload = {
         "model": model,
         "format": RESPONSE_SCHEMA,
         "stream": False,
         "keep_alive": runtime.get("keep_alive", "0s"),
         "options": {
-            "num_ctx": int(runtime.get("context_length", 2048)),
-            "num_predict": int(runtime.get("max_output_tokens", 384)),
+            "num_ctx": num_ctx,
+            "num_predict": num_predict,
             "temperature": float(runtime.get("temperature", 0.1)),
         },
     }
@@ -334,15 +467,53 @@ def analyze(agent: str, task: str, evidence: Any) -> dict[str, Any]:
         with _LOCK:
             for attempt_number in (1, 2):
                 request_started = time.perf_counter()
-                response = requests.post(
-                    cfg.get("base_url", "http://127.0.0.1:11434").rstrip("/") + "/api/chat",
-                    json={**base_payload, "messages": messages},
-                    timeout=float(runtime.get("request_timeout_seconds", 120)),
+                prompt_character_count = sum(
+                    len(str(message.get("content", "")))
+                    for message in messages
                 )
-                response.raise_for_status()
-                body = response.json()
-                if not isinstance(body, dict):
-                    raise ValueError("Ollama response must be a JSON object")
+                previous_prompt_character_count = (
+                    attempts[-1].get("prompt_character_count")
+                    if attempts else None
+                )
+                body = None
+                try:
+                    response = requests.post(
+                        cfg.get("base_url", "http://127.0.0.1:11434").rstrip("/") + "/api/chat",
+                        json={**base_payload, "messages": messages},
+                        timeout=float(runtime.get("request_timeout_seconds", 120)),
+                    )
+                    response.raise_for_status()
+                    body = response.json()
+                    if not isinstance(body, dict):
+                        raise ValueError("Ollama response must be a JSON object")
+                except requests.RequestException:
+                    attempts.append(_attempt_diagnostics(
+                        body,
+                        attempt_number=attempt_number,
+                        agent=agent,
+                        model=model,
+                        num_ctx=num_ctx,
+                        num_predict=num_predict,
+                        inference_status="unavailable",
+                        wall_duration_seconds=time.perf_counter() - request_started,
+                        prompt_character_count=prompt_character_count,
+                        previous_prompt_character_count=previous_prompt_character_count,
+                    ))
+                    raise
+                except (ValueError, TypeError, AttributeError):
+                    attempts.append(_attempt_diagnostics(
+                        body,
+                        attempt_number=attempt_number,
+                        agent=agent,
+                        model=model,
+                        num_ctx=num_ctx,
+                        num_predict=num_predict,
+                        inference_status="invalid_response",
+                        wall_duration_seconds=time.perf_counter() - request_started,
+                        prompt_character_count=prompt_character_count,
+                        previous_prompt_character_count=previous_prompt_character_count,
+                    ))
+                    raise
                 message = body.get("message")
                 content = message.get("content", "") if isinstance(message, dict) else ""
                 validation_error = None
@@ -354,14 +525,22 @@ def analyze(agent: str, task: str, evidence: Any) -> dict[str, Any]:
                         analysis = _parse_json_object(content)
                     except ValueError as exc:
                         validation_error = str(exc)
-                attempt = {
-                    "attempt": attempt_number,
-                    "status": "ok" if validation_error is None else "invalid_response",
-                    "detail": validation_error,
-                    "done_reason": body.get("done_reason"),
-                    "total_duration": body.get("total_duration"),
-                    "wall_duration_seconds": time.perf_counter() - request_started,
-                }
+                attempt = _attempt_diagnostics(
+                    body,
+                    attempt_number=attempt_number,
+                    agent=agent,
+                    model=model,
+                    num_ctx=num_ctx,
+                    num_predict=num_predict,
+                    inference_status=(
+                        "ok" if validation_error is None else "invalid_response"
+                    ),
+                    wall_duration_seconds=time.perf_counter() - request_started,
+                    prompt_character_count=prompt_character_count,
+                    previous_prompt_character_count=previous_prompt_character_count,
+                )
+                attempt["status"] = attempt["inference_status"]
+                attempt["detail"] = validation_error
                 if validation_error is not None:
                     excerpt, excerpt_truncated = _redact_diagnostic(content)
                     attempt["raw_excerpt"] = excerpt
@@ -373,10 +552,8 @@ def analyze(agent: str, task: str, evidence: Any) -> dict[str, Any]:
                         "content": json.dumps(analysis, ensure_ascii=False),
                         "analysis": analysis,
                         "raw_content": content,
-                        "total_duration": sum(
-                            attempt["total_duration"]
-                            for attempt in attempts
-                            if isinstance(attempt.get("total_duration"), (int, float))
+                        "total_duration": _sum_attempt_measurement(
+                            attempts, "total_duration"
                         ),
                         "wall_duration_seconds": time.perf_counter() - started,
                         "attempts": attempts,
@@ -432,19 +609,17 @@ def analyze(agent: str, task: str, evidence: Any) -> dict[str, Any]:
                 "detail": attempts[-1]["detail"] if len(attempts) > 1 else None,
             },
             "wall_duration_seconds": time.perf_counter() - started,
-            "total_duration": sum(
-                attempt["total_duration"]
-                for attempt in attempts
-                if isinstance(attempt.get("total_duration"), (int, float))
+            "total_duration": _sum_attempt_measurement(
+                attempts, "total_duration"
             ),
         }
     except requests.RequestException as exc:
         return {
             "status": "unavailable", "agent": agent, "model": model,
-            "detail": str(exc),
+            "detail": _safe_runtime_error(exc),
             "attempts": attempts,
             "retry": {
-                "attempted": len(attempts) > 0,
+                "attempted": len(attempts) > 1,
                 "status": "unavailable" if attempts else "not_started",
             },
             "wall_duration_seconds": time.perf_counter() - started,
@@ -452,10 +627,10 @@ def analyze(agent: str, task: str, evidence: Any) -> dict[str, Any]:
     except (ValueError, TypeError, AttributeError) as exc:
         return {
             "status": "invalid_response", "agent": agent, "model": model,
-            "detail": str(exc),
+            "detail": _safe_runtime_error(exc),
             "attempts": attempts,
             "retry": {
-                "attempted": len(attempts) > 0,
+                "attempted": len(attempts) > 1,
                 "status": "invalid_response" if attempts else "not_started",
             },
             "wall_duration_seconds": time.perf_counter() - started,
