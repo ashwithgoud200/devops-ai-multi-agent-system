@@ -7,6 +7,14 @@ env/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.cache/
+
+# JavaScript dependencies
+node_modules/
 
 # Environment variables and secrets
 .env
@@ -14,11 +22,18 @@ __pycache__/
 !.env.example
 
 # Logs
-logs/*.log
+logs/
+*.log
 
 # Local database and generated baseline
 data/*.db
 data/baseline.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
 
 # IDE
 .vscode/
