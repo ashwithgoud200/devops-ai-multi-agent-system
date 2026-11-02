@@ -1,0 +1,2444 @@
+{
+  "report_version": 1,
+  "run_utc": "2026-11-02T04:36:28.494951+00:00",
+  "execution_mode": "offline deterministic evaluation; no Ollama calls",
+  "architecture": [
+    "Collected evidence remains unchanged and accessible.",
+    "A strict deterministic extractor records source-traceable observations.",
+    "Role packaging filters observations before the specialist request.",
+    "Specialist results preserve extracted facts independently of model output.",
+    "RCA separates verified observations, interpretations, hypotheses, recommendations, and unverified claims."
+  ],
+  "previous_live_run": {
+    "available": true,
+    "run_utc": "2026-11-01T21:52:03.898114+00:00",
+    "summary": {
+      "total": 6,
+      "inference_ok": 6,
+      "schema_valid": 6,
+      "skipped": 0,
+      "failed": 0,
+      "pass": 1,
+      "partial": 5,
+      "total_inference_seconds": 43.1426812,
+      "total_wall_seconds": 43.182931900024414
+    },
+    "agents": [
+      {
+        "agent": "monitoring",
+        "model": "qwen2.5:3b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [],
+        "unsupported_claims": [
+          {
+            "kind": "summary",
+            "text": "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.",
+            "reasons": [
+              "numeric claim 16.67% cannot be matched to supplied error_rate evidence",
+              "numeric claim 78 cannot be matched to supplied memory evidence",
+              "numeric claim 643 cannot be matched to supplied memory evidence",
+              "numeric claim 200 cannot be matched to supplied memory evidence"
+            ]
+          }
+        ],
+        "latency_seconds": 9.65781689999858
+      },
+      {
+        "agent": "incident",
+        "model": "llama3.2:3b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [
+          "Previous version",
+          "Current version",
+          "Previous error count",
+          "Current error count",
+          "Baseline latency",
+          "Current latency",
+          "Timeout log evidence"
+        ],
+        "unsupported_claims": [],
+        "latency_seconds": 5.4608639999933075
+      },
+      {
+        "agent": "code",
+        "model": "qwen2.5-coder:3b",
+        "result": "PASS",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [],
+        "unsupported_claims": [],
+        "latency_seconds": 6.3285326000186615
+      },
+      {
+        "agent": "cicd",
+        "model": "stablelm-zephyr:3b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [
+          "Previous version",
+          "Current version",
+          "Deployment completion",
+          "Health response",
+          "Post-deployment error rate"
+        ],
+        "unsupported_claims": [
+          {
+            "kind": "findings",
+            "text": "Health check status is unavailable.",
+            "reasons": [
+              "health is not reported unavailable; supplied status health.status=ok, health.data.status=ok"
+            ]
+          },
+          {
+            "kind": "findings",
+            "text": "Post-deployment error rate increased from pre-deployment (16.666.7%).",
+            "reasons": [
+              "numeric claim 16.666 cannot be matched to supplied deployment evidence"
+            ]
+          }
+        ],
+        "latency_seconds": 6.942842699994799
+      },
+      {
+        "agent": "infrastructure",
+        "model": "phi3.5:3.8b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [
+          "Healthy state",
+          "Zero restarts"
+        ],
+        "unsupported_claims": [],
+        "latency_seconds": 7.487865700008115
+      },
+      {
+        "agent": "security",
+        "model": "granite3.1-dense:2b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [],
+        "unsupported_claims": [
+          {
+            "kind": "recommended_check",
+            "text": "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.",
+            "reasons": [
+              "security classification or threat attribution claim 'brute force' is not verified by the supplied evidence"
+            ]
+          }
+        ],
+        "latency_seconds": 7.305010000010952
+      }
+    ]
+  },
+  "root_cause_analysis": [
+    {
+      "agent": "monitoring",
+      "prior_result": "PARTIAL",
+      "missing_facts": [],
+      "unsupported_claims": [
+        "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes."
+      ]
+    },
+    {
+      "agent": "incident",
+      "prior_result": "PARTIAL",
+      "missing_facts": [
+        "Previous version",
+        "Current version",
+        "Previous error count",
+        "Current error count",
+        "Baseline latency",
+        "Current latency",
+        "Timeout log evidence"
+      ],
+      "unsupported_claims": []
+    },
+    {
+      "agent": "cicd",
+      "prior_result": "PARTIAL",
+      "missing_facts": [
+        "Previous version",
+        "Current version",
+        "Deployment completion",
+        "Health response",
+        "Post-deployment error rate"
+      ],
+      "unsupported_claims": [
+        "Health check status is unavailable.",
+        "Post-deployment error rate increased from pre-deployment (16.666.7%)."
+      ]
+    },
+    {
+      "agent": "infrastructure",
+      "prior_result": "PARTIAL",
+      "missing_facts": [
+        "Healthy state",
+        "Zero restarts"
+      ],
+      "unsupported_claims": []
+    },
+    {
+      "agent": "security",
+      "prior_result": "PARTIAL",
+      "missing_facts": [],
+      "unsupported_claims": [
+        "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts."
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "agent": "monitoring",
+      "model": "qwen2.5:3b",
+      "scenario": "Assess the supplied synthetic Prometheus observations. Identify the measured request/error rates, p95 latency, and process CPU. Keep observations separate from possible explanations; do not claim a confirmed root cause. Recommend checks only; take no action.",
+      "scenario_requirements": [
+        "Successful request rate",
+        "Error request rate",
+        "Error rate",
+        "P95 latency",
+        "Process CPU",
+        "Process memory"
+      ],
+      "extraction_status": "partial",
+      "extracted_observation_count": 6,
+      "role_observation_count": 6,
+      "required_fact_count": 5,
+      "required_facts_extracted": 5,
+      "required_facts_delivered": 5,
+      "extraction_completeness": 1.0,
+      "delivery_completeness": 1.0,
+      "all_extracted_role_evidence_delivered": true,
+      "extraction_requirements": [
+        {
+          "category": "application_metrics",
+          "metric_or_event": "request_rate",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "b213b8e161992445df67",
+            "d772d08bb3018af27e76"
+          ],
+          "delivered_evidence_ids": [
+            "b213b8e161992445df67",
+            "d772d08bb3018af27e76"
+          ],
+          "source_paths": [
+            "prometheus.metrics.request_rate.observations[0]",
+            "prometheus.metrics.request_rate.observations[1]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "http_error_rate",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "131cc6747210ddcbe2fc"
+          ],
+          "delivered_evidence_ids": [
+            "131cc6747210ddcbe2fc"
+          ],
+          "source_paths": [
+            "prometheus.metrics.http_error_rate.observations[0]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "latency_p95",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "91cda7ce2dddb3668ce5"
+          ],
+          "delivered_evidence_ids": [
+            "91cda7ce2dddb3668ce5"
+          ],
+          "source_paths": [
+            "prometheus.metrics.latency_p95.observations[0]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "cpu_utilization",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "0b174498a8a369ef6e56"
+          ],
+          "delivered_evidence_ids": [
+            "0b174498a8a369ef6e56"
+          ],
+          "source_paths": [
+            "prometheus.metrics.cpu_utilization.observations[0]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "memory_usage",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "b41039e57278cb6791f3"
+          ],
+          "delivered_evidence_ids": [
+            "b41039e57278cb6791f3"
+          ],
+          "source_paths": [
+            "prometheus.metrics.memory_usage.observations[0]"
+          ]
+        }
+      ],
+      "delivery_requirements": [
+        {
+          "category": "application_metrics",
+          "metric_or_event": "request_rate",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "b213b8e161992445df67",
+            "d772d08bb3018af27e76"
+          ],
+          "delivered_evidence_ids": [
+            "b213b8e161992445df67",
+            "d772d08bb3018af27e76"
+          ],
+          "source_paths": [
+            "prometheus.metrics.request_rate.observations[0]",
+            "prometheus.metrics.request_rate.observations[1]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "http_error_rate",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "131cc6747210ddcbe2fc"
+          ],
+          "delivered_evidence_ids": [
+            "131cc6747210ddcbe2fc"
+          ],
+          "source_paths": [
+            "prometheus.metrics.http_error_rate.observations[0]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "latency_p95",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "91cda7ce2dddb3668ce5"
+          ],
+          "delivered_evidence_ids": [
+            "91cda7ce2dddb3668ce5"
+          ],
+          "source_paths": [
+            "prometheus.metrics.latency_p95.observations[0]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "cpu_utilization",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "0b174498a8a369ef6e56"
+          ],
+          "delivered_evidence_ids": [
+            "0b174498a8a369ef6e56"
+          ],
+          "source_paths": [
+            "prometheus.metrics.cpu_utilization.observations[0]"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "memory_usage",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "b41039e57278cb6791f3"
+          ],
+          "delivered_evidence_ids": [
+            "b41039e57278cb6791f3"
+          ],
+          "source_paths": [
+            "prometheus.metrics.memory_usage.observations[0]"
+          ]
+        }
+      ],
+      "missing_required_facts": [],
+      "missing_source_evidence": [
+        {
+          "category": "application_metrics",
+          "source_path": "metrics",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        {
+          "category": "application_metrics",
+          "source_path": "metrics.request_counters",
+          "status": "unavailable",
+          "detail": "Evidence source did not provide an available observation."
+        },
+        {
+          "category": "infrastructure",
+          "source_path": "docker",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        {
+          "category": "infrastructure",
+          "source_path": "system_metrics",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        }
+      ],
+      "verified_observations": [
+        {
+          "evidence_id": "b213b8e161992445df67",
+          "category": "application_metrics",
+          "metric_or_event": "request_rate",
+          "value": 10,
+          "unit": "requests/second",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Prometheus evaluation fixture",
+          "source_path": "prometheus.metrics.request_rate.observations[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "{\"op\": \"div\", \"status\": \"ok\"}"
+        },
+        {
+          "evidence_id": "d772d08bb3018af27e76",
+          "category": "application_metrics",
+          "metric_or_event": "request_rate",
+          "value": 2,
+          "unit": "requests/second",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Prometheus evaluation fixture",
+          "source_path": "prometheus.metrics.request_rate.observations[1]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "{\"op\": \"div\", \"status\": \"error\"}"
+        },
+        {
+          "evidence_id": "131cc6747210ddcbe2fc",
+          "category": "application_metrics",
+          "metric_or_event": "http_error_rate",
+          "value": 16.6667,
+          "unit": "percent",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Prometheus evaluation fixture",
+          "source_path": "prometheus.metrics.http_error_rate.observations[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "{}"
+        },
+        {
+          "evidence_id": "91cda7ce2dddb3668ce5",
+          "category": "application_metrics",
+          "metric_or_event": "latency_p95",
+          "value": 0.85,
+          "unit": "seconds",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Prometheus evaluation fixture",
+          "source_path": "prometheus.metrics.latency_p95.observations[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "{}"
+        },
+        {
+          "evidence_id": "0b174498a8a369ef6e56",
+          "category": "application_metrics",
+          "metric_or_event": "cpu_utilization",
+          "value": 88,
+          "unit": "percent_of_one_cpu",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Prometheus evaluation fixture",
+          "source_path": "prometheus.metrics.cpu_utilization.observations[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "{}"
+        },
+        {
+          "evidence_id": "b41039e57278cb6791f3",
+          "category": "application_metrics",
+          "metric_or_event": "memory_usage",
+          "value": 78643200,
+          "unit": "bytes",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Prometheus evaluation fixture",
+          "source_path": "prometheus.metrics.memory_usage.observations[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "{}"
+        }
+      ],
+      "interpretation": {
+        "status": "not_run",
+        "schema_valid": null,
+        "complete": null,
+        "unsupported_claims": [],
+        "reason": "Live Ollama inference was explicitly deferred."
+      },
+      "prior_live_result": {
+        "agent": "monitoring",
+        "model": "qwen2.5:3b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [],
+        "unsupported_claims": [
+          {
+            "kind": "summary",
+            "text": "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.",
+            "reasons": [
+              "numeric claim 16.67% cannot be matched to supplied error_rate evidence",
+              "numeric claim 78 cannot be matched to supplied memory evidence",
+              "numeric claim 643 cannot be matched to supplied memory evidence",
+              "numeric claim 200 cannot be matched to supplied memory evidence"
+            ]
+          }
+        ],
+        "latency_seconds": 9.65781689999858
+      },
+      "current_result": "NOT_RUN",
+      "routing_selected": true,
+      "evidence_payload_matches_graph": true
+    },
+    {
+      "agent": "incident",
+      "model": "llama3.2:3b",
+      "scenario": "Triage this synthetic incident. Correlate deployment, counters, latency, and timestamped logs. Distinguish temporal correlation from confirmed causation. Recommend investigation only.",
+      "scenario_requirements": [
+        "Previous version",
+        "Current version",
+        "Previous error count",
+        "Current error count",
+        "Baseline latency",
+        "Current latency",
+        "Timeout log evidence"
+      ],
+      "extraction_status": "partial",
+      "extracted_observation_count": 12,
+      "role_observation_count": 12,
+      "required_fact_count": 5,
+      "required_facts_extracted": 5,
+      "required_facts_delivered": 5,
+      "extraction_completeness": 1.0,
+      "delivery_completeness": 1.0,
+      "all_extracted_role_evidence_delivered": true,
+      "extraction_requirements": [
+        {
+          "category": "deployment",
+          "metric_or_event": "previous_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "5980d666d96c34945408"
+          ],
+          "delivered_evidence_ids": [
+            "5980d666d96c34945408"
+          ],
+          "source_paths": [
+            "version.data.history[-2].version"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "current_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "e698fa0571870ca511f0"
+          ],
+          "delivered_evidence_ids": [
+            "e698fa0571870ca511f0"
+          ],
+          "source_paths": [
+            "version.data.version"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "div_error_request_count",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "948595022bb842745133"
+          ],
+          "delivered_evidence_ids": [
+            "948595022bb842745133"
+          ],
+          "source_paths": [
+            "metrics.requests.div.error"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "div_p95_latency",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "c66ff61d1c3b831813cf"
+          ],
+          "delivered_evidence_ids": [
+            "c66ff61d1c3b831813cf"
+          ],
+          "source_paths": [
+            "metrics.latency_observations.by_operation.div"
+          ]
+        },
+        {
+          "category": "application_log",
+          "metric_or_event": "application_log_event",
+          "evidence_text_contains": "timeout",
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "f46463a1817e777dc9ac",
+            "084d65768940ee79ae6c",
+            "da8b422fbd8f1cfcb598"
+          ],
+          "delivered_evidence_ids": [
+            "f46463a1817e777dc9ac",
+            "084d65768940ee79ae6c",
+            "da8b422fbd8f1cfcb598"
+          ],
+          "source_paths": [
+            "logs.events[0]",
+            "logs.events[1]",
+            "logs.events[2]"
+          ]
+        }
+      ],
+      "delivery_requirements": [
+        {
+          "category": "deployment",
+          "metric_or_event": "previous_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "5980d666d96c34945408"
+          ],
+          "delivered_evidence_ids": [
+            "5980d666d96c34945408"
+          ],
+          "source_paths": [
+            "version.data.history[-2].version"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "current_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "e698fa0571870ca511f0"
+          ],
+          "delivered_evidence_ids": [
+            "e698fa0571870ca511f0"
+          ],
+          "source_paths": [
+            "version.data.version"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "div_error_request_count",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "948595022bb842745133"
+          ],
+          "delivered_evidence_ids": [
+            "948595022bb842745133"
+          ],
+          "source_paths": [
+            "metrics.requests.div.error"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "div_p95_latency",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "c66ff61d1c3b831813cf"
+          ],
+          "delivered_evidence_ids": [
+            "c66ff61d1c3b831813cf"
+          ],
+          "source_paths": [
+            "metrics.latency_observations.by_operation.div"
+          ]
+        },
+        {
+          "category": "application_log",
+          "metric_or_event": "application_log_event",
+          "evidence_text_contains": "timeout",
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "f46463a1817e777dc9ac",
+            "084d65768940ee79ae6c",
+            "da8b422fbd8f1cfcb598"
+          ],
+          "delivered_evidence_ids": [
+            "f46463a1817e777dc9ac",
+            "084d65768940ee79ae6c",
+            "da8b422fbd8f1cfcb598"
+          ],
+          "source_paths": [
+            "logs.events[0]",
+            "logs.events[1]",
+            "logs.events[2]"
+          ]
+        }
+      ],
+      "missing_required_facts": [],
+      "missing_source_evidence": [
+        {
+          "category": "deployment",
+          "source_path": "health",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        {
+          "category": "infrastructure",
+          "source_path": "docker",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        {
+          "category": "infrastructure",
+          "source_path": "system_metrics",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        {
+          "category": "code",
+          "source_path": "code_changes",
+          "status": "unavailable",
+          "detail": "Evidence source did not provide an available observation."
+        }
+      ],
+      "verified_observations": [
+        {
+          "evidence_id": "948595022bb842745133",
+          "category": "application_metrics",
+          "metric_or_event": "div_error_request_count",
+          "value": 35,
+          "unit": "requests",
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic Prometheus observations",
+          "source_path": "metrics.requests.div.error",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "71207ad1194f479fcd6c",
+          "category": "application_metrics",
+          "metric_or_event": "div_ok_request_count",
+          "value": 65,
+          "unit": "requests",
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic Prometheus observations",
+          "source_path": "metrics.requests.div.ok",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "5e09a80f6aff3bd73a7a",
+          "category": "application_metrics",
+          "metric_or_event": "div_total_request_count",
+          "value": 100.0,
+          "unit": "requests",
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic Prometheus observations",
+          "source_path": "metrics.requests.div",
+          "status": "derived",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "86c12dda8a2417bf4840",
+          "category": "application_metrics",
+          "metric_or_event": "div_error_rate",
+          "value": 35.0,
+          "unit": "percent",
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic Prometheus observations",
+          "source_path": "metrics.requests.div",
+          "status": "derived",
+          "confidence": 1.0,
+          "baseline_value": {
+            "failed_requests": 35.0,
+            "total_requests": 100.0
+          },
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "c66ff61d1c3b831813cf",
+          "category": "application_metrics",
+          "metric_or_event": "div_p95_latency",
+          "value": 0.9,
+          "unit": "seconds",
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic Prometheus observations",
+          "source_path": "metrics.latency_observations.by_operation.div",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "e698fa0571870ca511f0",
+          "category": "deployment",
+          "metric_or_event": "current_application_version",
+          "value": "1.1",
+          "unit": null,
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic deployment record",
+          "source_path": "version.data.version",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "1.1"
+        },
+        {
+          "evidence_id": "04398307f3f075c06f48",
+          "category": "deployment",
+          "metric_or_event": "deployment_status",
+          "value": "completed",
+          "unit": null,
+          "timestamp": 1793594188.4904182,
+          "source": "synthetic deployment record",
+          "source_path": "version.data.deployment_status",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "completed"
+        },
+        {
+          "evidence_id": "5980d666d96c34945408",
+          "category": "deployment",
+          "metric_or_event": "previous_application_version",
+          "value": "1.0",
+          "unit": null,
+          "timestamp": 1793593828.4874194,
+          "source": "synthetic deployment record",
+          "source_path": "version.data.history[-2].version",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "f46463a1817e777dc9ac",
+          "category": "application_log",
+          "metric_or_event": "application_log_event",
+          "value": {
+            "ts": 1793594068.4874194,
+            "level": "ERROR",
+            "msg": "application timeout while handling request"
+          },
+          "unit": null,
+          "timestamp": 1793594068.4874194,
+          "source": "synthetic application logs",
+          "source_path": "logs.events[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "application timeout while handling request"
+        },
+        {
+          "evidence_id": "084d65768940ee79ae6c",
+          "category": "application_log",
+          "metric_or_event": "application_log_event",
+          "value": {
+            "ts": 1793594098.4874194,
+            "level": "ERROR",
+            "msg": "application timeout while handling request"
+          },
+          "unit": null,
+          "timestamp": 1793594098.4874194,
+          "source": "synthetic application logs",
+          "source_path": "logs.events[1]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "application timeout while handling request"
+        },
+        {
+          "evidence_id": "da8b422fbd8f1cfcb598",
+          "category": "application_log",
+          "metric_or_event": "application_log_event",
+          "value": {
+            "ts": 1793594158.4874194,
+            "level": "ERROR",
+            "msg": "application timeout while handling request"
+          },
+          "unit": null,
+          "timestamp": 1793594158.4874194,
+          "source": "synthetic application logs",
+          "source_path": "logs.events[2]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "application timeout while handling request"
+        },
+        {
+          "evidence_id": "eb1ae60b340436b544df",
+          "category": "application_metrics",
+          "metric_or_event": "div_error_counter_change",
+          "value": 33.0,
+          "unit": "requests",
+          "timestamp": 1793594188.4904182,
+          "source": "baseline comparison",
+          "source_path": "comparison.request_deltas.div.error",
+          "status": "derived",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": 35,
+          "change": 33.0,
+          "evidence_text": null
+        }
+      ],
+      "interpretation": {
+        "status": "not_run",
+        "schema_valid": null,
+        "complete": null,
+        "unsupported_claims": [],
+        "reason": "Live Ollama inference was explicitly deferred."
+      },
+      "prior_live_result": {
+        "agent": "incident",
+        "model": "llama3.2:3b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [
+          "Previous version",
+          "Current version",
+          "Previous error count",
+          "Current error count",
+          "Baseline latency",
+          "Current latency",
+          "Timeout log evidence"
+        ],
+        "unsupported_claims": [],
+        "latency_seconds": 5.4608639999933075
+      },
+      "current_result": "NOT_RUN",
+      "routing_selected": true,
+      "evidence_payload_matches_graph": true
+    },
+    {
+      "agent": "code",
+      "model": "qwen2.5-coder:3b",
+      "scenario": "Review only the supplied synthetic source snippet and observed stack trace. Identify the edge case and suggest a safe code-level correction without claiming it has been applied. Do not invent other code changes.",
+      "scenario_requirements": [
+        "Supplied function",
+        "Empty input edge case",
+        "Division failure"
+      ],
+      "extraction_status": "partial",
+      "extracted_observation_count": 3,
+      "role_observation_count": 3,
+      "required_fact_count": 3,
+      "required_facts_extracted": 3,
+      "required_facts_delivered": 3,
+      "extraction_completeness": 1.0,
+      "delivery_completeness": 1.0,
+      "all_extracted_role_evidence_delivered": true,
+      "extraction_requirements": [
+        {
+          "category": "code",
+          "metric_or_event": "source_code",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "d671064052298dd59ee5"
+          ],
+          "delivered_evidence_ids": [
+            "d671064052298dd59ee5"
+          ],
+          "source_paths": [
+            "code_changes.source_code"
+          ]
+        },
+        {
+          "category": "code",
+          "metric_or_event": "error_message",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "5dc142feea30c979962d"
+          ],
+          "delivered_evidence_ids": [
+            "5dc142feea30c979962d"
+          ],
+          "source_paths": [
+            "code_changes.observed_failure"
+          ]
+        },
+        {
+          "category": "code",
+          "metric_or_event": "stack_trace",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "385caa1bdb261322201a"
+          ],
+          "delivered_evidence_ids": [
+            "385caa1bdb261322201a"
+          ],
+          "source_paths": [
+            "code_changes.stack_trace"
+          ]
+        }
+      ],
+      "delivery_requirements": [
+        {
+          "category": "code",
+          "metric_or_event": "source_code",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "d671064052298dd59ee5"
+          ],
+          "delivered_evidence_ids": [
+            "d671064052298dd59ee5"
+          ],
+          "source_paths": [
+            "code_changes.source_code"
+          ]
+        },
+        {
+          "category": "code",
+          "metric_or_event": "error_message",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "5dc142feea30c979962d"
+          ],
+          "delivered_evidence_ids": [
+            "5dc142feea30c979962d"
+          ],
+          "source_paths": [
+            "code_changes.observed_failure"
+          ]
+        },
+        {
+          "category": "code",
+          "metric_or_event": "stack_trace",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "385caa1bdb261322201a"
+          ],
+          "delivered_evidence_ids": [
+            "385caa1bdb261322201a"
+          ],
+          "source_paths": [
+            "code_changes.stack_trace"
+          ]
+        }
+      ],
+      "missing_required_facts": [],
+      "missing_source_evidence": [
+        {
+          "category": "application_log",
+          "source_path": "logs",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        }
+      ],
+      "verified_observations": [
+        {
+          "evidence_id": "5dc142feea30c979962d",
+          "category": "code",
+          "metric_or_event": "error_message",
+          "value": "An empty input list causes division by zero.",
+          "unit": null,
+          "timestamp": 1793594188.491934,
+          "source": "synthetic test snippet; no repository change made",
+          "source_path": "code_changes.observed_failure",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "An empty input list causes division by zero."
+        },
+        {
+          "evidence_id": "385caa1bdb261322201a",
+          "category": "code",
+          "metric_or_event": "stack_trace",
+          "value": "Synthetic stack trace points to the division operation.",
+          "unit": null,
+          "timestamp": 1793594188.491934,
+          "source": "synthetic test snippet; no repository change made",
+          "source_path": "code_changes.stack_trace",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "Synthetic stack trace points to the division operation."
+        },
+        {
+          "evidence_id": "d671064052298dd59ee5",
+          "category": "code",
+          "metric_or_event": "source_code",
+          "value": "def calculate_average(values):\n    return sum(values) / len(values)\n",
+          "unit": null,
+          "timestamp": 1793594188.491934,
+          "source": "synthetic test snippet; no repository change made",
+          "source_path": "code_changes.source_code",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        }
+      ],
+      "interpretation": {
+        "status": "not_run",
+        "schema_valid": null,
+        "complete": null,
+        "unsupported_claims": [],
+        "reason": "Live Ollama inference was explicitly deferred."
+      },
+      "prior_live_result": {
+        "agent": "code",
+        "model": "qwen2.5-coder:3b",
+        "result": "PASS",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [],
+        "unsupported_claims": [],
+        "latency_seconds": 6.3285326000186615
+      },
+      "current_result": "NOT_RUN",
+      "routing_selected": true,
+      "evidence_payload_matches_graph": true
+    },
+    {
+      "agent": "cicd",
+      "model": "stablelm-zephyr:3b",
+      "scenario": "Analyze this synthetic deployment evidence. Distinguish deployment success from application health and pipeline status. Recommend verification steps only; do not deploy or roll back.",
+      "scenario_requirements": [
+        "Previous version",
+        "Current version",
+        "Deployment completion",
+        "Health response",
+        "Post-deployment error rate"
+      ],
+      "extraction_status": "partial",
+      "extracted_observation_count": 6,
+      "role_observation_count": 6,
+      "required_fact_count": 6,
+      "required_facts_extracted": 6,
+      "required_facts_delivered": 6,
+      "extraction_completeness": 1.0,
+      "delivery_completeness": 1.0,
+      "all_extracted_role_evidence_delivered": true,
+      "extraction_requirements": [
+        {
+          "category": "deployment",
+          "metric_or_event": "previous_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "f7df937685e182d81963"
+          ],
+          "delivered_evidence_ids": [
+            "f7df937685e182d81963"
+          ],
+          "source_paths": [
+            "version.data.previous_version"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "current_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "dd7c8db5422097691839"
+          ],
+          "delivered_evidence_ids": [
+            "dd7c8db5422097691839"
+          ],
+          "source_paths": [
+            "version.data.version"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "deployment_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "23ace891b0fee26c35aa"
+          ],
+          "delivered_evidence_ids": [
+            "23ace891b0fee26c35aa"
+          ],
+          "source_paths": [
+            "version.data.deployment_status"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "health_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "5d0b4e0fc042fb22da34"
+          ],
+          "delivered_evidence_ids": [
+            "5d0b4e0fc042fb22da34"
+          ],
+          "source_paths": [
+            "health.data.status"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "health_http_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "7bcba42059976ec36fab"
+          ],
+          "delivered_evidence_ids": [
+            "7bcba42059976ec36fab"
+          ],
+          "source_paths": [
+            "health.data.http_status"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "error_rate",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "9aacc4afda34c6d9556e"
+          ],
+          "delivered_evidence_ids": [
+            "9aacc4afda34c6d9556e"
+          ],
+          "source_paths": [
+            "metrics.error_rate_percent"
+          ]
+        }
+      ],
+      "delivery_requirements": [
+        {
+          "category": "deployment",
+          "metric_or_event": "previous_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "f7df937685e182d81963"
+          ],
+          "delivered_evidence_ids": [
+            "f7df937685e182d81963"
+          ],
+          "source_paths": [
+            "version.data.previous_version"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "current_application_version",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "dd7c8db5422097691839"
+          ],
+          "delivered_evidence_ids": [
+            "dd7c8db5422097691839"
+          ],
+          "source_paths": [
+            "version.data.version"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "deployment_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "23ace891b0fee26c35aa"
+          ],
+          "delivered_evidence_ids": [
+            "23ace891b0fee26c35aa"
+          ],
+          "source_paths": [
+            "version.data.deployment_status"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "health_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "5d0b4e0fc042fb22da34"
+          ],
+          "delivered_evidence_ids": [
+            "5d0b4e0fc042fb22da34"
+          ],
+          "source_paths": [
+            "health.data.status"
+          ]
+        },
+        {
+          "category": "deployment",
+          "metric_or_event": "health_http_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "7bcba42059976ec36fab"
+          ],
+          "delivered_evidence_ids": [
+            "7bcba42059976ec36fab"
+          ],
+          "source_paths": [
+            "health.data.http_status"
+          ]
+        },
+        {
+          "category": "application_metrics",
+          "metric_or_event": "error_rate",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "9aacc4afda34c6d9556e"
+          ],
+          "delivered_evidence_ids": [
+            "9aacc4afda34c6d9556e"
+          ],
+          "source_paths": [
+            "metrics.error_rate_percent"
+          ]
+        }
+      ],
+      "missing_required_facts": [],
+      "missing_source_evidence": [
+        {
+          "category": "application_metrics",
+          "source_path": "metrics.request_counters",
+          "status": "unavailable",
+          "detail": "Evidence source did not provide an available observation."
+        },
+        {
+          "category": "application_log",
+          "source_path": "logs",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        }
+      ],
+      "verified_observations": [
+        {
+          "evidence_id": "9aacc4afda34c6d9556e",
+          "category": "application_metrics",
+          "metric_or_event": "error_rate",
+          "value": 16.6667,
+          "unit": "percent",
+          "timestamp": 1793594188.4929519,
+          "source": "synthetic application observations",
+          "source_path": "metrics.error_rate_percent",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "dd7c8db5422097691839",
+          "category": "deployment",
+          "metric_or_event": "current_application_version",
+          "value": "1.1",
+          "unit": null,
+          "timestamp": 1793593888.4874194,
+          "source": "synthetic deployment record",
+          "source_path": "version.data.version",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "1.1"
+        },
+        {
+          "evidence_id": "23ace891b0fee26c35aa",
+          "category": "deployment",
+          "metric_or_event": "deployment_status",
+          "value": "completed successfully",
+          "unit": null,
+          "timestamp": 1793593888.4874194,
+          "source": "synthetic deployment record",
+          "source_path": "version.data.deployment_status",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "completed successfully"
+        },
+        {
+          "evidence_id": "f7df937685e182d81963",
+          "category": "deployment",
+          "metric_or_event": "previous_application_version",
+          "value": "1.0",
+          "unit": null,
+          "timestamp": 1793593888.4874194,
+          "source": "synthetic deployment record",
+          "source_path": "version.data.previous_version",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "1.0"
+        },
+        {
+          "evidence_id": "5d0b4e0fc042fb22da34",
+          "category": "deployment",
+          "metric_or_event": "health_status",
+          "value": "ok",
+          "unit": null,
+          "timestamp": 1793594188.4929519,
+          "source": "synthetic application observations",
+          "source_path": "health.data.status",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "7bcba42059976ec36fab",
+          "category": "deployment",
+          "metric_or_event": "health_http_status",
+          "value": 200,
+          "unit": "HTTP status",
+          "timestamp": 1793594188.4929519,
+          "source": "synthetic application observations",
+          "source_path": "health.data.http_status",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        }
+      ],
+      "interpretation": {
+        "status": "not_run",
+        "schema_valid": null,
+        "complete": null,
+        "unsupported_claims": [],
+        "reason": "Live Ollama inference was explicitly deferred."
+      },
+      "prior_live_result": {
+        "agent": "cicd",
+        "model": "stablelm-zephyr:3b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [
+          "Previous version",
+          "Current version",
+          "Deployment completion",
+          "Health response",
+          "Post-deployment error rate"
+        ],
+        "unsupported_claims": [
+          {
+            "kind": "findings",
+            "text": "Health check status is unavailable.",
+            "reasons": [
+              "health is not reported unavailable; supplied status health.status=ok, health.data.status=ok"
+            ]
+          },
+          {
+            "kind": "findings",
+            "text": "Post-deployment error rate increased from pre-deployment (16.666.7%).",
+            "reasons": [
+              "numeric claim 16.666 cannot be matched to supplied deployment evidence"
+            ]
+          }
+        ],
+        "latency_seconds": 6.942842699994799
+      },
+      "current_result": "NOT_RUN",
+      "routing_selected": true,
+      "evidence_payload_matches_graph": true
+    },
+    {
+      "agent": "infrastructure",
+      "model": "phi3.5:3.8b",
+      "scenario": "Interpret this synthetic Docker and process telemetry. Keep container and host-process memory separate. State resource pressure as an observation and do not invent root causes or unprovided metrics. Recommend checks only.",
+      "scenario_requirements": [
+        "Container name",
+        "Running state",
+        "Healthy state",
+        "Zero restarts",
+        "Container CPU",
+        "Container memory",
+        "Process memory"
+      ],
+      "extraction_status": "partial",
+      "extracted_observation_count": 9,
+      "role_observation_count": 9,
+      "required_fact_count": 7,
+      "required_facts_extracted": 7,
+      "required_facts_delivered": 7,
+      "extraction_completeness": 1.0,
+      "delivery_completeness": 1.0,
+      "all_extracted_role_evidence_delivered": true,
+      "extraction_requirements": [
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_name",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "0635f14847124e156dab"
+          ],
+          "delivered_evidence_ids": [
+            "0635f14847124e156dab"
+          ],
+          "source_paths": [
+            "docker.containers[0].name"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "dcb94ce44c30198b9bf9"
+          ],
+          "delivered_evidence_ids": [
+            "dcb94ce44c30198b9bf9"
+          ],
+          "source_paths": [
+            "docker.containers[0].status"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_health_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "a71306a51e8bed660a32"
+          ],
+          "delivered_evidence_ids": [
+            "a71306a51e8bed660a32"
+          ],
+          "source_paths": [
+            "docker.containers[0].health_status"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_restart_count",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "a58f94f741ac50371064"
+          ],
+          "delivered_evidence_ids": [
+            "a58f94f741ac50371064"
+          ],
+          "source_paths": [
+            "docker.containers[0].restart_count"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_cpu_usage_percent",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "c39a4c042951490e61ce"
+          ],
+          "delivered_evidence_ids": [
+            "c39a4c042951490e61ce"
+          ],
+          "source_paths": [
+            "docker.containers[0].cpu_usage_percent"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_memory_usage_bytes",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "457db3359580d8ca2b20"
+          ],
+          "delivered_evidence_ids": [
+            "457db3359580d8ca2b20"
+          ],
+          "source_paths": [
+            "docker.containers[0].memory_usage_bytes"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "host_process_memory_mib",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "377135fef48cc93319fa"
+          ],
+          "delivered_evidence_ids": [
+            "377135fef48cc93319fa"
+          ],
+          "source_paths": [
+            "process.host_process_memory_mib"
+          ]
+        }
+      ],
+      "delivery_requirements": [
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_name",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "0635f14847124e156dab"
+          ],
+          "delivered_evidence_ids": [
+            "0635f14847124e156dab"
+          ],
+          "source_paths": [
+            "docker.containers[0].name"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "dcb94ce44c30198b9bf9"
+          ],
+          "delivered_evidence_ids": [
+            "dcb94ce44c30198b9bf9"
+          ],
+          "source_paths": [
+            "docker.containers[0].status"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_health_status",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "a71306a51e8bed660a32"
+          ],
+          "delivered_evidence_ids": [
+            "a71306a51e8bed660a32"
+          ],
+          "source_paths": [
+            "docker.containers[0].health_status"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_restart_count",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "a58f94f741ac50371064"
+          ],
+          "delivered_evidence_ids": [
+            "a58f94f741ac50371064"
+          ],
+          "source_paths": [
+            "docker.containers[0].restart_count"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_cpu_usage_percent",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "c39a4c042951490e61ce"
+          ],
+          "delivered_evidence_ids": [
+            "c39a4c042951490e61ce"
+          ],
+          "source_paths": [
+            "docker.containers[0].cpu_usage_percent"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "container_memory_usage_bytes",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "457db3359580d8ca2b20"
+          ],
+          "delivered_evidence_ids": [
+            "457db3359580d8ca2b20"
+          ],
+          "source_paths": [
+            "docker.containers[0].memory_usage_bytes"
+          ]
+        },
+        {
+          "category": "infrastructure",
+          "metric_or_event": "host_process_memory_mib",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "377135fef48cc93319fa"
+          ],
+          "delivered_evidence_ids": [
+            "377135fef48cc93319fa"
+          ],
+          "source_paths": [
+            "process.host_process_memory_mib"
+          ]
+        }
+      ],
+      "missing_required_facts": [],
+      "missing_source_evidence": [
+        {
+          "category": "application_metrics",
+          "source_path": "metrics",
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        {
+          "category": "application_metrics",
+          "source_path": "metrics.request_counters",
+          "status": "unavailable",
+          "detail": "Evidence source did not provide an available observation."
+        },
+        {
+          "category": "infrastructure",
+          "source_path": "system_metrics",
+          "status": "unavailable",
+          "detail": "Evidence source did not provide an available observation."
+        }
+      ],
+      "verified_observations": [
+        {
+          "evidence_id": "bdd10513444fe407fa6e",
+          "category": "infrastructure",
+          "metric_or_event": "container_id",
+          "value": "synthetic-container-001",
+          "unit": null,
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].id",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "0635f14847124e156dab",
+          "category": "infrastructure",
+          "metric_or_event": "container_name",
+          "value": "synthetic-calculator",
+          "unit": null,
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].name",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "dcb94ce44c30198b9bf9",
+          "category": "infrastructure",
+          "metric_or_event": "container_status",
+          "value": "running",
+          "unit": null,
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].status",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "a71306a51e8bed660a32",
+          "category": "infrastructure",
+          "metric_or_event": "container_health_status",
+          "value": "healthy",
+          "unit": null,
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].health_status",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "c39a4c042951490e61ce",
+          "category": "infrastructure",
+          "metric_or_event": "container_cpu_usage_percent",
+          "value": 92,
+          "unit": "percent",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].cpu_usage_percent",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "457db3359580d8ca2b20",
+          "category": "infrastructure",
+          "metric_or_event": "container_memory_usage_bytes",
+          "value": 734003200,
+          "unit": "bytes",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].memory_usage_bytes",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "a58f94f741ac50371064",
+          "category": "infrastructure",
+          "metric_or_event": "container_restart_count",
+          "value": 0,
+          "unit": "restarts",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic Docker telemetry fixture",
+          "source_path": "docker.containers[0].restart_count",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "72d3bbcd6d8995e0020b",
+          "category": "infrastructure",
+          "metric_or_event": "host_process_memory_bytes",
+          "value": 62914560,
+          "unit": "bytes",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic process metrics fixture",
+          "source_path": "process.host_process_memory_bytes",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        },
+        {
+          "evidence_id": "377135fef48cc93319fa",
+          "category": "infrastructure",
+          "metric_or_event": "host_process_memory_mib",
+          "value": 60,
+          "unit": "MiB",
+          "timestamp": 1793594188.4874194,
+          "source": "synthetic process metrics fixture",
+          "source_path": "process.host_process_memory_mib",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": null
+        }
+      ],
+      "interpretation": {
+        "status": "not_run",
+        "schema_valid": null,
+        "complete": null,
+        "unsupported_claims": [],
+        "reason": "Live Ollama inference was explicitly deferred."
+      },
+      "prior_live_result": {
+        "agent": "infrastructure",
+        "model": "phi3.5:3.8b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [
+          "Healthy state",
+          "Zero restarts"
+        ],
+        "unsupported_claims": [],
+        "latency_seconds": 7.487865700008115
+      },
+      "current_result": "NOT_RUN",
+      "routing_selected": true,
+      "evidence_payload_matches_graph": true
+    },
+    {
+      "agent": "security",
+      "model": "granite3.1-dense:2b",
+      "scenario": "Triage only the synthetic authentication events. Identify the recorded failed and successful login sequence. Treat suspicious intent as a hypothesis, not confirmed compromise. Do not invent geolocation, reputation, threat intelligence, or attacker attribution.",
+      "scenario_requirements": [
+        "Synthetic source IP",
+        "Repeated failed logins",
+        "Subsequent successful login",
+        "Event timestamp 2026-11-02T04:35:43Z",
+        "Event timestamp 2026-11-02T04:35:48Z",
+        "Event timestamp 2026-11-02T04:35:53Z",
+        "Event timestamp 2026-11-02T04:35:58Z"
+      ],
+      "extraction_status": "partial",
+      "extracted_observation_count": 12,
+      "role_observation_count": 9,
+      "required_fact_count": 4,
+      "required_facts_extracted": 4,
+      "required_facts_delivered": 4,
+      "extraction_completeness": 1.0,
+      "delivery_completeness": 1.0,
+      "all_extracted_role_evidence_delivered": true,
+      "extraction_requirements": [
+        {
+          "category": "security",
+          "metric_or_event": "authentication_failure",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "10e718067337ed201a8c",
+            "ccd9e32cab94ed1824c2",
+            "8b88fd6aa7af98da94b9"
+          ],
+          "delivered_evidence_ids": [
+            "10e718067337ed201a8c",
+            "ccd9e32cab94ed1824c2",
+            "8b88fd6aa7af98da94b9"
+          ],
+          "source_paths": [
+            "logs.events[0]",
+            "logs.events[1]",
+            "logs.events[2]"
+          ]
+        },
+        {
+          "category": "security",
+          "metric_or_event": "authentication_success",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "cf74af30af4da985a340"
+          ],
+          "delivered_evidence_ids": [
+            "cf74af30af4da985a340"
+          ],
+          "source_paths": [
+            "logs.events[3]"
+          ]
+        },
+        {
+          "category": "security",
+          "metric_or_event": "source_ip",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "8b393ab829da0c140d37",
+            "1296696f5fa409417565",
+            "50eee7833a195223f3ed",
+            "92290f301f6c3b4b9727"
+          ],
+          "delivered_evidence_ids": [
+            "8b393ab829da0c140d37",
+            "1296696f5fa409417565",
+            "50eee7833a195223f3ed",
+            "92290f301f6c3b4b9727"
+          ],
+          "source_paths": [
+            "logs.events[0]",
+            "logs.events[1]",
+            "logs.events[2]",
+            "logs.events[3]"
+          ]
+        },
+        {
+          "category": "security",
+          "metric_or_event": "repeated_failures_followed_by_success",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "3095a2dbabcfbdac3b2e"
+          ],
+          "delivered_evidence_ids": [
+            "3095a2dbabcfbdac3b2e"
+          ],
+          "source_paths": [
+            "logs.events"
+          ]
+        }
+      ],
+      "delivery_requirements": [
+        {
+          "category": "security",
+          "metric_or_event": "authentication_failure",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "10e718067337ed201a8c",
+            "ccd9e32cab94ed1824c2",
+            "8b88fd6aa7af98da94b9"
+          ],
+          "delivered_evidence_ids": [
+            "10e718067337ed201a8c",
+            "ccd9e32cab94ed1824c2",
+            "8b88fd6aa7af98da94b9"
+          ],
+          "source_paths": [
+            "logs.events[0]",
+            "logs.events[1]",
+            "logs.events[2]"
+          ]
+        },
+        {
+          "category": "security",
+          "metric_or_event": "authentication_success",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "cf74af30af4da985a340"
+          ],
+          "delivered_evidence_ids": [
+            "cf74af30af4da985a340"
+          ],
+          "source_paths": [
+            "logs.events[3]"
+          ]
+        },
+        {
+          "category": "security",
+          "metric_or_event": "source_ip",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "8b393ab829da0c140d37",
+            "1296696f5fa409417565",
+            "50eee7833a195223f3ed",
+            "92290f301f6c3b4b9727"
+          ],
+          "delivered_evidence_ids": [
+            "8b393ab829da0c140d37",
+            "1296696f5fa409417565",
+            "50eee7833a195223f3ed",
+            "92290f301f6c3b4b9727"
+          ],
+          "source_paths": [
+            "logs.events[0]",
+            "logs.events[1]",
+            "logs.events[2]",
+            "logs.events[3]"
+          ]
+        },
+        {
+          "category": "security",
+          "metric_or_event": "repeated_failures_followed_by_success",
+          "evidence_text_contains": null,
+          "extracted": true,
+          "delivered": true,
+          "evidence_ids": [
+            "3095a2dbabcfbdac3b2e"
+          ],
+          "delivered_evidence_ids": [
+            "3095a2dbabcfbdac3b2e"
+          ],
+          "source_paths": [
+            "logs.events"
+          ]
+        }
+      ],
+      "missing_required_facts": [],
+      "missing_source_evidence": [],
+      "verified_observations": [
+        {
+          "evidence_id": "10e718067337ed201a8c",
+          "category": "security",
+          "metric_or_event": "authentication_failure",
+          "value": {
+            "ts": "2026-11-02T04:35:43Z",
+            "level": "WARN",
+            "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+          },
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:43Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication failed login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "8b393ab829da0c140d37",
+          "category": "security",
+          "metric_or_event": "source_ip",
+          "value": "192.0.2.10",
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:43Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[0]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication failed login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "ccd9e32cab94ed1824c2",
+          "category": "security",
+          "metric_or_event": "authentication_failure",
+          "value": {
+            "ts": "2026-11-02T04:35:48Z",
+            "level": "WARN",
+            "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+          },
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:48Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[1]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication failed login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "1296696f5fa409417565",
+          "category": "security",
+          "metric_or_event": "source_ip",
+          "value": "192.0.2.10",
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:48Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[1]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication failed login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "8b88fd6aa7af98da94b9",
+          "category": "security",
+          "metric_or_event": "authentication_failure",
+          "value": {
+            "ts": "2026-11-02T04:35:53Z",
+            "level": "WARN",
+            "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+          },
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:53Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[2]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication failed login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "50eee7833a195223f3ed",
+          "category": "security",
+          "metric_or_event": "source_ip",
+          "value": "192.0.2.10",
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:53Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[2]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication failed login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "cf74af30af4da985a340",
+          "category": "security",
+          "metric_or_event": "authentication_success",
+          "value": {
+            "ts": "2026-11-02T04:35:58Z",
+            "level": "INFO",
+            "msg": "authentication successful login user=demo source_ip=192.0.2.10"
+          },
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:58Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[3]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication successful login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "92290f301f6c3b4b9727",
+          "category": "security",
+          "metric_or_event": "source_ip",
+          "value": "192.0.2.10",
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:58Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events[3]",
+          "status": "observed",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "authentication successful login user=demo source_ip=192.0.2.10"
+        },
+        {
+          "evidence_id": "3095a2dbabcfbdac3b2e",
+          "category": "security",
+          "metric_or_event": "repeated_failures_followed_by_success",
+          "value": {
+            "failed_event_count": 3,
+            "success_event_count": 1
+          },
+          "unit": null,
+          "timestamp": "2026-11-02T04:35:58Z",
+          "source": "explicitly synthetic security log fixture",
+          "source_path": "logs.events",
+          "status": "derived",
+          "confidence": 1.0,
+          "baseline_value": null,
+          "current_value": null,
+          "change": null,
+          "evidence_text": "Repeated authentication failures precede a later successful event; this sequence alone does not establish malicious intent or compromise."
+        }
+      ],
+      "interpretation": {
+        "status": "not_run",
+        "schema_valid": null,
+        "complete": null,
+        "unsupported_claims": [],
+        "reason": "Live Ollama inference was explicitly deferred."
+      },
+      "prior_live_result": {
+        "agent": "security",
+        "model": "granite3.1-dense:2b",
+        "result": "PARTIAL",
+        "inference_status": "ok",
+        "schema_valid": true,
+        "missing_observations": [],
+        "unsupported_claims": [
+          {
+            "kind": "recommended_check",
+            "text": "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.",
+            "reasons": [
+              "security classification or threat attribution claim 'brute force' is not verified by the supplied evidence"
+            ]
+          }
+        ],
+        "latency_seconds": 7.305010000010952
+      },
+      "current_result": "NOT_RUN",
+      "routing_selected": true,
+      "evidence_payload_matches_graph": true
+    }
+  ],
+  "summary": {
+    "agents_total": 6,
+    "agents_pass_extraction_delivery": 6,
+    "agents_partial_extraction_delivery": 0,
+    "agents_failed_extraction_delivery": 0,
+    "required_facts_total": 30,
+    "required_facts_extracted": 30,
+    "required_facts_delivered": 30,
+    "evidence_extraction_success_rate": 1.0,
+    "evidence_delivery_success_rate": 1.0,
+    "interpretation_completeness_rate": null,
+    "interpretation_evaluated_agents": 0,
+    "live_model_inference": "not_run"
+  },
+  "offline_tests": {
+    "command": "python -m pytest -q",
+    "return_code": 0,
+    "counts": {
+      "passed": 128,
+      "failed": 0,
+      "skipped": 0
+    },
+    "summary": "128 passed, 0 failed, 0 skipped"
+  },
+  "model_mappings": {
+    "monitoring": "qwen2.5:3b",
+    "incident": "llama3.2:3b",
+    "code": "qwen2.5-coder:3b",
+    "cicd": "stablelm-zephyr:3b",
+    "infrastructure": "phi3.5:3.8b",
+    "security": "granite3.1-dense:2b"
+  },
+  "safety": {
+    "persistent_model_config_enabled": false,
+    "effective_model_config_enabled": false,
+    "max_parallel_models": 1,
+    "live_inference_executed": false,
+    "remediation_executed": false,
+    "rollback_executed": false
+  },
+  "limitations": [
+    "This report validates deterministic extraction and role delivery only; model interpretation completeness is not evaluated because live inference was not run.",
+    "Derived error rates are computed only when observed successful/error counters provide a non-zero denominator.",
+    "A suspicious authentication sequence is a deterministic sequence description, not a threat classification or proof of compromise."
+  ]
+}

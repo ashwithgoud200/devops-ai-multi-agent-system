@@ -1,0 +1,3178 @@
+{
+  "environment": {
+    "run_utc": "2026-11-01T21:52:03.898114+00:00",
+    "ollama_url": "http://127.0.0.1:11434",
+    "ollama_reachable": true,
+    "ollama_version": "0.40.13",
+    "installed_models": [
+      "granite3.1-dense:2b",
+      "phi3.5:3.8b",
+      "stablelm-zephyr:3b",
+      "qwen2.5-coder:3b",
+      "llama3.2:3b",
+      "qwen2.5:3b"
+    ],
+    "missing_models": [],
+    "python": "3.12.3",
+    "gpu": {
+      "status": "ok",
+      "reported": "NVIDIA GeForce RTX 3050 6GB Laptop GPU, 6144, 82, 30"
+    },
+    "runtime": {
+      "max_parallel_models": 1,
+      "keep_alive": "0s",
+      "context_length": 2048,
+      "max_output_tokens": 384,
+      "request_timeout_seconds": 120,
+      "temperature": 0.1
+    },
+    "llm_enabled_process_override": true,
+    "persistent_config_enabled": false,
+    "ollama_processes_before": {
+      "models": []
+    }
+  },
+  "offline_tests": {
+    "command": "python -m pytest -q",
+    "return_code": 0,
+    "counts": {
+      "passed": 114,
+      "failed": 0,
+      "skipped": 0
+    },
+    "summary": "114 passed, 0 failed, 0 skipped"
+  },
+  "baseline": {
+    "run_utc": "2026-11-01T21:11:29.548160+00:00",
+    "summary": {
+      "total": 6,
+      "inference_ok": 6,
+      "schema_valid": 6,
+      "skipped": 0,
+      "failed": 0,
+      "total_inference_seconds": 40.442
+    },
+    "agents": [
+      {
+        "agent": "monitoring",
+        "model": "qwen2.5:3b",
+        "latency_seconds": 6.16,
+        "retry_count": 0,
+        "reported_result": "PARTIAL"
+      },
+      {
+        "agent": "incident",
+        "model": "llama3.2:3b",
+        "latency_seconds": 6.55,
+        "retry_count": 0,
+        "reported_result": "PARTIAL"
+      },
+      {
+        "agent": "code",
+        "model": "qwen2.5-coder:3b",
+        "latency_seconds": 6.51,
+        "retry_count": 0,
+        "reported_result": "PARTIAL"
+      },
+      {
+        "agent": "cicd",
+        "model": "stablelm-zephyr:3b",
+        "latency_seconds": 4.6,
+        "retry_count": 0,
+        "reported_result": "PARTIAL"
+      },
+      {
+        "agent": "infrastructure",
+        "model": "phi3.5:3.8b",
+        "latency_seconds": 8.17,
+        "retry_count": 0,
+        "reported_result": "PARTIAL"
+      },
+      {
+        "agent": "security",
+        "model": "granite3.1-dense:2b",
+        "latency_seconds": 8.5,
+        "retry_count": 0,
+        "reported_result": "PARTIAL"
+      }
+    ],
+    "sequential_overlap_detected": false,
+    "interpretation": "The original run had six schema-valid responses and no overlap, but the harness labeled every response PARTIAL without checking acceptance criteria. These values come from the original report and are not a content-quality score."
+  },
+  "root_cause_analysis": [
+    "The previous live harness hand-translated synthetic fixtures into graph state and inserted generic unavailable-source placeholders. This did not match the production evidence contract and let unrelated missing-source text distract from supplied observations.",
+    "The shared prompt requested citations but did not require a fixed observations-first pass or say that an unavailable source must not override another source's valid measurements.",
+    "Graph evidence shaping sent broad bundles to multiple specialists; code evaluation bypassed graph shaping, while the other routes received irrelevant health, deployment, logs, or source-availability fields.",
+    "The prior harness did not evaluate its stated acceptance criteria and assigned PARTIAL to every successful response. Its status labels were therefore not a content-quality comparison.",
+    "The claim validator accepted security terms found in any evidence string, including negative telemetry details, and did not verify recommendation premises. Its numeric aliases also missed several observed units and Prometheus query-value paths.",
+    "The monitoring fixture initially placed Prometheus rates in application counter fields, creating a false cumulative-total observation; the corrected fixture now keeps those independent sources separate.",
+    "The offline pytest summary parser previously matched an all-optional empty pattern, reporting zero tests despite a passing suite; it now extracts actual passed/failed/skipped counts and rejects missing summaries.",
+    "Validation also needed to recognize underscore-separated Prometheus names, scientific notation, percentile labels, punctuated IPv4 addresses, and container IDs without confusing them for container names."
+  ],
+  "changes": [
+    {
+      "file": "agents/graph.py",
+      "change": "Scope specialist evidence by role, route CI/CD pipeline availability, add source-path observations, and validate Prometheus metrics, availability claims, container IDs, and recommendations against original source evidence."
+    },
+    {
+      "file": "agents/llm_runtime.py",
+      "change": "Use an observations-first reasoning contract that directs specialists to retain exact source paths and timestamps without changing the JSON schema, model mappings, limits, retries, or sequential lock."
+    },
+    {
+      "file": "tests/live_agent_evaluation.py",
+      "change": "Use production-shaped independent telemetry fixtures, preserve source/shaped evidence and sanitized prompts, record prompt sizes, grade explicit criteria, and parse pytest summaries strictly."
+    },
+    {
+      "file": "tests/test_graph.py",
+      "change": "Add regressions for role-scoped evidence, source-path observation indexing, and unsupported source-availability/security claims and recommendation premises."
+    },
+    {
+      "file": "tests/test_llm_runtime.py",
+      "change": "Test the shared evidence-first prompt, deterministic observation-index guidance, and independent source handling."
+    },
+    {
+      "file": "tests/test_telemetry.py",
+      "change": "Update Security evidence-routing expectations to include the deterministic observation index."
+    },
+    {
+      "file": "tests/test_live_agent_evaluation.py",
+      "change": "Test scenario grading and credential-safe diagnostics/report generation offline."
+    },
+    {
+      "file": "reports/six_agent_grounding_improvement.md and .json",
+      "change": "Record the before/after synthetic evaluation, exact sanitized prompts, evidence payloads, and validation details."
+    }
+  ],
+  "sequential_overlap_detected": false,
+  "agents": [
+    {
+      "agent": "monitoring",
+      "assigned_model": "qwen2.5:3b",
+      "reported_model": "qwen2.5:3b",
+      "model_mapping_matches": true,
+      "model_available": true,
+      "routing_selected": true,
+      "routing_selected_agents": [
+        "monitoring",
+        "infrastructure"
+      ],
+      "inference_status": "ok",
+      "json_schema_valid": true,
+      "json_parse_error": null,
+      "analysis": {
+        "summary": "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.",
+        "findings": [
+          "Insufficient evidence: CPU utilization is 88 percent_of_one_cpu.",
+          "Insufficient evidence: Memory usage is 78643200 bytes.",
+          "Insufficient evidence: HTTP error rate is 16.6667 percent.",
+          "Insufficient evidence: Request rate for error operations is 2 requests/second.",
+          "Insufficient evidence: Latency p95 is 0.85 seconds."
+        ],
+        "confidence": 0.9,
+        "recommended_checks": [
+          "Verify the Prometheus synthetic evaluation fixture to ensure it is functioning correctly.",
+          "Check the actual Prometheus metrics for the synthetic evaluation to confirm the values are accurate.",
+          "Review the system for any recent changes that could affect the observed metrics.",
+          "Monitor the system for any anomalies that might correlate with the observed metrics.",
+          "Inspect the Docker containers for any resource usage that could explain the observed CPU and memory usage."
+        ]
+      },
+      "claims": [
+        {
+          "kind": "summary",
+          "text": "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [
+            "prometheus.metrics.cpu_utilization.observations[0].latest_value",
+            "prometheus.metrics.cpu_utilization.observations[0].values[0].value",
+            "prometheus.metrics.latency_p95.observations[0].latest_value",
+            "prometheus.metrics.latency_p95.observations[0].values[0].value",
+            "prometheus.metrics.request_rate.observations[0].latest_value",
+            "prometheus.metrics.request_rate.observations[0].values[0].value",
+            "prometheus.metrics.request_rate.observations[1].latest_value",
+            "prometheus.metrics.request_rate.observations[1].values[0].value"
+          ],
+          "reasons": [
+            "numeric claim 16.67% cannot be matched to supplied error_rate evidence",
+            "numeric claim 78 cannot be matched to supplied memory evidence",
+            "numeric claim 643 cannot be matched to supplied memory evidence",
+            "numeric claim 200 cannot be matched to supplied memory evidence"
+          ],
+          "validation": {
+            "claim": "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.",
+            "validation_status": "unverified",
+            "reasons": [
+              "numeric claim 16.67% cannot be matched to supplied error_rate evidence",
+              "numeric claim 78 cannot be matched to supplied memory evidence",
+              "numeric claim 643 cannot be matched to supplied memory evidence",
+              "numeric claim 200 cannot be matched to supplied memory evidence"
+            ],
+            "evidence_refs": [
+              "prometheus.metrics.cpu_utilization.observations[0].latest_value",
+              "prometheus.metrics.cpu_utilization.observations[0].values[0].value",
+              "prometheus.metrics.latency_p95.observations[0].latest_value",
+              "prometheus.metrics.latency_p95.observations[0].values[0].value",
+              "prometheus.metrics.request_rate.observations[0].latest_value",
+              "prometheus.metrics.request_rate.observations[0].values[0].value",
+              "prometheus.metrics.request_rate.observations[1].latest_value",
+              "prometheus.metrics.request_rate.observations[1].values[0].value"
+            ],
+            "numeric_claims": [
+              {
+                "value": 10.0,
+                "unit": "number",
+                "topic": "request_count",
+                "is_threshold": false
+              },
+              {
+                "value": 2.0,
+                "unit": "number",
+                "topic": "request_count",
+                "is_threshold": false
+              },
+              {
+                "value": 16.67,
+                "unit": "percent",
+                "topic": "error_rate",
+                "is_threshold": false
+              },
+              {
+                "value": 0.85,
+                "unit": "number",
+                "topic": "latency",
+                "is_threshold": false
+              },
+              {
+                "value": 88.0,
+                "unit": "percent",
+                "topic": "cpu",
+                "is_threshold": false
+              },
+              {
+                "value": 78.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              },
+              {
+                "value": 643.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              },
+              {
+                "value": 200.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Insufficient evidence: CPU utilization is 88 percent_of_one_cpu.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "numbers_supported",
+          "evidence_refs": [
+            "prometheus.metrics.cpu_utilization.observations[0].latest_value",
+            "prometheus.metrics.cpu_utilization.observations[0].values[0].value"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Insufficient evidence: CPU utilization is 88 percent_of_one_cpu.",
+            "validation_status": "numbers_supported",
+            "reasons": [],
+            "evidence_refs": [
+              "prometheus.metrics.cpu_utilization.observations[0].latest_value",
+              "prometheus.metrics.cpu_utilization.observations[0].values[0].value"
+            ],
+            "numeric_claims": [
+              {
+                "value": 88.0,
+                "unit": "percent",
+                "topic": "cpu",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Insufficient evidence: Memory usage is 78643200 bytes.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "numbers_supported",
+          "evidence_refs": [
+            "prometheus.metrics.memory_usage.observations[0].latest_value",
+            "prometheus.metrics.memory_usage.observations[0].values[0].value"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Insufficient evidence: Memory usage is 78643200 bytes.",
+            "validation_status": "numbers_supported",
+            "reasons": [],
+            "evidence_refs": [
+              "prometheus.metrics.memory_usage.observations[0].latest_value",
+              "prometheus.metrics.memory_usage.observations[0].values[0].value"
+            ],
+            "numeric_claims": [
+              {
+                "value": 78643200.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Insufficient evidence: HTTP error rate is 16.6667 percent.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "numbers_supported",
+          "evidence_refs": [
+            "prometheus.metrics.http_error_rate.observations[0].latest_value",
+            "prometheus.metrics.http_error_rate.observations[0].values[0].value"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Insufficient evidence: HTTP error rate is 16.6667 percent.",
+            "validation_status": "numbers_supported",
+            "reasons": [],
+            "evidence_refs": [
+              "prometheus.metrics.http_error_rate.observations[0].latest_value",
+              "prometheus.metrics.http_error_rate.observations[0].values[0].value"
+            ],
+            "numeric_claims": [
+              {
+                "value": 16.6667,
+                "unit": "percent",
+                "topic": "error_rate",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Insufficient evidence: Request rate for error operations is 2 requests/second.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "numbers_supported",
+          "evidence_refs": [
+            "prometheus.metrics.request_rate.observations[1].latest_value",
+            "prometheus.metrics.request_rate.observations[1].values[0].value"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Insufficient evidence: Request rate for error operations is 2 requests/second.",
+            "validation_status": "numbers_supported",
+            "reasons": [],
+            "evidence_refs": [
+              "prometheus.metrics.request_rate.observations[1].latest_value",
+              "prometheus.metrics.request_rate.observations[1].values[0].value"
+            ],
+            "numeric_claims": [
+              {
+                "value": 2.0,
+                "unit": "number",
+                "topic": "request_count",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Insufficient evidence: Latency p95 is 0.85 seconds.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "numbers_supported",
+          "evidence_refs": [
+            "prometheus.metrics.latency_p95.observations[0].latest_value",
+            "prometheus.metrics.latency_p95.observations[0].values[0].value"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Insufficient evidence: Latency p95 is 0.85 seconds.",
+            "validation_status": "numbers_supported",
+            "reasons": [],
+            "evidence_refs": [
+              "prometheus.metrics.latency_p95.observations[0].latest_value",
+              "prometheus.metrics.latency_p95.observations[0].values[0].value"
+            ],
+            "numeric_claims": [
+              {
+                "value": 0.85,
+                "unit": "number",
+                "topic": "latency",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Verify the Prometheus synthetic evaluation fixture to ensure it is functioning correctly.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Verify the Prometheus synthetic evaluation fixture to ensure it is functioning correctly.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Check the actual Prometheus metrics for the synthetic evaluation to confirm the values are accurate.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Check the actual Prometheus metrics for the synthetic evaluation to confirm the values are accurate.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Review the system for any recent changes that could affect the observed metrics.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Review the system for any recent changes that could affect the observed metrics.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Monitor the system for any anomalies that might correlate with the observed metrics.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Monitor the system for any anomalies that might correlate with the observed metrics.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Inspect the Docker containers for any resource usage that could explain the observed CPU and memory usage.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Inspect the Docker containers for any resource usage that could explain the observed CPU and memory usage.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        }
+      ],
+      "raw_excerpt": "{\n  \"summary\": \"Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.\",\n  \"findings\": [\n    \"Insufficient evidence: CPU utilization is 88 percent_of_one_cpu.\",\n    \"Insufficient evidence: Memory usage is 78643200 bytes.\",\n    \"Insufficient evidence: HTTP error rate is 16.6667 percent.\",\n    \"Insufficient evidence: Request rate for error operations is 2 requests/second.\",\n    \"Insufficient evidence: Latency p95 is 0.85 seconds.\"\n  ],\n  \"confidence\": 0.9,\n  \"recommended_checks\": [\n    \"Verify the Prometheus synthetic evaluation fixture to ensure it is functioning correctly.\",\n    \"Check the actual Prometheus metrics for the synthetic evaluation to confirm the values are accurate.\",\n    \"Review the system for any recent changes that could affect the observed metrics.\",\n    \"Monitor the system for any anomalies that might correlate with the observed metrics.\",\n    \"Inspect the Docker containers for any resource usage that could explain the observed CPU and memory usage.\"\n  ]\n}",
+      "raw_excerpt_truncated": false,
+      "latency_seconds": 9.65781689999858,
+      "start_unix": 1793569924.0467808,
+      "end_unix": 1793569933.7048984,
+      "previous_inference_end_perf": null,
+      "no_overlap_with_previous": true,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "ok",
+          "detail": null,
+          "done_reason": "stop",
+          "total_duration": 9654473500,
+          "wall_duration_seconds": 9.657315100019332
+        }
+      ],
+      "retry": {
+        "attempted": false,
+        "status": "not_needed"
+      },
+      "retry_count": 0,
+      "validation_error": null,
+      "error_detail": null,
+      "ollama_processes_before": {
+        "models": []
+      },
+      "ollama_processes_after": {
+        "models": []
+      },
+      "expected_criteria": [
+        "Reports the observed error request rate and elevated error behavior.",
+        "Reports the observed 850 ms p95 latency.",
+        "Reports 88% process CPU as an observation, not a proven cause.",
+        "Does not invent host/container measurements or assert a confirmed root cause."
+      ],
+      "original_synthetic_evidence": {
+        "source": "synthetic Prometheus evaluation fixture",
+        "timestamp": 1793569914.5529604,
+        "prometheus": {
+          "status": "ok",
+          "source": "synthetic Prometheus evaluation fixture",
+          "timestamp": 1793569914.5529604,
+          "metrics": {
+            "request_rate": {
+              "status": "ok",
+              "unit": "requests/second",
+              "observations": [
+                {
+                  "labels": {
+                    "op": "div",
+                    "status": "ok"
+                  },
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 10,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 10,
+                      "stale": false
+                    }
+                  ]
+                },
+                {
+                  "labels": {
+                    "op": "div",
+                    "status": "error"
+                  },
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 2,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 2,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "http_error_rate": {
+              "status": "ok",
+              "unit": "percent",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 16.6667,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 16.6667,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "latency_p95": {
+              "status": "ok",
+              "unit": "seconds",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 0.85,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 0.85,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "cpu_utilization": {
+              "status": "ok",
+              "unit": "percent_of_one_cpu",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 88,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 88,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "memory_usage": {
+              "status": "ok",
+              "unit": "bytes",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 78643200,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 78643200,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "unavailable": [
+          "No synthetic evidence supplied for host CPU, container metrics, or root cause."
+        ]
+      },
+      "graph_input_evidence": {
+        "captured_at": 1793569924.0220883,
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "version": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "logs": {
+          "status": "unavailable",
+          "events": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "ok",
+          "source": "synthetic Prometheus evaluation fixture",
+          "timestamp": 1793569914.5529604,
+          "metrics": {
+            "request_rate": {
+              "status": "ok",
+              "unit": "requests/second",
+              "observations": [
+                {
+                  "labels": {
+                    "op": "div",
+                    "status": "ok"
+                  },
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 10,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 10,
+                      "stale": false
+                    }
+                  ]
+                },
+                {
+                  "labels": {
+                    "op": "div",
+                    "status": "error"
+                  },
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 2,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 2,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "http_error_rate": {
+              "status": "ok",
+              "unit": "percent",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 16.6667,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 16.6667,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "latency_p95": {
+              "status": "ok",
+              "unit": "seconds",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 0.85,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 0.85,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "cpu_utilization": {
+              "status": "ok",
+              "unit": "percent_of_one_cpu",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 88,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 88,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "memory_usage": {
+              "status": "ok",
+              "unit": "bytes",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 78643200,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 78643200,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "graph_shaped_evidence": {
+        "metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "ok",
+          "source": "synthetic Prometheus evaluation fixture",
+          "timestamp": 1793569914.5529604,
+          "metrics": {
+            "request_rate": {
+              "status": "ok",
+              "unit": "requests/second",
+              "observations": [
+                {
+                  "labels": {
+                    "op": "div",
+                    "status": "ok"
+                  },
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 10,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 10,
+                      "stale": false
+                    }
+                  ]
+                },
+                {
+                  "labels": {
+                    "op": "div",
+                    "status": "error"
+                  },
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 2,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 2,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "http_error_rate": {
+              "status": "ok",
+              "unit": "percent",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 16.6667,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 16.6667,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "latency_p95": {
+              "status": "ok",
+              "unit": "seconds",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 0.85,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 0.85,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "cpu_utilization": {
+              "status": "ok",
+              "unit": "percent_of_one_cpu",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 88,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 88,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "memory_usage": {
+              "status": "ok",
+              "unit": "bytes",
+              "observations": [
+                {
+                  "labels": {},
+                  "latest_timestamp": 1793569914.5529604,
+                  "latest_value": 78643200,
+                  "stale": false,
+                  "values": [
+                    {
+                      "timestamp": 1793569914.5529604,
+                      "value": 78643200,
+                      "stale": false
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "baseline_comparison": {
+          "regression_signal": false,
+          "deployment_changed": false
+        },
+        "verified_observations": [
+          {
+            "statement": "Prometheus request_rate is 10 requests/second for labels {\"op\": \"div\", \"status\": \"ok\"}.",
+            "source": "prometheus.metrics.request_rate.observations[0]",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Prometheus request_rate is 2 requests/second for labels {\"op\": \"div\", \"status\": \"error\"}.",
+            "source": "prometheus.metrics.request_rate.observations[1]",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Prometheus http_error_rate is 16.6667 percent.",
+            "source": "prometheus.metrics.http_error_rate.observations[0]",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Prometheus latency_p95 is 0.85 seconds.",
+            "source": "prometheus.metrics.latency_p95.observations[0]",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Prometheus cpu_utilization is 88 percent_of_one_cpu.",
+            "source": "prometheus.metrics.cpu_utilization.observations[0]",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Prometheus memory_usage is 78643200 bytes.",
+            "source": "prometheus.metrics.memory_usage.observations[0]",
+            "timestamp": 1793569914.5529604
+          }
+        ]
+      },
+      "prompt_diagnostics": {
+        "serialized_graph_evidence_characters": 3044,
+        "serialized_prompt_evidence_characters": 3044,
+        "system_prompt_characters": 1883,
+        "user_prompt_characters": 3399,
+        "source_log_event_count": 0,
+        "prompt_log_event_count": 0,
+        "omitted_log_event_count": 0,
+        "log_truncation_applied": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cautious DevOps specialist. Use only supplied evidence. Follow this order: (1) extract directly observed facts, (2) compare relevant observations and timestamps, (3) label any explanation as an unconfirmed hypothesis, (4) name only genuinely unavailable relevant evidence, and (5) recommend checks without executing them. An unavailable source never makes a different source unavailable. Prioritize supplied values over generic missing-source notices. For each factual finding, include its exact evidence JSON path and observed value. Never invent or estimate metrics, percentages, thresholds, timestamps, deployment events, or facts. Do not use general industry thresholds as application-configured thresholds. Label claims that cannot be tied to evidence 'Unverified' and explain the missing evidence. Correlation is not causation; confidence is not proof. Do not claim to have run tools or inspected systems. If verified_observations is supplied, use it as a deterministic index of source-derived facts, retain its source paths/timestamps, and do not infer beyond those facts. When relevant evidence is genuinely insufficient, begin that finding with 'Insufficient evidence:'. For Docker claims, cite exact docker.containers paths and never invent container IDs, names, health, restart counts, or resource values. Null or unavailable values are not zero. Never issue commands or authorize changes. Return only the required JSON object with a concise summary, evidence-grounded findings, confidence from 0 to 1, and advisory recommended_checks. Read every supplied metric source independently. Report available request, success/error, latency, CPU, and memory observations before mentioning missing host or container metrics. Preserve units and distinguish host, process, and container values. Compare a baseline only when the comparison contains compatible observations."
+          },
+          {
+            "role": "user",
+            "content": "{\"task\": \"Assess the supplied synthetic Prometheus observations. Identify the measured request/error rates, p95 latency, and process CPU. Keep observations separate from possible explanations; do not claim a confirmed root cause. Recommend checks only; take no action.\", \"specialist_role\": \"Analyze monitoring metrics and explain anomalies\", \"evidence\": {\"metrics\": {\"status\": \"unavailable\", \"detail\": \"Not supplied in this fixture\"}, \"system_metrics\": {\"status\": \"unavailable\", \"detail\": \"Not supplied in this fixture\", \"measurements\": {}}, \"docker\": {\"status\": \"unavailable\", \"containers\": [], \"detail\": \"Not supplied in this fixture\"}, \"prometheus\": {\"status\": \"ok\", \"source\": \"synthetic Prometheus evaluation fixture\", \"timestamp\": 1793569914.5529604, \"metrics\": {\"request_rate\": {\"status\": \"ok\", \"unit\": \"requests/second\", \"observations\": [{\"labels\": {\"op\": \"div\", \"status\": \"ok\"}, \"latest_timestamp\": 1793569914.5529604, \"latest_value\": 10, \"stale\": false, \"values\": [{\"timestamp\": 1793569914.5529604, \"value\": 10, \"stale\": false}]}, {\"labels\": {\"op\": \"div\", \"status\": \"error\"}, \"latest_timestamp\": 1793569914.5529604, \"latest_value\": 2, \"stale\": false, \"values\": [{\"timestamp\": 1793569914.5529604, \"value\": 2, \"stale\": false}]}]}, \"http_error_rate\": {\"status\": \"ok\", \"unit\": \"percent\", \"observations\": [{\"labels\": {}, \"latest_timestamp\": 1793569914.5529604, \"latest_value\": 16.6667, \"stale\": false, \"values\": [{\"timestamp\": 1793569914.5529604, \"value\": 16.6667, \"stale\": false}]}]}, \"latency_p95\": {\"status\": \"ok\", \"unit\": \"seconds\", \"observations\": [{\"labels\": {}, \"latest_timestamp\": 1793569914.5529604, \"latest_value\": 0.85, \"stale\": false, \"values\": [{\"timestamp\": 1793569914.5529604, \"value\": 0.85, \"stale\": false}]}]}, \"cpu_utilization\": {\"status\": \"ok\", \"unit\": \"percent_of_one_cpu\", \"observations\": [{\"labels\": {}, \"latest_timestamp\": 1793569914.5529604, \"latest_value\": 88, \"stale\": false, \"values\": [{\"timestamp\": 1793569914.5529604, \"value\": 88, \"stale\": false}]}]}, \"memory_usage\": {\"status\": \"ok\", \"unit\": \"bytes\", \"observations\": [{\"labels\": {}, \"latest_timestamp\": 1793569914.5529604, \"latest_value\": 78643200, \"stale\": false, \"values\": [{\"timestamp\": 1793569914.5529604, \"value\": 78643200, \"stale\": false}]}]}}}, \"baseline_comparison\": {\"regression_signal\": false, \"deployment_changed\": false}, \"verified_observations\": [{\"statement\": \"Prometheus request_rate is 10 requests/second for labels {\\\"op\\\": \\\"div\\\", \\\"status\\\": \\\"ok\\\"}.\", \"source\": \"prometheus.metrics.request_rate.observations[0]\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Prometheus request_rate is 2 requests/second for labels {\\\"op\\\": \\\"div\\\", \\\"status\\\": \\\"error\\\"}.\", \"source\": \"prometheus.metrics.request_rate.observations[1]\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Prometheus http_error_rate is 16.6667 percent.\", \"source\": \"prometheus.metrics.http_error_rate.observations[0]\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Prometheus latency_p95 is 0.85 seconds.\", \"source\": \"prometheus.metrics.latency_p95.observations[0]\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Prometheus cpu_utilization is 88 percent_of_one_cpu.\", \"source\": \"prometheus.metrics.cpu_utilization.observations[0]\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Prometheus memory_usage is 78643200 bytes.\", \"source\": \"prometheus.metrics.memory_usage.observations[0]\", \"timestamp\": 1793569914.5529604}]}}"
+          }
+        ]
+      },
+      "overall_result": "PARTIAL",
+      "required_observations": [
+        {
+          "requirement": "Successful request rate",
+          "pattern": "(?<![\\w.])10(?:\\.0+)?(?![\\w.])",
+          "identified": true
+        },
+        {
+          "requirement": "Error request rate",
+          "pattern": "(?<![\\w.])2(?:\\.0+)?(?![\\w.])",
+          "identified": true
+        },
+        {
+          "requirement": "Error rate",
+          "pattern": "16\\.6667",
+          "identified": true
+        },
+        {
+          "requirement": "P95 latency",
+          "pattern": "(?<![\\w.])0\\.85(?![\\w.])",
+          "identified": true
+        },
+        {
+          "requirement": "Process CPU",
+          "pattern": "(?<![\\w.])88(?:\\.0+)?\\s*%?",
+          "identified": true
+        },
+        {
+          "requirement": "Process memory",
+          "pattern": "(?<![\\w.])(?:75\\s*MiB|78,?643,?200(?:\\s*bytes)?|7\\.86432e\\+?0?7(?:\\s*bytes)?)",
+          "identified": true
+        }
+      ],
+      "missing_observations": [],
+      "prohibited_claim_patterns": [],
+      "material_unsupported_claims": [
+        {
+          "kind": "summary",
+          "text": "Prometheus synthetic observations have been reviewed. The request rate is 10 requests/second for successful operations and 2 requests/second for error operations. The HTTP error rate is 16.67 percent. The 95th percentile latency is 0.85 seconds. The CPU utilization is 88 percent of one CPU. The memory usage is 78,643,200 bytes.",
+          "reasons": [
+            "numeric claim 16.67% cannot be matched to supplied error_rate evidence",
+            "numeric claim 78 cannot be matched to supplied memory evidence",
+            "numeric claim 643 cannot be matched to supplied memory evidence",
+            "numeric claim 200 cannot be matched to supplied memory evidence"
+          ]
+        }
+      ],
+      "scenario_summary": "Assess the supplied synthetic Prometheus observations. Identify the measured request/error rates, p95 latency, and process CPU. Keep observations separate from possible explanations; do not claim a confirmed root cause. Recommend checks only; take no action."
+    },
+    {
+      "agent": "incident",
+      "assigned_model": "llama3.2:3b",
+      "reported_model": "llama3.2:3b",
+      "model_mapping_matches": true,
+      "model_available": true,
+      "routing_selected": true,
+      "routing_selected_agents": [
+        "monitoring",
+        "incident",
+        "code",
+        "cicd",
+        "infrastructure"
+      ],
+      "inference_status": "ok",
+      "json_schema_valid": true,
+      "json_parse_error": null,
+      "analysis": {
+        "summary": "Synthetic incident triage",
+        "findings": [],
+        "confidence": 0.0,
+        "recommended_checks": []
+      },
+      "claims": [
+        {
+          "kind": "summary",
+          "text": "Synthetic incident triage",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Synthetic incident triage",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        }
+      ],
+      "raw_excerpt": "{\"summary\": \"Synthetic incident triage\", \"findings\": [], \"confidence\": 0, \"recommended_checks\": []}",
+      "raw_excerpt_truncated": false,
+      "latency_seconds": 5.4608639999933075,
+      "start_unix": 1793569933.802586,
+      "end_unix": 1793569939.263141,
+      "previous_inference_end_perf": 146455.6275717,
+      "no_overlap_with_previous": true,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "ok",
+          "detail": null,
+          "done_reason": "stop",
+          "total_duration": 5445610800,
+          "wall_duration_seconds": 5.460390300024301
+        }
+      ],
+      "retry": {
+        "attempted": false,
+        "status": "not_needed"
+      },
+      "retry_count": 0,
+      "validation_error": null,
+      "error_detail": null,
+      "ollama_processes_before": {
+        "models": []
+      },
+      "ollama_processes_after": {
+        "models": []
+      },
+      "expected_criteria": [
+        "Connects the version transition and increased errors/latency with repeated timeout logs.",
+        "Treats the timing as correlation rather than confirmed causation.",
+        "Does not invent infrastructure failure evidence.",
+        "Recommends verification without executing rollback or remediation."
+      ],
+      "original_synthetic_evidence": {
+        "source": "synthetic incident fixture",
+        "captured_at": 1793569914.5529604,
+        "deployment": {
+          "source": "synthetic deployment record",
+          "previous_version": "1.0",
+          "current_version": "1.1",
+          "deployment_timestamp": 1793569614.5529604,
+          "deployment_status": "completed"
+        },
+        "metrics": {
+          "source": "synthetic Prometheus observations",
+          "timestamp": 1793569914.5529604,
+          "request_counters": {
+            "status": "ok",
+            "requests": {
+              "div": {
+                "error": 35,
+                "ok": 65
+              }
+            }
+          },
+          "baseline_error_count": 2,
+          "current_error_count": 35,
+          "baseline_p95_latency_ms": 100,
+          "current_p95_latency_ms": 900
+        },
+        "logs": {
+          "status": "ok",
+          "source": "synthetic application logs",
+          "events": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ]
+        },
+        "unavailable": [
+          "No infrastructure-failure evidence was supplied."
+        ]
+      },
+      "graph_input_evidence": {
+        "captured_at": 1793569933.7977347,
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "metrics": {
+          "status": "ok",
+          "source": "synthetic Prometheus observations",
+          "timestamp": 1793569933.7977347,
+          "requests": {
+            "div": {
+              "error": 35,
+              "ok": 65
+            }
+          },
+          "latency_observations": {
+            "by_operation": {
+              "div": 0.9
+            }
+          }
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "version": {
+          "status": "ok",
+          "source": "synthetic deployment record",
+          "timestamp": 1793569933.7977347,
+          "data": {
+            "version": "1.1",
+            "deployment_status": "completed",
+            "history": [
+              {
+                "version": "1.0",
+                "ts": 1793569554.5529604
+              },
+              {
+                "version": "1.1",
+                "ts": 1793569614.5529604
+              }
+            ]
+          }
+        },
+        "logs": {
+          "status": "ok",
+          "source": "synthetic application logs",
+          "events": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ]
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        },
+        "baseline_comparison": {
+          "status": "partial",
+          "detail": "Baseline comparison is partial; unavailable or incomparable sources: prometheus",
+          "comparable_sources": [
+            "metrics",
+            "version",
+            "logs"
+          ],
+          "unavailable_sources": [
+            "prometheus"
+          ],
+          "request_deltas": {
+            "div": {
+              "error": 33.0
+            }
+          },
+          "latency_observation_deltas": {
+            "div": 0.8
+          },
+          "prometheus_comparison": {
+            "status": "unavailable",
+            "detail": "Prometheus observations are unavailable in the baseline or current snapshot.",
+            "deltas": []
+          },
+          "new_logs": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ],
+          "new_error_logs": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ],
+          "baseline_version": "1.0",
+          "current_version": "1.1",
+          "previous_deployment_version": "1.0",
+          "deployment_events": [],
+          "detected_deployment_version": null,
+          "deployment_changed": true,
+          "regression_signal": true,
+          "baseline_metrics_status": "ok",
+          "current_metrics_status": "ok",
+          "logs_status": "ok",
+          "logs_window_mode": "timestamp_fallback",
+          "logs_window_status": "timestamp_fallback",
+          "metrics_window": {
+            "baseline_timestamp": 1793569573.7977347,
+            "current_timestamp": 1793569933.7977347
+          }
+        }
+      },
+      "graph_shaped_evidence": {
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "metrics": {
+          "status": "ok",
+          "source": "synthetic Prometheus observations",
+          "timestamp": 1793569933.7977347,
+          "requests": {
+            "div": {
+              "error": 35,
+              "ok": 65
+            }
+          },
+          "latency_observations": {
+            "by_operation": {
+              "div": 0.9
+            }
+          }
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "deployment": {
+          "status": "ok",
+          "source": "synthetic deployment record",
+          "timestamp": 1793569933.7977347,
+          "data": {
+            "version": "1.1",
+            "deployment_status": "completed",
+            "history": [
+              {
+                "version": "1.0",
+                "ts": 1793569554.5529604
+              },
+              {
+                "version": "1.1",
+                "ts": 1793569614.5529604
+              }
+            ]
+          }
+        },
+        "logs": {
+          "status": "ok",
+          "source": "synthetic application logs",
+          "events": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ]
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        },
+        "baseline_comparison": {
+          "status": "partial",
+          "detail": "Baseline comparison is partial; unavailable or incomparable sources: prometheus",
+          "comparable_sources": [
+            "metrics",
+            "version",
+            "logs"
+          ],
+          "unavailable_sources": [
+            "prometheus"
+          ],
+          "request_deltas": {
+            "div": {
+              "error": 33.0
+            }
+          },
+          "latency_observation_deltas": {
+            "div": 0.8
+          },
+          "prometheus_comparison": {
+            "status": "unavailable",
+            "detail": "Prometheus observations are unavailable in the baseline or current snapshot.",
+            "deltas": []
+          },
+          "new_logs": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ],
+          "new_error_logs": [
+            {
+              "ts": 1793569794.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569824.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            },
+            {
+              "ts": 1793569884.5529604,
+              "level": "ERROR",
+              "msg": "application timeout while handling request"
+            }
+          ],
+          "baseline_version": "1.0",
+          "current_version": "1.1",
+          "previous_deployment_version": "1.0",
+          "deployment_events": [],
+          "detected_deployment_version": null,
+          "deployment_changed": true,
+          "regression_signal": true,
+          "baseline_metrics_status": "ok",
+          "current_metrics_status": "ok",
+          "logs_status": "ok",
+          "logs_window_mode": "timestamp_fallback",
+          "logs_window_status": "timestamp_fallback",
+          "metrics_window": {
+            "baseline_timestamp": 1793569573.7977347,
+            "current_timestamp": 1793569933.7977347
+          }
+        },
+        "verified_observations": [
+          {
+            "statement": "Cumulative div request total is 100 from reported status counters.",
+            "source": "metrics.requests.div",
+            "timestamp": 1793569933.7977347
+          },
+          {
+            "statement": "Current div/error request counter is 35.",
+            "source": "metrics.requests.div.error",
+            "timestamp": 1793569933.7977347
+          },
+          {
+            "statement": "Cumulative div error rate is 35.00% (35 errors / 100 reported requests).",
+            "source": "metrics.requests.div",
+            "timestamp": 1793569933.7977347
+          },
+          {
+            "statement": "Baseline-period div/error request counter changed by 33.",
+            "source": "baseline_comparison.request_deltas.div.error",
+            "timestamp": 1793569933.7977347
+          },
+          {
+            "statement": "Current application version is '1.1'.",
+            "source": "version.data.version",
+            "timestamp": 1793569614.5529604
+          },
+          {
+            "statement": "Previous deployment version recorded by the application is '1.0'.",
+            "source": "version.data.history[-2].version",
+            "timestamp": 1793569554.5529604
+          },
+          {
+            "statement": "Deployment status is 'completed'.",
+            "source": "version.data.deployment_status",
+            "timestamp": 1793569614.5529604
+          },
+          {
+            "statement": "ERROR event: {\"level\": \"ERROR\", \"msg\": \"application timeout while handling request\", \"ts\": 1793569794.5529604}",
+            "source": "logs.events[0]",
+            "timestamp": 1793569794.5529604
+          },
+          {
+            "statement": "ERROR event: {\"level\": \"ERROR\", \"msg\": \"application timeout while handling request\", \"ts\": 1793569824.5529604}",
+            "source": "logs.events[1]",
+            "timestamp": 1793569824.5529604
+          },
+          {
+            "statement": "ERROR event: {\"level\": \"ERROR\", \"msg\": \"application timeout while handling request\", \"ts\": 1793569884.5529604}",
+            "source": "logs.events[2]",
+            "timestamp": 1793569884.5529604
+          }
+        ]
+      },
+      "prompt_diagnostics": {
+        "serialized_graph_evidence_characters": 4477,
+        "serialized_prompt_evidence_characters": 4477,
+        "system_prompt_characters": 1819,
+        "user_prompt_characters": 4762,
+        "source_log_event_count": 3,
+        "prompt_log_event_count": 3,
+        "omitted_log_event_count": 0,
+        "log_truncation_applied": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cautious DevOps specialist. Use only supplied evidence. Follow this order: (1) extract directly observed facts, (2) compare relevant observations and timestamps, (3) label any explanation as an unconfirmed hypothesis, (4) name only genuinely unavailable relevant evidence, and (5) recommend checks without executing them. An unavailable source never makes a different source unavailable. Prioritize supplied values over generic missing-source notices. For each factual finding, include its exact evidence JSON path and observed value. Never invent or estimate metrics, percentages, thresholds, timestamps, deployment events, or facts. Do not use general industry thresholds as application-configured thresholds. Label claims that cannot be tied to evidence 'Unverified' and explain the missing evidence. Correlation is not causation; confidence is not proof. Do not claim to have run tools or inspected systems. If verified_observations is supplied, use it as a deterministic index of source-derived facts, retain its source paths/timestamps, and do not infer beyond those facts. When relevant evidence is genuinely insufficient, begin that finding with 'Insufficient evidence:'. For Docker claims, cite exact docker.containers paths and never invent container IDs, names, health, restart counts, or resource values. Null or unavailable values are not zero. Never issue commands or authorize changes. Return only the required JSON object with a concise summary, evidence-grounded findings, confidence from 0 to 1, and advisory recommended_checks. Build a short chronological account from supplied deployment, metric, log, health, and container timestamps. State changes and their temporal relationship; do not claim a root cause from timing alone. Preserve the exact status, version, values, and log evidence."
+          },
+          {
+            "role": "user",
+            "content": "{\"task\": \"Triage this synthetic incident. Correlate deployment, counters, latency, and timestamped logs. Distinguish temporal correlation from confirmed causation. Recommend investigation only.\", \"specialist_role\": \"Triage incident logs and summarize likely root causes\", \"evidence\": {\"health\": {\"status\": \"unavailable\", \"detail\": \"Not supplied in this fixture\"}, \"metrics\": {\"status\": \"ok\", \"source\": \"synthetic Prometheus observations\", \"timestamp\": 1793569933.7977347, \"requests\": {\"div\": {\"error\": 35, \"ok\": 65}}, \"latency_observations\": {\"by_operation\": {\"div\": 0.9}}}, \"system_metrics\": {\"status\": \"unavailable\", \"detail\": \"Not supplied in this fixture\", \"measurements\": {}}, \"deployment\": {\"status\": \"ok\", \"source\": \"synthetic deployment record\", \"timestamp\": 1793569933.7977347, \"data\": {\"version\": \"1.1\", \"deployment_status\": \"completed\", \"history\": [{\"version\": \"1.0\", \"ts\": 1793569554.5529604}, {\"version\": \"1.1\", \"ts\": 1793569614.5529604}]}}, \"logs\": {\"status\": \"ok\", \"source\": \"synthetic application logs\", \"events\": [{\"ts\": 1793569794.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}, {\"ts\": 1793569824.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}, {\"ts\": 1793569884.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}]}, \"docker\": {\"status\": \"unavailable\", \"containers\": [], \"detail\": \"Not supplied in this fixture\"}, \"prometheus\": {\"status\": \"unavailable\", \"metrics\": {}, \"detail\": \"Not supplied in this fixture\"}, \"baseline_comparison\": {\"status\": \"partial\", \"detail\": \"Baseline comparison is partial; unavailable or incomparable sources: prometheus\", \"comparable_sources\": [\"metrics\", \"version\", \"logs\"], \"unavailable_sources\": [\"prometheus\"], \"request_deltas\": {\"div\": {\"error\": 33.0}}, \"latency_observation_deltas\": {\"div\": 0.8}, \"prometheus_comparison\": {\"status\": \"unavailable\", \"detail\": \"Prometheus observations are unavailable in the baseline or current snapshot.\", \"deltas\": []}, \"new_logs\": [{\"ts\": 1793569794.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}, {\"ts\": 1793569824.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}, {\"ts\": 1793569884.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}], \"new_error_logs\": [{\"ts\": 1793569794.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}, {\"ts\": 1793569824.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}, {\"ts\": 1793569884.5529604, \"level\": \"ERROR\", \"msg\": \"application timeout while handling request\"}], \"baseline_version\": \"1.0\", \"current_version\": \"1.1\", \"previous_deployment_version\": \"1.0\", \"deployment_events\": [], \"detected_deployment_version\": null, \"deployment_changed\": true, \"regression_signal\": true, \"baseline_metrics_status\": \"ok\", \"current_metrics_status\": \"ok\", \"logs_status\": \"ok\", \"logs_window_mode\": \"timestamp_fallback\", \"logs_window_status\": \"timestamp_fallback\", \"metrics_window\": {\"baseline_timestamp\": 1793569573.7977347, \"current_timestamp\": 1793569933.7977347}}, \"verified_observations\": [{\"statement\": \"Cumulative div request total is 100 from reported status counters.\", \"source\": \"metrics.requests.div\", \"timestamp\": 1793569933.7977347}, {\"statement\": \"Current div/error request counter is 35.\", \"source\": \"metrics.requests.div.error\", \"timestamp\": 1793569933.7977347}, {\"statement\": \"Cumulative div error rate is 35.00% (35 errors / 100 reported requests).\", \"source\": \"metrics.requests.div\", \"timestamp\": 1793569933.7977347}, {\"statement\": \"Baseline-period div/error request counter changed by 33.\", \"source\": \"baseline_comparison.request_deltas.div.error\", \"timestamp\": 1793569933.7977347}, {\"statement\": \"Current application version is '1.1'.\", \"source\": \"version.data.version\", \"timestamp\": 1793569614.5529604}, {\"statement\": \"Previous deployment version recorded by the application is '1.0'.\", \"source\": \"version.data.history[-2].version\", \"timestamp\": 1793569554.5529604}, {\"statement\": \"Deployment status is 'completed'.\", \"source\": \"version.data.deployment_status\", \"timestamp\": 1793569614.5529604}, {\"statement\": \"ERROR event: {\\\"level\\\": \\\"ERROR\\\", \\\"msg\\\": \\\"application timeout while handling request\\\", \\\"ts\\\": 1793569794.5529604}\", \"source\": \"logs.events[0]\", \"timestamp\": 1793569794.5529604}, {\"statement\": \"ERROR event: {\\\"level\\\": \\\"ERROR\\\", \\\"msg\\\": \\\"application timeout while handling request\\\", \\\"ts\\\": 1793569824.5529604}\", \"source\": \"logs.events[1]\", \"timestamp\": 1793569824.5529604}, {\"statement\": \"ERROR event: {\\\"level\\\": \\\"ERROR\\\", \\\"msg\\\": \\\"application timeout while handling request\\\", \\\"ts\\\": 1793569884.5529604}\", \"source\": \"logs.events[2]\", \"timestamp\": 1793569884.5529604}]}}"
+          }
+        ]
+      },
+      "overall_result": "PARTIAL",
+      "required_observations": [
+        {
+          "requirement": "Previous version",
+          "pattern": "(?<![\\w.])1\\.0(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Current version",
+          "pattern": "(?<![\\w.])1\\.1(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Previous error count",
+          "pattern": "(?<![\\w.])2(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Current error count",
+          "pattern": "(?<![\\w.])35(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Baseline latency",
+          "pattern": "(?<![\\w.])100(?:\\s*ms)?",
+          "identified": false
+        },
+        {
+          "requirement": "Current latency",
+          "pattern": "(?<![\\w.])900(?:\\s*ms)?",
+          "identified": false
+        },
+        {
+          "requirement": "Timeout log evidence",
+          "pattern": "\\btimeout",
+          "identified": false
+        }
+      ],
+      "missing_observations": [
+        "Previous version",
+        "Current version",
+        "Previous error count",
+        "Current error count",
+        "Baseline latency",
+        "Current latency",
+        "Timeout log evidence"
+      ],
+      "prohibited_claim_patterns": [],
+      "material_unsupported_claims": [],
+      "scenario_summary": "Triage this synthetic incident. Correlate deployment, counters, latency, and timestamped logs. Distinguish temporal correlation from confirmed causation. Recommend investigation only."
+    },
+    {
+      "agent": "code",
+      "assigned_model": "qwen2.5-coder:3b",
+      "reported_model": "qwen2.5-coder:3b",
+      "model_mapping_matches": true,
+      "model_available": true,
+      "routing_selected": true,
+      "routing_selected_agents": [
+        "incident",
+        "code"
+      ],
+      "inference_status": "ok",
+      "json_schema_valid": true,
+      "json_parse_error": null,
+      "analysis": {
+        "summary": "Identified edge case and suggested correction for division by zero in calculate_average function.",
+        "findings": [
+          "Insufficient evidence: The provided code snippet does not include any checks for an empty list before performing the division operation."
+        ],
+        "confidence": 0.5,
+        "recommended_checks": [
+          "Add a check to ensure the input list is not empty before calling calculate_average."
+        ]
+      },
+      "claims": [
+        {
+          "kind": "summary",
+          "text": "Identified edge case and suggested correction for division by zero in calculate_average function.",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Identified edge case and suggested correction for division by zero in calculate_average function.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Insufficient evidence: The provided code snippet does not include any checks for an empty list before performing the division operation.",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Insufficient evidence: The provided code snippet does not include any checks for an empty list before performing the division operation.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Add a check to ensure the input list is not empty before calling calculate_average.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Add a check to ensure the input list is not empty before calling calculate_average.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        }
+      ],
+      "raw_excerpt": "{\n  \"summary\": \"Identified edge case and suggested correction for division by zero in calculate_average function.\",\n  \"findings\": [\n    \"Insufficient evidence: The provided code snippet does not include any checks for an empty list before performing the division operation.\"\n  ],\n  \"confidence\": 0.5,\n  \"recommended_checks\": [\n    \"Add a check to ensure the input list is not empty before calling calculate_average.\"\n  ]\n}",
+      "raw_excerpt_truncated": false,
+      "latency_seconds": 6.3285326000186615,
+      "start_unix": 1793569939.4040766,
+      "end_unix": 1793569945.73285,
+      "previous_inference_end_perf": 146461.1860638,
+      "no_overlap_with_previous": true,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "ok",
+          "detail": null,
+          "done_reason": "stop",
+          "total_duration": 6321726600,
+          "wall_duration_seconds": 6.3278589000110514
+        }
+      ],
+      "retry": {
+        "attempted": false,
+        "status": "not_needed"
+      },
+      "retry_count": 0,
+      "validation_error": null,
+      "error_detail": null,
+      "ollama_processes_before": {
+        "models": []
+      },
+      "ollama_processes_after": {
+        "models": []
+      },
+      "expected_criteria": [
+        "Identifies the empty-list division-by-zero edge case.",
+        "Suggests a safe correction while stating it is only a suggestion.",
+        "Does not claim any change was applied or invent additional modifications."
+      ],
+      "original_synthetic_evidence": {
+        "code_changes": {
+          "status": "provided",
+          "source": "synthetic test snippet; no repository change made",
+          "source_code": "def calculate_average(values):\n    return sum(values) / len(values)\n",
+          "observed_failure": "An empty input list causes division by zero.",
+          "stack_trace": "Synthetic stack trace points to the division operation.",
+          "modification_status": "No source-code modification has been made."
+        },
+        "unavailable": [
+          "No other code changes or runtime telemetry were supplied."
+        ]
+      },
+      "graph_input_evidence": {
+        "captured_at": 1793569939.38902,
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "version": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "logs": {
+          "status": "unavailable",
+          "events": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        },
+        "code_changes": {
+          "status": "provided",
+          "source": "synthetic test snippet; no repository change made",
+          "source_code": "def calculate_average(values):\n    return sum(values) / len(values)\n",
+          "observed_failure": "An empty input list causes division by zero.",
+          "stack_trace": "Synthetic stack trace points to the division operation.",
+          "modification_status": "No source-code modification has been made."
+        }
+      },
+      "graph_shaped_evidence": {
+        "code_changes": {
+          "status": "provided",
+          "source": "synthetic test snippet; no repository change made",
+          "source_code": "def calculate_average(values):\n    return sum(values) / len(values)\n",
+          "observed_failure": "An empty input list causes division by zero.",
+          "stack_trace": "Synthetic stack trace points to the division operation.",
+          "modification_status": "No source-code modification has been made."
+        }
+      },
+      "prompt_diagnostics": {
+        "serialized_graph_evidence_characters": 403,
+        "serialized_prompt_evidence_characters": 403,
+        "system_prompt_characters": 1769,
+        "user_prompt_characters": 731,
+        "source_log_event_count": 0,
+        "prompt_log_event_count": 0,
+        "omitted_log_event_count": 0,
+        "log_truncation_applied": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cautious DevOps specialist. Use only supplied evidence. Follow this order: (1) extract directly observed facts, (2) compare relevant observations and timestamps, (3) label any explanation as an unconfirmed hypothesis, (4) name only genuinely unavailable relevant evidence, and (5) recommend checks without executing them. An unavailable source never makes a different source unavailable. Prioritize supplied values over generic missing-source notices. For each factual finding, include its exact evidence JSON path and observed value. Never invent or estimate metrics, percentages, thresholds, timestamps, deployment events, or facts. Do not use general industry thresholds as application-configured thresholds. Label claims that cannot be tied to evidence 'Unverified' and explain the missing evidence. Correlation is not causation; confidence is not proof. Do not claim to have run tools or inspected systems. If verified_observations is supplied, use it as a deterministic index of source-derived facts, retain its source paths/timestamps, and do not infer beyond those facts. When relevant evidence is genuinely insufficient, begin that finding with 'Insufficient evidence:'. For Docker claims, cite exact docker.containers paths and never invent container IDs, names, health, restart counts, or resource values. Null or unavailable values are not zero. Never issue commands or authorize changes. Return only the required JSON object with a concise summary, evidence-grounded findings, confidence from 0 to 1, and advisory recommended_checks. Review only supplied code_changes. Tie any defect to the supplied function/source and failure evidence. Present corrections as suggestions; never say code was changed or tested unless evidence explicitly says so."
+          },
+          {
+            "role": "user",
+            "content": "{\"task\": \"Review only the supplied synthetic source snippet and observed stack trace. Identify the edge case and suggest a safe code-level correction without claiming it has been applied. Do not invent other code changes.\", \"specialist_role\": \"Review supplied code-change evidence and identify likely regressions\", \"evidence\": {\"code_changes\": {\"status\": \"provided\", \"source\": \"synthetic test snippet; no repository change made\", \"source_code\": \"def calculate_average(values):\\n    return sum(values) / len(values)\\n\", \"observed_failure\": \"An empty input list causes division by zero.\", \"stack_trace\": \"Synthetic stack trace points to the division operation.\", \"modification_status\": \"No source-code modification has been made.\"}}}"
+          }
+        ]
+      },
+      "overall_result": "PASS",
+      "required_observations": [
+        {
+          "requirement": "Supplied function",
+          "pattern": "\\bcalculate_average\\b",
+          "identified": true
+        },
+        {
+          "requirement": "Empty input edge case",
+          "pattern": "\\bempty\\b",
+          "identified": true
+        },
+        {
+          "requirement": "Division failure",
+          "pattern": "\\bdivision by zero\\b|\\bdivide by zero\\b",
+          "identified": true
+        }
+      ],
+      "missing_observations": [],
+      "prohibited_claim_patterns": [],
+      "material_unsupported_claims": [],
+      "scenario_summary": "Review only the supplied synthetic source snippet and observed stack trace. Identify the edge case and suggest a safe code-level correction without claiming it has been applied. Do not invent other code changes."
+    },
+    {
+      "agent": "cicd",
+      "assigned_model": "stablelm-zephyr:3b",
+      "reported_model": "stablelm-zephyr:3b",
+      "model_mapping_matches": true,
+      "model_available": true,
+      "routing_selected": true,
+      "routing_selected_agents": [
+        "monitoring",
+        "incident",
+        "code",
+        "cicd",
+        "infrastructure"
+      ],
+      "inference_status": "ok",
+      "json_schema_valid": true,
+      "json_parse_error": null,
+      "analysis": {
+        "summary": "Analyzing synthetic deployment evidence",
+        "findings": [
+          "Deployment status is 'ok'.",
+          "Application health status is 'ok'.",
+          "Pipeline status is unavailable.",
+          "Health check status is unavailable.",
+          "Post-deployment error rate increased from pre-deployment (16.666.7%).",
+          "Baseline comparison indicates a regression signal and deployment has changed.",
+          "Prometheus metrics are unavailable."
+        ],
+        "confidence": 0.9,
+        "recommended_checks": [
+          "Check if there are any pipeline failures by reviewing the pipeline status.",
+          "Check if the health check is working correctly by running a health check manually.",
+          "Monitor post-deployment error rate over time to assess if it's increasing or decreasing.",
+          "Check if the baseline comparison indicates any issues with the new deployment."
+        ]
+      },
+      "claims": [
+        {
+          "kind": "summary",
+          "text": "Analyzing synthetic deployment evidence",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Analyzing synthetic deployment evidence",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Deployment status is 'ok'.",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Deployment status is 'ok'.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Application health status is 'ok'.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "health.data.status"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Application health status is 'ok'.",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "health.data.status"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Pipeline status is unavailable.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "pipeline.status"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Pipeline status is unavailable.",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "pipeline.status"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Health check status is unavailable.",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "health is not reported unavailable; supplied status health.status=ok, health.data.status=ok",
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Health check status is unavailable.",
+            "validation_status": "unverified",
+            "reasons": [
+              "health is not reported unavailable; supplied status health.status=ok, health.data.status=ok",
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Post-deployment error rate increased from pre-deployment (16.666.7%).",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "numeric claim 16.666 cannot be matched to supplied deployment evidence"
+          ],
+          "validation": {
+            "claim": "Post-deployment error rate increased from pre-deployment (16.666.7%).",
+            "validation_status": "unverified",
+            "reasons": [
+              "numeric claim 16.666 cannot be matched to supplied deployment evidence"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": [
+              {
+                "value": 16.666,
+                "unit": "number",
+                "topic": "deployment",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Baseline comparison indicates a regression signal and deployment has changed.",
+          "classification": "Unsupported or unverified claim",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "natural-language claim cannot be fully verified by conservative evidence checks"
+          ],
+          "validation": {
+            "claim": "Baseline comparison indicates a regression signal and deployment has changed.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Prometheus metrics are unavailable.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "prometheus.status"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Prometheus metrics are unavailable.",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "prometheus.status"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Check if there are any pipeline failures by reviewing the pipeline status.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Check if there are any pipeline failures by reviewing the pipeline status.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Check if the health check is working correctly by running a health check manually.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Check if the health check is working correctly by running a health check manually.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Monitor post-deployment error rate over time to assess if it's increasing or decreasing.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Monitor post-deployment error rate over time to assess if it's increasing or decreasing.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Check if the baseline comparison indicates any issues with the new deployment.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Check if the baseline comparison indicates any issues with the new deployment.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        }
+      ],
+      "raw_excerpt": "{\n  \"summary\": \"Analyzing synthetic deployment evidence\",\n  \"findings\": [\n    \"Deployment status is 'ok'.\",\n    \"Application health status is 'ok'.\",\n    \"Pipeline status is unavailable.\",\n    \"Health check status is unavailable.\",\n    \"Post-deployment error rate increased from pre-deployment (16.666.7%).\",\n    \"Baseline comparison indicates a regression signal and deployment has changed.\",\n    \"Prometheus metrics are unavailable.\"\n  ],\n  \"confidence\": 0.9,\n  \"recommended_checks\": [\n    \"Check if there are any pipeline failures by reviewing the pipeline status.\",\n    \"Check if the health check is working correctly by running a health check manually.\",\n    \"Monitor post-deployment error rate over time to assess if it's increasing or decreasing.\",\n    \"Check if the baseline comparison indicates any issues with the new deployment.\"\n  ]\n}",
+      "raw_excerpt_truncated": false,
+      "latency_seconds": 6.942842699994799,
+      "start_unix": 1793569945.8436258,
+      "end_unix": 1793569952.7863917,
+      "previous_inference_end_perf": 146467.6554793,
+      "no_overlap_with_previous": true,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "ok",
+          "detail": null,
+          "done_reason": "stop",
+          "total_duration": 6939755400,
+          "wall_duration_seconds": 6.942304900003364
+        }
+      ],
+      "retry": {
+        "attempted": false,
+        "status": "not_needed"
+      },
+      "retry_count": 0,
+      "validation_error": null,
+      "error_detail": null,
+      "ollama_processes_before": {
+        "models": []
+      },
+      "ollama_processes_after": {
+        "models": []
+      },
+      "expected_criteria": [
+        "Identifies successful deployment followed by increased errors.",
+        "Does not claim pipeline failure.",
+        "Distinguishes HTTP 200/health status from error-rate behavior.",
+        "Recommends investigation without executing deployment or rollback."
+      ],
+      "original_synthetic_evidence": {
+        "deployment": {
+          "source": "synthetic deployment record",
+          "previous_version": "1.0",
+          "current_version": "1.1",
+          "deployment_status": "completed successfully",
+          "timestamp": 1793569614.5529604
+        },
+        "application": {
+          "source": "synthetic application observations",
+          "error_rate_percent": 16.6667,
+          "post_deployment_error_rate_increased": true,
+          "health_http_status": 200,
+          "health_status": "ok"
+        },
+        "pipeline": {
+          "status": "unavailable",
+          "detail": "No CI pipeline failure evidence is available."
+        },
+        "unavailable": [
+          "Pipeline failure details are unavailable."
+        ]
+      },
+      "graph_input_evidence": {
+        "captured_at": 1793569945.8389623,
+        "health": {
+          "status": "ok",
+          "source": "synthetic application observations",
+          "timestamp": 1793569945.8389623,
+          "data": {
+            "status": "ok",
+            "http_status": 200
+          }
+        },
+        "metrics": {
+          "status": "ok",
+          "source": "synthetic application observations",
+          "timestamp": 1793569945.8389623,
+          "error_rate_percent": 16.6667,
+          "post_deployment_error_rate_increased": true
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "version": {
+          "status": "ok",
+          "source": "synthetic deployment record",
+          "timestamp": 1793569614.5529604,
+          "data": {
+            "version": "1.1",
+            "previous_version": "1.0",
+            "deployment_status": "completed successfully",
+            "pipeline": {
+              "status": "unavailable",
+              "detail": "No CI pipeline failure evidence is available."
+            }
+          }
+        },
+        "logs": {
+          "status": "unavailable",
+          "events": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        }
+      },
+      "graph_shaped_evidence": {
+        "health": {
+          "status": "ok",
+          "source": "synthetic application observations",
+          "timestamp": 1793569945.8389623,
+          "data": {
+            "status": "ok",
+            "http_status": 200
+          }
+        },
+        "metrics": {
+          "status": "ok",
+          "source": "synthetic application observations",
+          "timestamp": 1793569945.8389623,
+          "error_rate_percent": 16.6667,
+          "post_deployment_error_rate_increased": true
+        },
+        "deployment": {
+          "status": "ok",
+          "source": "synthetic deployment record",
+          "timestamp": 1793569614.5529604,
+          "data": {
+            "version": "1.1",
+            "previous_version": "1.0",
+            "deployment_status": "completed successfully",
+            "pipeline": {
+              "status": "unavailable",
+              "detail": "No CI pipeline failure evidence is available."
+            }
+          }
+        },
+        "pipeline": {
+          "status": "unavailable",
+          "detail": "No CI pipeline failure evidence is available."
+        },
+        "logs": {
+          "status": "unavailable",
+          "events": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "baseline_comparison": {
+          "regression_signal": true,
+          "deployment_changed": true
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        },
+        "verified_observations": [
+          {
+            "statement": "Health endpoint status is 'ok'.",
+            "source": "health.data.status",
+            "timestamp": 1793569945.8389623
+          },
+          {
+            "statement": "Current application version is '1.1'.",
+            "source": "version.data.version",
+            "timestamp": 1793569945.8389623
+          },
+          {
+            "statement": "Deployment status is 'completed successfully'.",
+            "source": "version.data.deployment_status",
+            "timestamp": 1793569945.8389623
+          }
+        ]
+      },
+      "prompt_diagnostics": {
+        "serialized_graph_evidence_characters": 1519,
+        "serialized_prompt_evidence_characters": 1519,
+        "system_prompt_characters": 1776,
+        "user_prompt_characters": 1796,
+        "source_log_event_count": 0,
+        "prompt_log_event_count": 0,
+        "omitted_log_event_count": 0,
+        "log_truncation_applied": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cautious DevOps specialist. Use only supplied evidence. Follow this order: (1) extract directly observed facts, (2) compare relevant observations and timestamps, (3) label any explanation as an unconfirmed hypothesis, (4) name only genuinely unavailable relevant evidence, and (5) recommend checks without executing them. An unavailable source never makes a different source unavailable. Prioritize supplied values over generic missing-source notices. For each factual finding, include its exact evidence JSON path and observed value. Never invent or estimate metrics, percentages, thresholds, timestamps, deployment events, or facts. Do not use general industry thresholds as application-configured thresholds. Label claims that cannot be tied to evidence 'Unverified' and explain the missing evidence. Correlation is not causation; confidence is not proof. Do not claim to have run tools or inspected systems. If verified_observations is supplied, use it as a deterministic index of source-derived facts, retain its source paths/timestamps, and do not infer beyond those facts. When relevant evidence is genuinely insufficient, begin that finding with 'Insufficient evidence:'. For Docker claims, cite exact docker.containers paths and never invent container IDs, names, health, restart counts, or resource values. Null or unavailable values are not zero. Never issue commands or authorize changes. Return only the required JSON object with a concise summary, evidence-grounded findings, confidence from 0 to 1, and advisory recommended_checks. Report deployment status, pipeline status, health-check status, and post-deployment metrics as separate facts. Missing pipeline evidence does not negate a supplied deployment or health result. Never deploy or roll back."
+          },
+          {
+            "role": "user",
+            "content": "{\"task\": \"Analyze this synthetic deployment evidence. Distinguish deployment success from application health and pipeline status. Recommend verification steps only; do not deploy or roll back.\", \"specialist_role\": \"Analyze CI/CD deployment and pipeline evidence\", \"evidence\": {\"health\": {\"status\": \"ok\", \"source\": \"synthetic application observations\", \"timestamp\": 1793569945.8389623, \"data\": {\"status\": \"ok\", \"http_status\": 200}}, \"metrics\": {\"status\": \"ok\", \"source\": \"synthetic application observations\", \"timestamp\": 1793569945.8389623, \"error_rate_percent\": 16.6667, \"post_deployment_error_rate_increased\": true}, \"deployment\": {\"status\": \"ok\", \"source\": \"synthetic deployment record\", \"timestamp\": 1793569614.5529604, \"data\": {\"version\": \"1.1\", \"previous_version\": \"1.0\", \"deployment_status\": \"completed successfully\", \"pipeline\": {\"status\": \"unavailable\", \"detail\": \"No CI pipeline failure evidence is available.\"}}}, \"pipeline\": {\"status\": \"unavailable\", \"detail\": \"No CI pipeline failure evidence is available.\"}, \"logs\": {\"status\": \"unavailable\", \"events\": [], \"detail\": \"Not supplied in this fixture\"}, \"docker\": {\"status\": \"unavailable\", \"containers\": [], \"detail\": \"Not supplied in this fixture\"}, \"baseline_comparison\": {\"regression_signal\": true, \"deployment_changed\": true}, \"prometheus\": {\"status\": \"unavailable\", \"metrics\": {}, \"detail\": \"Not supplied in this fixture\"}, \"verified_observations\": [{\"statement\": \"Health endpoint status is 'ok'.\", \"source\": \"health.data.status\", \"timestamp\": 1793569945.8389623}, {\"statement\": \"Current application version is '1.1'.\", \"source\": \"version.data.version\", \"timestamp\": 1793569945.8389623}, {\"statement\": \"Deployment status is 'completed successfully'.\", \"source\": \"version.data.deployment_status\", \"timestamp\": 1793569945.8389623}]}}"
+          }
+        ]
+      },
+      "overall_result": "PARTIAL",
+      "required_observations": [
+        {
+          "requirement": "Previous version",
+          "pattern": "(?<![\\w.])1\\.0(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Current version",
+          "pattern": "(?<![\\w.])1\\.1(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Deployment completion",
+          "pattern": "\\bcompleted\\b|\\bsuccessful\\b",
+          "identified": false
+        },
+        {
+          "requirement": "Health response",
+          "pattern": "(?<![\\w.])200(?![\\w.])",
+          "identified": false
+        },
+        {
+          "requirement": "Post-deployment error rate",
+          "pattern": "16\\.6667",
+          "identified": false
+        }
+      ],
+      "missing_observations": [
+        "Previous version",
+        "Current version",
+        "Deployment completion",
+        "Health response",
+        "Post-deployment error rate"
+      ],
+      "prohibited_claim_patterns": [],
+      "material_unsupported_claims": [
+        {
+          "kind": "findings",
+          "text": "Health check status is unavailable.",
+          "reasons": [
+            "health is not reported unavailable; supplied status health.status=ok, health.data.status=ok"
+          ]
+        },
+        {
+          "kind": "findings",
+          "text": "Post-deployment error rate increased from pre-deployment (16.666.7%).",
+          "reasons": [
+            "numeric claim 16.666 cannot be matched to supplied deployment evidence"
+          ]
+        }
+      ],
+      "scenario_summary": "Analyze this synthetic deployment evidence. Distinguish deployment success from application health and pipeline status. Recommend verification steps only; do not deploy or roll back."
+    },
+    {
+      "agent": "infrastructure",
+      "assigned_model": "phi3.5:3.8b",
+      "reported_model": "phi3.5:3.8b",
+      "model_mapping_matches": true,
+      "model_available": true,
+      "routing_selected": true,
+      "routing_selected_agents": [
+        "monitoring",
+        "infrastructure"
+      ],
+      "inference_status": "ok",
+      "json_schema_valid": true,
+      "json_parse_error": null,
+      "analysis": {
+        "summary": "Container 'synthetic-calculator' (ID: synthetic-container-001) is running with a CPU usage of 92% and memory usage of 734003200 bytes (700 MiB). The host process memory usage is 60 MiB. No health status, restart count, or Prometheus metrics are available.",
+        "findings": [
+          "Container ID: synthetic-container-001 (evidence: {"
+        ],
+        "confidence": 1.0,
+        "recommended_checks": [
+          "Check if the high CPU usage of the container is within acceptable limits for the application's requirements."
+        ]
+      },
+      "claims": [
+        {
+          "kind": "summary",
+          "text": "Container 'synthetic-calculator' (ID: synthetic-container-001) is running with a CPU usage of 92% and memory usage of 734003200 bytes (700 MiB). The host process memory usage is 60 MiB. No health status, restart count, or Prometheus metrics are available.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "numbers_supported",
+          "evidence_refs": [
+            "docker.containers[0].cpu_usage_percent",
+            "docker.containers[0].id",
+            "docker.containers[0].memory_usage_bytes",
+            "docker.containers[0].memory_usage_mib",
+            "docker.containers[0].status",
+            "health.status",
+            "system_metrics.host_process_memory_mib"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Container 'synthetic-calculator' (ID: synthetic-container-001) is running with a CPU usage of 92% and memory usage of 734003200 bytes (700 MiB). The host process memory usage is 60 MiB. No health status, restart count, or Prometheus metrics are available.",
+            "validation_status": "numbers_supported",
+            "reasons": [],
+            "evidence_refs": [
+              "docker.containers[0].cpu_usage_percent",
+              "docker.containers[0].id",
+              "docker.containers[0].memory_usage_bytes",
+              "docker.containers[0].memory_usage_mib",
+              "docker.containers[0].status",
+              "health.status",
+              "system_metrics.host_process_memory_mib"
+            ],
+            "numeric_claims": [
+              {
+                "value": 92.0,
+                "unit": "percent",
+                "topic": "cpu",
+                "is_threshold": false
+              },
+              {
+                "value": 734003200.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              },
+              {
+                "value": 700.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              },
+              {
+                "value": 60.0,
+                "unit": "number",
+                "topic": "memory",
+                "is_threshold": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Container ID: synthetic-container-001 (evidence: {",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "docker.containers[0].id"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Container ID: synthetic-container-001 (evidence: {",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "docker.containers[0].id"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Check if the high CPU usage of the container is within acceptable limits for the application's requirements.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Check if the high CPU usage of the container is within acceptable limits for the application's requirements.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        }
+      ],
+      "raw_excerpt": "{\n  \"summary\": \"Container 'synthetic-calculator' (ID: synthetic-container-001) is running with a CPU usage of 92% and memory usage of 734003200 bytes (700 MiB). The host process memory usage is 60 MiB. No health status, restart count, or Prometheus metrics are available.\",\n  \"findings\": [\n    \"Container ID: synthetic-container-001 (evidence: {\"\n   \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t],\"confidence\": 1,\n    \"recommended_checks\": [\"Check if the high CPU usage of the container is within acceptable limits for the application's requirements.\"]\n  }",
+      "raw_excerpt_truncated": false,
+      "latency_seconds": 7.487865700008115,
+      "start_unix": 1793569952.884943,
+      "end_unix": 1793569960.3727446,
+      "previous_inference_end_perf": 146474.709202,
+      "no_overlap_with_previous": true,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "ok",
+          "detail": null,
+          "done_reason": "stop",
+          "total_duration": 7479635400,
+          "wall_duration_seconds": 7.4870153999945614
+        }
+      ],
+      "retry": {
+        "attempted": false,
+        "status": "not_needed"
+      },
+      "retry_count": 0,
+      "validation_error": null,
+      "error_detail": null,
+      "ollama_processes_before": {
+        "models": []
+      },
+      "ollama_processes_after": {
+        "models": []
+      },
+      "expected_criteria": [
+        "Reports running/healthy status and zero restarts accurately.",
+        "Identifies 92% CPU as observed resource pressure without calling the container unhealthy.",
+        "Distinguishes 700 MiB container memory from 60 MiB process memory.",
+        "Does not invent disk, network, or root-cause evidence."
+      ],
+      "original_synthetic_evidence": {
+        "docker": {
+          "status": "ok",
+          "source": "synthetic Docker telemetry fixture",
+          "timestamp": 1793569914.5529604,
+          "containers": [
+            {
+              "id": "synthetic-container-001",
+              "name": "synthetic-calculator",
+              "status": "running",
+              "health_status": "healthy",
+              "restart_count": 0,
+              "cpu_usage_percent": 92,
+              "memory_usage_bytes": 734003200,
+              "memory_usage_mib": 700
+            }
+          ]
+        },
+        "process": {
+          "source": "synthetic process metrics fixture",
+          "timestamp": 1793569914.5529604,
+          "host_process_memory_bytes": 62914560,
+          "host_process_memory_mib": 60
+        },
+        "unavailable": [
+          "No disk, network, or broader host utilization measurements were supplied."
+        ]
+      },
+      "graph_input_evidence": {
+        "captured_at": 1793569952.8812094,
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "system_metrics": {
+          "status": "ok",
+          "source": "synthetic process metrics fixture",
+          "timestamp": 1793569914.5529604,
+          "host_process_memory_bytes": 62914560,
+          "host_process_memory_mib": 60
+        },
+        "version": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "logs": {
+          "status": "unavailable",
+          "events": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "docker": {
+          "status": "ok",
+          "source": "synthetic Docker telemetry fixture",
+          "timestamp": 1793569914.5529604,
+          "containers": [
+            {
+              "id": "synthetic-container-001",
+              "name": "synthetic-calculator",
+              "status": "running",
+              "health_status": "healthy",
+              "restart_count": 0,
+              "cpu_usage_percent": 92,
+              "memory_usage_bytes": 734003200,
+              "memory_usage_mib": 700
+            }
+          ]
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        }
+      },
+      "graph_shaped_evidence": {
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "system_metrics": {
+          "status": "ok",
+          "source": "synthetic process metrics fixture",
+          "timestamp": 1793569914.5529604,
+          "host_process_memory_bytes": 62914560,
+          "host_process_memory_mib": 60
+        },
+        "docker": {
+          "status": "ok",
+          "source": "synthetic Docker telemetry fixture",
+          "timestamp": 1793569914.5529604,
+          "containers": [
+            {
+              "id": "synthetic-container-001",
+              "name": "synthetic-calculator",
+              "status": "running",
+              "health_status": "healthy",
+              "restart_count": 0,
+              "cpu_usage_percent": 92,
+              "memory_usage_bytes": 734003200,
+              "memory_usage_mib": 700
+            }
+          ]
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        },
+        "baseline_comparison": {
+          "regression_signal": false,
+          "deployment_changed": false
+        },
+        "verified_observations": [
+          {
+            "statement": "Container ID is 'synthetic-container-001'.",
+            "source": "docker.containers[0].id",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Container name is 'synthetic-calculator'.",
+            "source": "docker.containers[0].name",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Container status is 'running'.",
+            "source": "docker.containers[0].status",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Container health status is 'healthy'.",
+            "source": "docker.containers[0].health_status",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Container restart count is 0.",
+            "source": "docker.containers[0].restart_count",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Container CPU usage is 92%.",
+            "source": "docker.containers[0].cpu_usage_percent",
+            "timestamp": 1793569914.5529604
+          },
+          {
+            "statement": "Container memory usage bytes is 734003200.",
+            "source": "docker.containers[0].memory_usage_bytes",
+            "timestamp": 1793569914.5529604
+          }
+        ]
+      },
+      "prompt_diagnostics": {
+        "serialized_graph_evidence_characters": 1746,
+        "serialized_prompt_evidence_characters": 1746,
+        "system_prompt_characters": 1799,
+        "user_prompt_characters": 2057,
+        "source_log_event_count": 0,
+        "prompt_log_event_count": 0,
+        "omitted_log_event_count": 0,
+        "log_truncation_applied": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cautious DevOps specialist. Use only supplied evidence. Follow this order: (1) extract directly observed facts, (2) compare relevant observations and timestamps, (3) label any explanation as an unconfirmed hypothesis, (4) name only genuinely unavailable relevant evidence, and (5) recommend checks without executing them. An unavailable source never makes a different source unavailable. Prioritize supplied values over generic missing-source notices. For each factual finding, include its exact evidence JSON path and observed value. Never invent or estimate metrics, percentages, thresholds, timestamps, deployment events, or facts. Do not use general industry thresholds as application-configured thresholds. Label claims that cannot be tied to evidence 'Unverified' and explain the missing evidence. Correlation is not causation; confidence is not proof. Do not claim to have run tools or inspected systems. If verified_observations is supplied, use it as a deterministic index of source-derived facts, retain its source paths/timestamps, and do not infer beyond those facts. When relevant evidence is genuinely insufficient, begin that finding with 'Insufficient evidence:'. For Docker claims, cite exact docker.containers paths and never invent container IDs, names, health, restart counts, or resource values. Null or unavailable values are not zero. Never issue commands or authorize changes. Return only the required JSON object with a concise summary, evidence-grounded findings, confidence from 0 to 1, and advisory recommended_checks. Report container status and health separately. Include available CPU, memory, restart, network, and block-I/O observations. Keep container metrics separate from host/process metrics and do not infer resource exhaustion from utilization alone."
+          },
+          {
+            "role": "user",
+            "content": "{\"task\": \"Interpret this synthetic Docker and process telemetry. Keep container and host-process memory separate. State resource pressure as an observation and do not invent root causes or unprovided metrics. Recommend checks only.\", \"specialist_role\": \"Recommend safe infrastructure remediation\", \"evidence\": {\"health\": {\"status\": \"unavailable\", \"detail\": \"Not supplied in this fixture\"}, \"system_metrics\": {\"status\": \"ok\", \"source\": \"synthetic process metrics fixture\", \"timestamp\": 1793569914.5529604, \"host_process_memory_bytes\": 62914560, \"host_process_memory_mib\": 60}, \"docker\": {\"status\": \"ok\", \"source\": \"synthetic Docker telemetry fixture\", \"timestamp\": 1793569914.5529604, \"containers\": [{\"id\": \"synthetic-container-001\", \"name\": \"synthetic-calculator\", \"status\": \"running\", \"health_status\": \"healthy\", \"restart_count\": 0, \"cpu_usage_percent\": 92, \"memory_usage_bytes\": 734003200, \"memory_usage_mib\": 700}]}, \"prometheus\": {\"status\": \"unavailable\", \"metrics\": {}, \"detail\": \"Not supplied in this fixture\"}, \"baseline_comparison\": {\"regression_signal\": false, \"deployment_changed\": false}, \"verified_observations\": [{\"statement\": \"Container ID is 'synthetic-container-001'.\", \"source\": \"docker.containers[0].id\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Container name is 'synthetic-calculator'.\", \"source\": \"docker.containers[0].name\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Container status is 'running'.\", \"source\": \"docker.containers[0].status\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Container health status is 'healthy'.\", \"source\": \"docker.containers[0].health_status\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Container restart count is 0.\", \"source\": \"docker.containers[0].restart_count\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Container CPU usage is 92%.\", \"source\": \"docker.containers[0].cpu_usage_percent\", \"timestamp\": 1793569914.5529604}, {\"statement\": \"Container memory usage bytes is 734003200.\", \"source\": \"docker.containers[0].memory_usage_bytes\", \"timestamp\": 1793569914.5529604}]}}"
+          }
+        ]
+      },
+      "overall_result": "PARTIAL",
+      "required_observations": [
+        {
+          "requirement": "Container name",
+          "pattern": "\\bsynthetic-calculator\\b",
+          "identified": true
+        },
+        {
+          "requirement": "Running state",
+          "pattern": "\\brunning\\b",
+          "identified": true
+        },
+        {
+          "requirement": "Healthy state",
+          "pattern": "\\bhealthy\\b",
+          "identified": false
+        },
+        {
+          "requirement": "Zero restarts",
+          "pattern": "\\b0\\s+restarts?\\b|\\brestart count\\s*(?:is|=|:)?\\s*0\\b",
+          "identified": false
+        },
+        {
+          "requirement": "Container CPU",
+          "pattern": "(?<![\\w.])92\\s*%",
+          "identified": true
+        },
+        {
+          "requirement": "Container memory",
+          "pattern": "(?<![\\w.])700\\s*MiB",
+          "identified": true
+        },
+        {
+          "requirement": "Process memory",
+          "pattern": "(?<![\\w.])60\\s*MiB",
+          "identified": true
+        }
+      ],
+      "missing_observations": [
+        "Healthy state",
+        "Zero restarts"
+      ],
+      "prohibited_claim_patterns": [],
+      "material_unsupported_claims": [],
+      "scenario_summary": "Interpret this synthetic Docker and process telemetry. Keep container and host-process memory separate. State resource pressure as an observation and do not invent root causes or unprovided metrics. Recommend checks only."
+    },
+    {
+      "agent": "security",
+      "assigned_model": "granite3.1-dense:2b",
+      "reported_model": "granite3.1-dense:2b",
+      "model_mapping_matches": true,
+      "model_available": true,
+      "routing_selected": true,
+      "routing_selected_agents": [
+        "security"
+      ],
+      "inference_status": "ok",
+      "json_schema_valid": true,
+      "json_parse_error": null,
+      "analysis": {
+        "summary": "Synthetic authentication events indicate repeated failed login attempts for user 'demo' from IP 192.0.2.10, followed by a successful login.",
+        "findings": [
+          "Repeated failed authentication attempts for user 'demo' from IP 192.0.2.10 at timestamps 2026-11-01T21:51:09Z, 2026-11-01T21:51:14Z, and 2026-11-01T21:51:19Z.",
+          "Successful authentication for user 'demo' from IP 192.0.2.10 at timestamp 2026-11-01T21:51:24Z."
+        ],
+        "confidence": 1.0,
+        "recommended_checks": [
+          "Verify the configuration of the synthetic security log fixture to ensure it accurately captures authentication events.",
+          "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.",
+          "Review the security policies and access controls for user 'demo' to ensure they are appropriately configured and enforced."
+        ]
+      },
+      "claims": [
+        {
+          "kind": "summary",
+          "text": "Synthetic authentication events indicate repeated failed login attempts for user 'demo' from IP 192.0.2.10, followed by a successful login.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "security_events.events[0].msg",
+            "security_events.events[1].msg",
+            "security_events.events[2].msg",
+            "security_events.events[3].msg"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Synthetic authentication events indicate repeated failed login attempts for user 'demo' from IP 192.0.2.10, followed by a successful login.",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "security_events.events[0].msg",
+              "security_events.events[1].msg",
+              "security_events.events[2].msg",
+              "security_events.events[3].msg"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Repeated failed authentication attempts for user 'demo' from IP 192.0.2.10 at timestamps 2026-11-01T21:51:09Z, 2026-11-01T21:51:14Z, and 2026-11-01T21:51:19Z.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "security_events.events[0].msg",
+            "security_events.events[0].ts",
+            "security_events.events[1].msg",
+            "security_events.events[1].ts",
+            "security_events.events[2].msg",
+            "security_events.events[2].ts",
+            "security_events.events[3].msg"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Repeated failed authentication attempts for user 'demo' from IP 192.0.2.10 at timestamps 2026-11-01T21:51:09Z, 2026-11-01T21:51:14Z, and 2026-11-01T21:51:19Z.",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "security_events.events[0].msg",
+              "security_events.events[0].ts",
+              "security_events.events[1].msg",
+              "security_events.events[1].ts",
+              "security_events.events[2].msg",
+              "security_events.events[2].ts",
+              "security_events.events[3].msg"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "findings",
+          "text": "Successful authentication for user 'demo' from IP 192.0.2.10 at timestamp 2026-11-01T21:51:24Z.",
+          "classification": "Supported observation / evidence-linked claim",
+          "validation_status": "evidence_linked",
+          "evidence_refs": [
+            "security_events.events[0].msg",
+            "security_events.events[1].msg",
+            "security_events.events[2].msg",
+            "security_events.events[3].msg",
+            "security_events.events[3].ts"
+          ],
+          "reasons": [],
+          "validation": {
+            "claim": "Successful authentication for user 'demo' from IP 192.0.2.10 at timestamp 2026-11-01T21:51:24Z.",
+            "validation_status": "evidence_linked",
+            "reasons": [],
+            "evidence_refs": [
+              "security_events.events[0].msg",
+              "security_events.events[1].msg",
+              "security_events.events[2].msg",
+              "security_events.events[3].msg",
+              "security_events.events[3].ts"
+            ],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Verify the configuration of the synthetic security log fixture to ensure it accurately captures authentication events.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Verify the configuration of the synthetic security log fixture to ensure it accurately captures authentication events.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.",
+          "classification": "Recommendation with unsupported premise",
+          "validation_status": "unverified",
+          "evidence_refs": [],
+          "reasons": [
+            "security classification or threat attribution claim 'brute force' is not verified by the supplied evidence"
+          ],
+          "validation": {
+            "claim": "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.",
+            "validation_status": "unverified",
+            "reasons": [
+              "security classification or threat attribution claim 'brute force' is not verified by the supplied evidence",
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        },
+        {
+          "kind": "recommended_check",
+          "text": "Review the security policies and access controls for user 'demo' to ensure they are appropriately configured and enforced.",
+          "classification": "Recommendation (not executed)",
+          "validation_status": "advisory",
+          "evidence_refs": [],
+          "reasons": [],
+          "validation": {
+            "claim": "Review the security policies and access controls for user 'demo' to ensure they are appropriately configured and enforced.",
+            "validation_status": "unverified",
+            "reasons": [
+              "natural-language claim cannot be fully verified by conservative evidence checks"
+            ],
+            "evidence_refs": [],
+            "numeric_claims": []
+          }
+        }
+      ],
+      "raw_excerpt": "{\n  \"summary\": \"Synthetic authentication events indicate repeated failed login attempts for user 'demo' from IP 192.0.2.10, followed by a successful login.\",\n  \"findings\": [\n    \"Repeated failed authentication attempts for user 'demo' from IP 192.0.2.10 at timestamps 2026-11-01T21:51:09Z, 2026-11-01T21:51:14Z, and 2026-11-01T21:51:19Z.\",\n    \"Successful authentication for user 'demo' from IP 192.0.2.10 at timestamp 2026-11-01T21:51:24Z.\"\n  ],\n  \"confidence\": 1,\n  \"recommended_checks\": [\n    \"Verify the configuration of the synthetic security log fixture to ensure it accurately captures authentication events.\",\n    \"Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.\",\n    \"Review the security policies and access controls for user 'demo' to ensure they are appropriately configured and enforced.\"\n  ]\n}",
+      "raw_excerpt_truncated": false,
+      "latency_seconds": 7.305010000010952,
+      "start_unix": 1793569960.486308,
+      "end_unix": 1793569967.7911377,
+      "previous_inference_end_perf": 146482.2956002,
+      "no_overlap_with_previous": true,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "ok",
+          "detail": null,
+          "done_reason": "stop",
+          "total_duration": 7301479500,
+          "wall_duration_seconds": 7.304444399982458
+        }
+      ],
+      "retry": {
+        "attempted": false,
+        "status": "not_needed"
+      },
+      "retry_count": 0,
+      "validation_error": null,
+      "error_detail": null,
+      "ollama_processes_before": {
+        "models": []
+      },
+      "ollama_processes_after": {
+        "models": []
+      },
+      "expected_criteria": [
+        "Identifies the repeated failed logins and subsequent successful login.",
+        "Treats the sequence as potentially suspicious, not confirmed malicious or compromised.",
+        "Preserves supplied timestamps and the synthetic source IP accurately.",
+        "Does not invent geolocation, reputation, or threat-intelligence claims."
+      ],
+      "original_synthetic_evidence": {
+        "logs": {
+          "status": "ok",
+          "source": "explicitly synthetic security log fixture",
+          "events": [
+            {
+              "ts": "2026-11-01T21:51:09Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:14Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:19Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:24Z",
+              "level": "INFO",
+              "msg": "authentication successful login user=demo source_ip=192.0.2.10"
+            }
+          ]
+        },
+        "security_telemetry": {
+          "status": "unavailable",
+          "detail": "No threat-intelligence or account-compromise evidence supplied."
+        }
+      },
+      "graph_input_evidence": {
+        "captured_at": 1793569960.4814923,
+        "health": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "system_metrics": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture",
+          "measurements": {}
+        },
+        "version": {
+          "status": "unavailable",
+          "detail": "Not supplied in this fixture"
+        },
+        "logs": {
+          "status": "ok",
+          "source": "explicitly synthetic security log fixture",
+          "events": [
+            {
+              "ts": "2026-11-01T21:51:09Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:14Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:19Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:24Z",
+              "level": "INFO",
+              "msg": "authentication successful login user=demo source_ip=192.0.2.10"
+            }
+          ]
+        },
+        "docker": {
+          "status": "unavailable",
+          "containers": [],
+          "detail": "Not supplied in this fixture"
+        },
+        "prometheus": {
+          "status": "unavailable",
+          "metrics": {},
+          "detail": "Not supplied in this fixture"
+        }
+      },
+      "graph_shaped_evidence": {
+        "security_events": {
+          "status": "ok",
+          "source": "explicitly synthetic security log fixture",
+          "timestamp": 1793569960.4814923,
+          "events": [
+            {
+              "ts": "2026-11-01T21:51:09Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:14Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:19Z",
+              "level": "WARN",
+              "msg": "authentication failed login user=demo source_ip=192.0.2.10"
+            },
+            {
+              "ts": "2026-11-01T21:51:24Z",
+              "level": "INFO",
+              "msg": "authentication successful login user=demo source_ip=192.0.2.10"
+            }
+          ],
+          "detail": "Only security-related log events are supplied; no dedicated security event source is configured."
+        },
+        "security_telemetry": {
+          "status": "unavailable",
+          "detail": "No dedicated security event source is configured."
+        },
+        "verified_observations": [
+          {
+            "statement": "authentication failed login user=demo source_ip=192.0.2.10",
+            "source": "security_events.events[0].msg",
+            "timestamp": "2026-11-01T21:51:09Z"
+          },
+          {
+            "statement": "authentication failed login user=demo source_ip=192.0.2.10",
+            "source": "security_events.events[1].msg",
+            "timestamp": "2026-11-01T21:51:14Z"
+          },
+          {
+            "statement": "authentication failed login user=demo source_ip=192.0.2.10",
+            "source": "security_events.events[2].msg",
+            "timestamp": "2026-11-01T21:51:19Z"
+          },
+          {
+            "statement": "authentication successful login user=demo source_ip=192.0.2.10",
+            "source": "security_events.events[3].msg",
+            "timestamp": "2026-11-01T21:51:24Z"
+          }
+        ]
+      },
+      "prompt_diagnostics": {
+        "serialized_graph_evidence_characters": 1494,
+        "serialized_prompt_evidence_characters": 1494,
+        "system_prompt_characters": 1965,
+        "user_prompt_characters": 1857,
+        "source_log_event_count": 0,
+        "prompt_log_event_count": 0,
+        "omitted_log_event_count": 0,
+        "log_truncation_applied": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cautious DevOps specialist. Use only supplied evidence. Follow this order: (1) extract directly observed facts, (2) compare relevant observations and timestamps, (3) label any explanation as an unconfirmed hypothesis, (4) name only genuinely unavailable relevant evidence, and (5) recommend checks without executing them. An unavailable source never makes a different source unavailable. Prioritize supplied values over generic missing-source notices. For each factual finding, include its exact evidence JSON path and observed value. Never invent or estimate metrics, percentages, thresholds, timestamps, deployment events, or facts. Do not use general industry thresholds as application-configured thresholds. Label claims that cannot be tied to evidence 'Unverified' and explain the missing evidence. Correlation is not causation; confidence is not proof. Do not claim to have run tools or inspected systems. If verified_observations is supplied, use it as a deterministic index of source-derived facts, retain its source paths/timestamps, and do not infer beyond those facts. When relevant evidence is genuinely insufficient, begin that finding with 'Insufficient evidence:'. For Docker claims, cite exact docker.containers paths and never invent container IDs, names, health, restart counts, or resource values. Null or unavailable values are not zero. Never issue commands or authorize changes. Return only the required JSON object with a concise summary, evidence-grounded findings, confidence from 0 to 1, and advisory recommended_checks. Use only supplied security-related events. Preserve event timestamps and source IPs exactly; identify repeated failures and a subsequent success when present. Distinguish suspicious behavior from confirmed compromise. Do not infer attacker intent, attack classification, geolocation, IP reputation, or threat intelligence without explicit supporting event evidence. Do not describe supplied events as absent."
+          },
+          {
+            "role": "user",
+            "content": "{\"task\": \"Triage only the synthetic authentication events. Identify the recorded failed and successful login sequence. Treat suspicious intent as a hypothesis, not confirmed compromise. Do not invent geolocation, reputation, threat intelligence, or attacker attribution.\", \"specialist_role\": \"Triage security signals and recommend defensive checks\", \"evidence\": {\"security_events\": {\"status\": \"ok\", \"source\": \"explicitly synthetic security log fixture\", \"timestamp\": 1793569960.4814923, \"events\": [{\"ts\": \"2026-11-01T21:51:09Z\", \"level\": \"WARN\", \"msg\": \"authentication failed login user=demo source_ip=192.0.2.10\"}, {\"ts\": \"2026-11-01T21:51:14Z\", \"level\": \"WARN\", \"msg\": \"authentication failed login user=demo source_ip=192.0.2.10\"}, {\"ts\": \"2026-11-01T21:51:19Z\", \"level\": \"WARN\", \"msg\": \"authentication failed login user=demo source_ip=192.0.2.10\"}, {\"ts\": \"2026-11-01T21:51:24Z\", \"level\": \"INFO\", \"msg\": \"authentication successful login user=demo source_ip=192.0.2.10\"}], \"detail\": \"Only security-related log events are supplied; no dedicated security event source is configured.\"}, \"security_telemetry\": {\"status\": \"unavailable\", \"detail\": \"No dedicated security event source is configured.\"}, \"verified_observations\": [{\"statement\": \"authentication failed login user=demo source_ip=192.0.2.10\", \"source\": \"security_events.events[0].msg\", \"timestamp\": \"2026-11-01T21:51:09Z\"}, {\"statement\": \"authentication failed login user=demo source_ip=192.0.2.10\", \"source\": \"security_events.events[1].msg\", \"timestamp\": \"2026-11-01T21:51:14Z\"}, {\"statement\": \"authentication failed login user=demo source_ip=192.0.2.10\", \"source\": \"security_events.events[2].msg\", \"timestamp\": \"2026-11-01T21:51:19Z\"}, {\"statement\": \"authentication successful login user=demo source_ip=192.0.2.10\", \"source\": \"security_events.events[3].msg\", \"timestamp\": \"2026-11-01T21:51:24Z\"}]}}"
+          }
+        ]
+      },
+      "overall_result": "PARTIAL",
+      "required_observations": [
+        {
+          "requirement": "Synthetic source IP",
+          "pattern": "192\\.0\\.2\\.10",
+          "identified": true
+        },
+        {
+          "requirement": "Repeated failed logins",
+          "pattern": "\\b(?:3|three)\\b.{0,30}\\bfailed\\b|\\brepeated\\b.{0,30}\\bfailed\\b",
+          "identified": true
+        },
+        {
+          "requirement": "Subsequent successful login",
+          "pattern": "\\bsuccessful login\\b|\\bauthentication successful\\b",
+          "identified": true
+        },
+        {
+          "requirement": "Event timestamp 2026-11-01T21:51:09Z",
+          "pattern": "2026\\-11\\-01T21:51:09Z",
+          "identified": true
+        },
+        {
+          "requirement": "Event timestamp 2026-11-01T21:51:14Z",
+          "pattern": "2026\\-11\\-01T21:51:14Z",
+          "identified": true
+        },
+        {
+          "requirement": "Event timestamp 2026-11-01T21:51:19Z",
+          "pattern": "2026\\-11\\-01T21:51:19Z",
+          "identified": true
+        },
+        {
+          "requirement": "Event timestamp 2026-11-01T21:51:24Z",
+          "pattern": "2026\\-11\\-01T21:51:24Z",
+          "identified": true
+        }
+      ],
+      "missing_observations": [],
+      "prohibited_claim_patterns": [],
+      "material_unsupported_claims": [
+        {
+          "kind": "recommended_check",
+          "text": "Investigate the source of repeated failed login attempts, including potential brute force attacks or unauthorized access attempts.",
+          "reasons": [
+            "security classification or threat attribution claim 'brute force' is not verified by the supplied evidence"
+          ]
+        }
+      ],
+      "scenario_summary": "Triage only the synthetic authentication events. Identify the recorded failed and successful login sequence. Treat suspicious intent as a hypothesis, not confirmed compromise. Do not invent geolocation, reputation, threat intelligence, or attacker attribution."
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "inference_ok": 6,
+    "schema_valid": 6,
+    "skipped": 0,
+    "failed": 0,
+    "pass": 1,
+    "partial": 5,
+    "total_inference_seconds": 43.1426812,
+    "total_wall_seconds": 43.182931900024414
+  },
+  "safety": {
+    "model_config_sha256_before": "77b280bf84936684c3e82183747ebdea8ba13ac051bf643ba353baf3f0caf935",
+    "model_config_sha256_after": "77b280bf84936684c3e82183747ebdea8ba13ac051bf643ba353baf3f0caf935",
+    "model_config_unchanged": true,
+    "persistent_config_enabled": false,
+    "models_loaded_before_run": 0,
+    "models_loaded_after_run": 0,
+    "remediation_executed": false,
+    "deployment_executed": false,
+    "rollback_executed": false
+  }
+}

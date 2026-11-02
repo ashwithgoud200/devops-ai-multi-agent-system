@@ -1,0 +1,377 @@
+{
+  "id": null,
+  "uid": "ai-devops-overview",
+  "title": "AI DevOps — System Monitoring Overview",
+  "description": "Application and optional infrastructure metrics from the project's Prometheus datasource. Missing exporter series are shown as No Data.",
+  "tags": ["devops", "prometheus", "application"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["30s", "1m", "5m", "15m"]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Application Overview",
+      "collapsed": false,
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1},
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Application Request Rate",
+      "description": "Requests per second from calc_requests_total, grouped by operation and status.",
+      "gridPos": {"x": 0, "y": 1, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "sum by (op, status) (rate(calc_requests_total[5m]))",
+          "legendFormat": "{{op}} / {{status}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps", "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Successful Request Rate",
+      "description": "Successful requests per second, derived from the app's status=ok counter series.",
+      "gridPos": {"x": 12, "y": 1, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "sum by (op) (rate(calc_requests_total{status=\"ok\"}[5m]))",
+          "legendFormat": "{{op}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "reqps", "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Application Error Rate",
+      "description": "Percent of requests with status=error or client_error. No Data means no matching error counter series is currently exposed; it is not interpreted as zero.",
+      "gridPos": {"x": 0, "y": 9, "w": 8, "h": 6},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "100 * sum(rate(calc_requests_total{status=~\"error|client_error\"}[5m])) / sum(rate(calc_requests_total[5m]))",
+          "legendFormat": "Error rate",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "noValue": "No Data",
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "P95 Request Latency",
+      "description": "95th percentile latency from the calc_latency_seconds histogram, grouped by operation.",
+      "gridPos": {"x": 8, "y": 9, "w": 16, "h": 6},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le, op) (rate(calc_latency_seconds_bucket[5m])))",
+          "legendFormat": "{{op}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "s", "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "Application Resource Usage",
+      "collapsed": false,
+      "gridPos": {"x": 0, "y": 15, "w": 24, "h": 1},
+      "panels": []
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Process CPU Usage",
+      "description": "Process CPU usage as a percentage of one CPU, derived from process_cpu_seconds_total. This is not host CPU utilization.",
+      "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+          "legendFormat": "Application process",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single"}
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Process Memory Usage",
+      "description": "Application resident memory in MiB from process_resident_memory_bytes. This is absolute process memory, not a percent of a limit.",
+      "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "process_resident_memory_bytes / 1024 / 1024",
+          "legendFormat": "Application process",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "mebibytes", "min": 0, "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single"}
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Docker Container Monitoring (optional)",
+      "collapsed": false,
+      "gridPos": {"x": 0, "y": 24, "w": 24, "h": 1},
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Container CPU Usage",
+      "description": "Optional cAdvisor-compatible container_cpu_usage_seconds_total series. No cAdvisor exporter is installed by this project.",
+      "gridPos": {"x": 0, "y": 25, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "sum by (container, image) (rate(container_cpu_usage_seconds_total[5m])) * 100",
+          "legendFormat": "{{container}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Container Memory Usage",
+      "description": "Optional cAdvisor container_memory_working_set_bytes series. No cAdvisor exporter is installed by this project.",
+      "gridPos": {"x": 12, "y": 25, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "sum by (container, image) (container_memory_working_set_bytes)",
+          "legendFormat": "{{container}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "bytes", "min": 0, "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Container Restarts",
+      "description": "No compatible restart-count series is exported by the current Prometheus targets. Add a compatible exporter before enabling a query; No Data is intentional.",
+      "gridPos": {"x": 0, "y": 33, "w": 12, "h": 5},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [],
+      "fieldConfig": {"defaults": {"noValue": "No Data"}, "overrides": []},
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Container Health / Status",
+      "description": "No compatible container-health/status series is exported by the current Prometheus targets. Docker CLI telemetry remains available separately from the API/agent; No Data is intentional.",
+      "gridPos": {"x": 12, "y": 33, "w": 12, "h": 5},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [],
+      "fieldConfig": {"defaults": {"noValue": "No Data"}, "overrides": []},
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}
+      }
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "Host Monitoring (optional)",
+      "collapsed": false,
+      "gridPos": {"x": 0, "y": 38, "w": 24, "h": 1},
+      "panels": []
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Host CPU Utilization",
+      "description": "Optional node-exporter node_cpu_seconds_total series. Node Exporter is not installed by this project.",
+      "gridPos": {"x": 0, "y": 39, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "max": 100, "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Host Memory Utilization",
+      "description": "Optional node-exporter node_memory_MemAvailable_bytes and node_memory_MemTotal_bytes series. Node Exporter is not installed by this project.",
+      "gridPos": {"x": 12, "y": 39, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "editorMode": "code",
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "max": 100, "color": {"mode": "palette-classic"}},
+        "overrides": []
+      },
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      }
+    }
+  ],
+  "links": []
+}

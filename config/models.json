@@ -1,0 +1,39 @@
+{
+  "provider": "ollama",
+  "base_url": "http://127.0.0.1:11434",
+  "enabled": false,
+  "runtime": {
+    "max_parallel_models": 1,
+    "keep_alive": "0s",
+    "context_length": 2048,
+    "max_output_tokens": 384,
+    "request_timeout_seconds": 120,
+    "temperature": 0.1
+  },
+  "agents": {
+    "monitoring": {
+      "model": "qwen2.5:3b",
+      "role": "Analyze monitoring metrics and explain anomalies"
+    },
+    "incident": {
+      "model": "llama3.2:3b",
+      "role": "Triage incident logs and summarize likely root causes"
+    },
+    "code": {
+      "model": "qwen2.5-coder:3b",
+      "role": "Review supplied code-change evidence and identify likely regressions"
+    },
+    "cicd": {
+      "model": "stablelm-zephyr:3b",
+      "role": "Analyze CI/CD deployment and pipeline evidence"
+    },
+    "infrastructure": {
+      "model": "phi3.5:3.8b",
+      "role": "Recommend safe infrastructure remediation"
+    },
+    "security": {
+      "model": "granite3.1-dense:2b",
+      "role": "Triage security signals and recommend defensive checks"
+    }
+  }
+}
