@@ -1,4 +1,6 @@
-# AI-powered DevOps agents — Phase 2: CI/CD
+# devops-ai-multi-agent-system
+
+## AI-powered DevOps agents — Phase 2: CI/CD
 
 This repository contains a FastAPI calculator service and a LangGraph incident-response demo. Phase 2 adds a repeatable CI/CD path around the application without replacing the existing agent workflow.
 
