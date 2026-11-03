@@ -1,0 +1,194 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DEVOPS_LLM_ENABLED: "false"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  backend-ci:
+    name: Backend Quality & Pytest (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run Python syntax and code-quality checks
+        run: |
+          python -m compileall -q agents calculator_app run_demo.py tests
+          python -c "
+          import ast, json, pathlib, yaml
+          root = pathlib.Path('.')
+          for py_file in list(root.glob('agents/*.py')) + list(root.glob('calculator_app/*.py')) + list(root.glob('tests/*.py')) + [root / 'run_demo.py']:
+              ast.parse(py_file.read_text(encoding='utf-8'), filename=str(py_file))
+          cfg = json.loads((root / 'config' / 'models.json').read_text(encoding='utf-8'))
+          assert cfg['enabled'] is False, 'Default LLM enabled flag must remain False in repository'
+          assert cfg['runtime']['max_parallel_models'] == 1, 'max_parallel_models must remain 1'
+          assert cfg['runtime']['context_length'] == 2048, 'context_length must remain 2048'
+          assert cfg['runtime']['max_output_tokens'] == 384, 'max_output_tokens must remain 384'
+          expected_models = {
+              'monitoring': 'qwen2.5:3b',
+              'incident': 'llama3.2:3b',
+              'code': 'qwen2.5-coder:3b',
+              'cicd': 'stablelm-zephyr:3b',
+              'infrastructure': 'phi3.5:3.8b',
+              'security': 'granite3.1-dense:2b',
+          }
+          actual_models = {k: v['model'] for k, v in cfg['agents'].items()}
+          assert actual_models == expected_models, f'Model mapping mismatch: {actual_models}'
+          for yml_file in [root / 'docker-compose.yml', root / 'prometheus.yml'] + list((root / 'grafana').rglob('*.yml')) + list((root / '.github' / 'workflows').glob('*.yml')):
+              yaml.safe_load(yml_file.read_text(encoding='utf-8'))
+          print('All Python AST, configuration invariants, and YAML schemas verified.')
+          "
+
+      - name: Run backend pytest test suite with JUnit XML reporting
+        env:
+          DEVOPS_LLM_ENABLED: "false"
+        run: |
+          mkdir -p reports/junit
+          python -m pytest -v --tb=short --junitxml=reports/junit/test-results-${{ matrix.python-version }}.xml
+
+      - name: Generate machine-readable CI summary JSON
+        if: always()
+        run: |
+          mkdir -p reports
+          python -c "
+          import json, pathlib, xml.etree.ElementTree as ET
+          xml_path = pathlib.Path('reports/junit/test-results-${{ matrix.python-version }}.xml')
+          summary = {
+              'job': 'backend-ci',
+              'python_version': '${{ matrix.python-version }}',
+              'status': 'unknown',
+              'tests': 0,
+              'failures': 0,
+              'errors': 0,
+              'skipped': 0,
+              'time_seconds': 0.0,
+          }
+          if xml_path.exists():
+              try:
+                  tree = ET.parse(xml_path)
+                  root = tree.getroot()
+                  suite = root if root.tag == 'testsuite' else root.find('testsuite')
+                  if suite is not None:
+                      summary['tests'] = int(suite.attrib.get('tests', 0))
+                      summary['failures'] = int(suite.attrib.get('failures', 0))
+                      summary['errors'] = int(suite.attrib.get('errors', 0))
+                      summary['skipped'] = int(suite.attrib.get('skipped', 0))
+                      summary['time_seconds'] = float(suite.attrib.get('time', 0.0))
+                      summary['status'] = 'failed' if (summary['failures'] > 0 or summary['errors'] > 0) else 'passed'
+              except Exception as exc:
+                  summary['error'] = str(exc)
+          pathlib.Path('reports/ci-summary-${{ matrix.python-version }}.json').write_text(
+              json.dumps(summary, indent=2), encoding='utf-8'
+          )
+          "
+
+      - name: Upload backend test results artifact
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: ci-backend-results-${{ matrix.python-version }}
+          path: |
+            reports/junit/test-results-${{ matrix.python-version }}.xml
+            reports/ci-summary-${{ matrix.python-version }}.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  frontend-ci:
+    name: Frontend Build Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@1d43b558a28a475868693a5581bf06cb059d64d1 # v4.2.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build production frontend bundle
+        run: npm run build
+
+      - name: Verify production build artifacts
+        run: |
+          test -f dist/index.html
+          test -d dist/assets
+          ls -la dist/ dist/assets/
+
+  docker-validation:
+    name: Docker Compose & Image Build Validation
+    runs-on: ubuntu-latest
+    needs: [backend-ci, frontend-ci]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Build and validate application Docker image
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: devops-agents-calculator:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test container health and agent configuration
+        run: |
+          docker run -d --name devops-ci-smoke -p 127.0.0.1:8100:8100 \
+            -e DEVOPS_LLM_ENABLED=false \
+            devops-agents-calculator:ci-test
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8100/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl --fail --silent http://127.0.0.1:8100/health | grep -q '"status":"ok"'
+          curl --fail --silent http://127.0.0.1:8100/agents | grep -q '"qwen2.5:3b"'
+          curl --fail --silent http://127.0.0.1:8100/metrics | grep -q 'calc_requests_total'
+          docker rm -f devops-ci-smoke

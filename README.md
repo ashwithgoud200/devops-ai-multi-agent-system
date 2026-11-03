@@ -332,6 +332,62 @@ docker compose stop grafana prometheus calculator-app
 
 For offline validation, run `docker compose config --quiet` and `python -m pytest -q`.
 
+### Stage 7 — CI/CD Pipeline & Security Findings Integration
+
+
+
+Stage 7 integrates structured CI/CD pipeline summaries and security scanner reports into the deterministic LangGraph runtime:
+
+- **Offline & GitHub Ingestion**: Reports are ingested either via read-only GitHub Actions REST API (`agents/github_client.py`) or offline JSON drops in `./data/ci-security-reports` (e.g. `ci-summary.json`, `gitleaks.json`, `pip_audit.json`, `npm_audit.json`, `trivy_image.json`, `trivy_config.json`).
+
+- **Normalized Findings**: `agents/ci_security_normalizer.py` deduplicates CVE/GHSA aliases, enforces strict category/severity vocabularies, preserves scanner attributions, and suppresses raw secrets/matches.
+
+- **Untrusted Text Protection**: `agents/untrusted_text.py` strips control characters, enforces length caps, and keeps injection attempts inert across all external evidence fields.
+
+- **Role-Based Partitioning**:
+
+  - `cicd` specialist receives structured pipeline conclusions, test failure counts, and step metadata (never raw log tails).
+
+  - `security` specialist receives structured vulnerability and secret findings.
+
+  - `incident` specialist receives severity counts only (never raw finding lists or secrets).
+
+  - `monitoring`, `code`, and `infrastructure` specialists receive neither CI nor security findings.
+
+- **Integration API Endpoints**:
+
+  - `GET /integrations/status`: Read-only GitHub connection and rate limit telemetry.
+
+  - `GET /ci/runs/latest`: Structured CI run status, test counts, and jobs metadata.
+
+  - `GET /security/findings`: Normalized scanner findings, severity counts, and scanner freshness.
+
+- **Frontend Observability**:
+
+  - React/Vite dashboard includes a dedicated **CI/CD & Security** tab showing GitHub connection status, latest workflow runs, test pass/fail metrics, and vulnerability breakdowns with severity badges.
+
+
+
+Configuration environment variables:
+
+| Variable | Default | Purpose |
+
+|---|---|---|
+
+| `DEVOPS_GITHUB_ENABLED` | `false` | Enable read-only GitHub Actions API integration |
+
+| `DEVOPS_GITHUB_REPO` | `ashwithgoud200/devops-ai-multi-agent-system` | Repository in `owner/repo` format |
+
+| `DEVOPS_GITHUB_TOKEN` | *None* | Optional read-only PAT for higher rate limits |
+
+| `DEVOPS_CI_EVIDENCE_ENABLED` | `false` | Enable structured CI evidence in incident runs |
+
+| `DEVOPS_SECURITY_EVIDENCE_ENABLED` | `false` | Enable security scanner findings in incident runs |
+
+| `DEVOPS_EVIDENCE_IMPORT_DIR` | `/app/data/ci-security-reports` | Directory for offline JSON scanner drops |
+
+
+
 ### Run tests
 
 ```powershell

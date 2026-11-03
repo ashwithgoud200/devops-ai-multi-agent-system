@@ -3,14 +3,18 @@ import {
   buildIncidentHistory,
   decideIncident,
   formatTimestamp,
+  getIntegrationsStatus,
   getJson,
+  getLatestCiRun,
   getMetricsText,
   getOllamaStatus,
+  getSecurityFindings,
   getServiceStatus,
   parseApplicationMetrics,
   startIncident,
 } from "./api.js";
 import AgentGrid from "./components/AgentGrid.jsx";
+import CiSecurityView from "./components/CiSecurityView.jsx";
 import AuditLog from "./components/AuditLog.jsx";
 import Icon from "./components/Icon.jsx";
 import IncidentDetails from "./components/IncidentDetails.jsx";
@@ -21,6 +25,7 @@ const navigation = [
   { id: "overview", label: "Overview", icon: "grid" },
   { id: "agents", label: "Six AI Agents", icon: "agents" },
   { id: "incidents", label: "Incident Management", icon: "incident" },
+  { id: "ci-security", label: "CI/CD & Security", icon: "shield" },
   { id: "approval", label: "Human Approval", icon: "approval" },
   { id: "monitoring", label: "Monitoring", icon: "chart" },
   { id: "audit", label: "Audit Log", icon: "audit" },
@@ -30,6 +35,7 @@ const pageTitles = {
   overview: ["Overview", "Operational status and incident activity at a glance."],
   agents: ["Six AI Agents", "Specialist execution details from the selected incident."],
   incidents: ["Incident Management", "Investigate using live application and observability evidence."],
+  "ci-security": ["CI/CD & Security", "GitHub integration, CI pipeline results, and normalized security scanner findings."],
   approval: ["Human Approval", "Review proposed remediation before explicitly deciding."],
   monitoring: ["Monitoring", "Application counters and Prometheus time-series telemetry."],
   audit: ["Audit Log", "Metadata-only incident, approval, and action records."],
@@ -95,6 +101,9 @@ function DashboardHome({ data, counters, history, onNavigate, onSelectIncident }
             <ServiceIndicator label="Ollama runtime" status={data.ollama ? "online" : "unavailable"} detail={data.ollama?.models?.length != null ? `${data.ollama.models.length} models available` : null} />
             <ServiceIndicator label="Prometheus" status={data.prometheusService ? promStatus || "online" : "unavailable"} />
             <ServiceIndicator label="Grafana" status={data.grafana ? "online" : "unavailable"} />
+            <ServiceIndicator label="GitHub API" status={data.integrations?.github?.status || "disabled"} detail={data.integrations?.github?.repo || "Read-only API"} />
+            <ServiceIndicator label="CI Pipeline" status={data.ciRun?.conclusion || data.ciRun?.status || "unavailable"} detail={data.ciRun?.workflow_name || null} />
+            <ServiceIndicator label="Security Scans" status={data.securityFindings?.status || "unavailable"} detail={data.securityFindings?.summary?.total_findings != null ? `${data.securityFindings.summary.total_findings} findings` : null} />
             <ServiceIndicator label="Specialist agents" status={data.agents?.enabled ? "enabled" : data.agents ? "disabled" : "unavailable"} detail={agentCount ? `${agentCount} configured` : null} />
           </div>
           <div className="service-links"><a href="http://127.0.0.1:9090" target="_blank" rel="noreferrer">Prometheus <Icon name="arrow" size={14} /></a><a href="http://127.0.0.1:3000" target="_blank" rel="noreferrer">Grafana <Icon name="arrow" size={14} /></a></div>
@@ -141,9 +150,15 @@ function MetricsPage({ data, counters }) {
     <>
       <div className="status-grid monitoring-cards">
         <StatusCard label="Application status" value={health?.status === "ok" ? "Healthy" : "Unavailable"} detail={health?.version ? `Current version ${health.version}` : "No health response"} icon="◉" tone={health?.status === "ok" ? "green" : "amber"} />
-        <StatusCard label="Request total" value={formatCounter(counters?.total)} detail="Read from /metrics" icon="↗" tone="blue" />
+        <StatusCard label="Request total" value={formatCounter(counters?.total)} detail={`HTTP API total: ${formatCounter(counters?.httpTotal)}`} icon="↗" tone="blue" />
         <StatusCard label="HTTP error rate" value={formatValue(errors, "%")} detail="Prometheus 5-minute query" icon="!" tone="amber" />
         <StatusCard label="Latency p95" value={formatValue(p95, "s")} detail="Prometheus histogram quantile" icon="◷" tone="neutral" />
+      </div>
+      <div className="status-grid monitoring-cards">
+        <StatusCard label="Incidents created" value={formatCounter(counters?.incidentsCreated)} detail={`Pending approval: ${formatCounter(counters?.incidentsByStatus?.pending_approval ?? 0)}`} icon="!" tone="blue" />
+        <StatusCard label="Human decisions" value={counters ? `${counters.approvals.approve} / ${counters.approvals.reject}` : "Unavailable"} detail="Approved / Rejected" icon="✓" tone="green" />
+        <StatusCard label="Agent executions" value={formatCounter(counters?.agentExecutionsTotal)} detail={`OK: ${formatCounter(counters?.agentByOutcome?.ok ?? 0)} · Disabled: ${formatCounter(counters?.agentByOutcome?.disabled ?? 0)}`} icon="◉" tone="neutral" />
+        <StatusCard label="LLM inference calls" value={counters ? `${counters.llmCalls.success} ok` : "Unavailable"} detail={counters ? `Fail/Timeout: ${(counters.llmCalls.failure || 0) + (counters.llmCalls.timeout || 0)} · Unavail: ${counters.llmCalls.unavailable || 0}` : "From /metrics"} icon="↗" tone="neutral" />
       </div>
       <section className="panel">
         <SectionTitle eyebrow="PROMETHEUS TIME SERIES" title="Request success and failure trend" action={<span className={`pill ${data.prometheus?.status === "ok" ? "pill-green" : "pill-muted"}`}>{data.prometheus?.status || "unavailable"}</span>} />
@@ -152,8 +167,8 @@ function MetricsPage({ data, counters }) {
       <div className="content-grid monitoring-grid">
         <section className="panel"><SectionTitle eyebrow="APPLICATION COUNTERS" title="Request outcomes" /><MetricBars counters={counters} /><p className="panel-footnote">Values are cumulative counters exposed by the live application. They are not estimated.</p></section>
         <section className="panel"><SectionTitle eyebrow="SERVICE LINKS" title="Observability tools" /><div className="tool-link-list">
-          <a href="http://127.0.0.1:9090" target="_blank" rel="noreferrer"><span><strong>Prometheus</strong><small>Explore metrics and targets</small></span><Icon name="arrow" /></a>
-          <a href="http://127.0.0.1:3000" target="_blank" rel="noreferrer"><span><strong>Grafana</strong><small>Open provisioned dashboards</small></span><Icon name="arrow" /></a>
+          <a href="http://127.0.0.1:9090" target="_blank" rel="noreferrer"><span><strong>Prometheus</strong><small>Explore metrics, alert rules, and targets</small></span><Icon name="arrow" /></a>
+          <a href="http://127.0.0.1:3000" target="_blank" rel="noreferrer"><span><strong>Grafana</strong><small>Open provisioned dashboards (40 panels across 7+ sections)</small></span><Icon name="arrow" /></a>
         </div>{data.prometheus?.detail && <p className="inline-warning">{data.prometheus.detail}</p>}</section>
       </div>
     </>
@@ -223,7 +238,7 @@ export default function App() {
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
-    const [health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama] = await Promise.all([
+    const [health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama, integrations, ciRun, securityFindings] = await Promise.all([
       call(getJson("/health")),
       call(getMetricsText()),
       call(getJson("/admin/version")),
@@ -233,8 +248,11 @@ export default function App() {
       call(getServiceStatus("/grafana/api/health")),
       call(getServiceStatus("/prometheus/-/healthy")),
       call(getOllamaStatus()),
+      call(getIntegrationsStatus()),
+      call(getLatestCiRun()),
+      call(getSecurityFindings()),
     ]);
-    const results = { health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama };
+    const results = { health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama, integrations, ciRun, securityFindings };
     const errors = Object.fromEntries(Object.entries(results).filter(([, result]) => result.error).map(([key, result]) => [key, result.error]));
     const auditEvents = audit.value?.events;
     setData((previous) => ({
@@ -247,6 +265,9 @@ export default function App() {
       grafana: grafana.value,
       prometheusService: prometheusService.value,
       ollama: ollama.value,
+      integrations: integrations.value,
+      ciRun: ciRun.value,
+      securityFindings: securityFindings.value,
       errors,
       lastUpdated: new Date().toISOString(),
     }));
@@ -356,6 +377,7 @@ export default function App() {
           <div className="page-heading"><div><h1>{currentPage[0]}</h1><p>{currentPage[1]}</p></div>{page === "overview" && <button className="button button-primary" onClick={() => setPage("incidents")}><span>＋</span> New investigation</button>}</div>
           {actionError && <div className="global-error" role="alert">{actionError}<button onClick={() => setActionError("")}>Dismiss</button></div>}
           {page === "overview" && <DashboardHome data={data} counters={counters} history={history} onNavigate={setPage} onSelectIncident={selectIncident} />}
+          {page === "ci-security" && <CiSecurityView integrations={data.integrations} ciRun={data.ciRun} securityFindings={data.securityFindings} />}
           {page === "agents" && <><div className="notice-bar"><span className="notice-icon">i</span><span>Agent statuses and outputs below come from the selected incident response. Agents not selected by the workflow are marked accordingly.</span><span className={`pill ${data.agents?.enabled ? "pill-green" : "pill-muted"}`}>Inference {data.agents?.enabled ? "enabled" : "disabled"}</span></div><AgentGrid configuredAgents={configuredAgents} results={agentResults} /></>}
           {page === "incidents" && <div className="incident-page">
             <section className="panel incident-form-panel"><SectionTitle eyebrow="NEW INVESTIGATION" title="Submit an incident" /><form className="incident-form" onSubmit={submitIncident}><label htmlFor="incident-query">What should the system investigate?</label><textarea id="incident-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. Investigate increased calculator errors after the latest deployment" maxLength={2000} rows={3} /><div className="form-footer"><small>Evidence collection and agent execution may take a few moments. No remediation runs without human approval.</small><button className="button button-primary" disabled={incidentBusy || query.trim().length < 3}>{incidentBusy ? <><span className="button-spinner" /> Investigating…</> : "Run investigation"}</button></div></form>{incidentError && <div className="form-error" role="alert">{incidentError}</div>}</section>

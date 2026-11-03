@@ -1,0 +1,102 @@
+groups:
+  - name: devops_system_and_api_alerts
+    interval: 15s
+    rules:
+      - alert: BackendUnavailable
+        expr: up{job="calculator-app"} == 0 or devops_app_health_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: backend
+        annotations:
+          summary: "FastAPI calculator-app backend is unavailable"
+          description: "The calculator-app service has been unreachable by Prometheus or reporting unhealthy for more than 1 minute."
+
+      - alert: PrometheusScrapeFailure
+        expr: up{job="calculator-app"} == 0 or scrape_samples_scraped{job="calculator-app"} == 0
+        for: 45s
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus scrape failure for calculator-app"
+          description: "Prometheus failed to scrape metrics from calculator-app:8100/metrics for 45 seconds (3 consecutive 15s scrape intervals)."
+
+      - alert: ElevatedHttpErrorRate
+        expr: >-
+          (
+            100 * sum(rate(devops_http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(devops_http_requests_total[5m])), 0.001) > 5
+            and sum(rate(devops_http_requests_total[5m])) > 0.05
+          )
+          or
+          (
+            100 * sum(rate(calc_requests_total{status="error"}[5m]))
+            / clamp_min(sum(rate(calc_requests_total[5m])), 0.001) > 5
+            and sum(rate(calc_requests_total[5m])) > 0.05
+          )
+        for: 2m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "Elevated HTTP or calculator server error rate (> 5%)"
+          description: "Server error rate exceeded 5% over a 5-minute window for 2 minutes (guarded by minimum traffic > 0.05 req/s to avoid idle false positives)."
+
+      - alert: HighApiLatencyP95
+        expr: >-
+          (
+            histogram_quantile(0.95, sum by (le) (rate(devops_http_request_duration_seconds_bucket{endpoint!~"/incidents.*"}[5m]))) > 1.0
+            and sum(rate(devops_http_request_duration_seconds_count{endpoint!~"/incidents.*"}[5m])) > 0.05
+          )
+          or
+          (
+            histogram_quantile(0.95, sum by (le) (rate(calc_latency_seconds_bucket[5m]))) > 0.5
+            and sum(rate(calc_latency_seconds_count[5m])) > 0.05
+          )
+        for: 2m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High P95 API latency detected"
+          description: "95th percentile non-incident HTTP request latency exceeded 1.0s (or calculator latency exceeded 0.5s) over a 5-minute window for 2 minutes."
+
+  - name: devops_agents_and_llm_alerts
+    interval: 15s
+    rules:
+      - alert: AgentExecutionFailures
+        expr: sum by (agent) (increase(devops_agent_executions_total{outcome=~"error|invalid_response|timeout|configuration_error"}[10m])) >= 2
+        for: 1m
+        labels:
+          severity: warning
+          component: agents
+        annotations:
+          summary: "Repeated specialist agent execution failures ({{ $labels.agent }})"
+          description: "Specialist agent {{ $labels.agent }} experienced 2 or more execution failures or schema validation errors within a 10-minute window."
+
+      - alert: LlmTimeoutOrFailureRate
+        expr: >-
+          100 * sum(rate(devops_llm_requests_total{status=~"timeout|failure|unavailable"}[10m]))
+          / clamp_min(sum(rate(devops_llm_requests_total{status!="disabled"}[10m])), 0.0001) > 25
+          and sum(increase(devops_llm_requests_total{status!="disabled"}[10m])) >= 2
+        for: 2m
+        labels:
+          severity: warning
+          component: llm_runtime
+        annotations:
+          summary: "Elevated Ollama LLM inference timeout/failure rate (> 25%)"
+          description: "More than 25% of enabled LLM inference calls failed, timed out, or could not reach Ollama over the last 10 minutes (minimum 2 active calls; does not fire when LLM inference is disabled)."
+
+  - name: devops_infrastructure_alerts
+    interval: 15s
+    rules:
+      - alert: ServiceTargetUnavailableOrRestarting
+        expr: up{job="calculator-app"} == 0 or changes(process_start_time_seconds{job="calculator-app"}[10m]) >= 2
+        for: 1m
+        labels:
+          severity: critical
+          component: service_target
+        annotations:
+          summary: "Monitored service target is unreachable or restarting repeatedly"
+          description: "Prometheus target calculator-app is unreachable (up == 0) or its process_start_time_seconds changed 2+ times within 10 minutes. Note: this reflects HTTP scrape target availability and process restarts, not Docker Engine container health status (cAdvisor is not installed and /var/run/docker.sock is not mounted)."

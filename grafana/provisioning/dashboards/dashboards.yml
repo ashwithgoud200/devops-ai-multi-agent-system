@@ -5,7 +5,10 @@ providers:
     orgId: 1
     folder: DevOps
     type: file
-    disableDeletion: false
-    editable: true
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    editable: false
     options:
       path: /etc/grafana/dashboards
+      foldersFromFilesStructure: false

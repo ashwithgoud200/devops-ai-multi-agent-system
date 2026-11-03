@@ -15,6 +15,7 @@ from langgraph.types import Command
 from pydantic import BaseModel, Field
 
 from agents import graph, llm_runtime
+from agents import metrics as app_metrics
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT_LOG_PATH = ROOT / "logs" / "incident_audit.jsonl"
@@ -58,6 +59,7 @@ def _append_audit(
             stream.write(json.dumps(record, ensure_ascii=False) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
+        app_metrics.record_audit_event(event)
     except OSError as exc:
         raise HTTPException(
             status_code=500,
@@ -166,9 +168,11 @@ def create_baseline() -> dict[str, Any]:
 @router.get("/agents", summary="Read configured specialist agents")
 def read_agents() -> dict[str, Any]:
     config = llm_runtime.load_config()
+    enabled = bool(config.get("enabled", False))
+    app_metrics.LLM_ENABLED_STATUS.set(1 if enabled else 0)
     agents = config.get("agents", {})
     return {
-        "enabled": bool(config.get("enabled", False)),
+        "enabled": enabled,
         "agents": [
             {
                 "id": agent_id,
@@ -194,15 +198,26 @@ def start_incident(request: IncidentRequest) -> dict[str, Any]:
     incident_id = str(uuid.uuid4())
     config = _config(incident_id)
     _append_audit("incident_started", incident_id)
+    app_metrics.record_incident_created()
     initial_state: graph.IncidentState = {"query": query, "trace": []}
-    _run(config, initial_state)
-    snapshot = _snapshot(incident_id)
-    response = _incident_response(incident_id, snapshot)
+    try:
+        _run(config, initial_state)
+        snapshot = _snapshot(incident_id)
+        response = _incident_response(incident_id, snapshot)
+    except Exception:
+        app_metrics.record_incident_failed()
+        raise
+    remediation_action = (response.get("proposed_remediation") or {}).get("action")
+    outcome_status = (response.get("outcome") or {}).get("status")
+    metric_status = (
+        "failed" if outcome_status == "failed" else response.get("status")
+    )
+    app_metrics.record_incident_diagnosis(remediation_action, metric_status)
     _append_audit(
         "diagnosis_finished",
         incident_id,
         status=response["status"],
-        remediation_action=(response.get("proposed_remediation") or {}).get("action"),
+        remediation_action=remediation_action,
     )
     return response
 
@@ -241,12 +256,18 @@ def decide_incident(
     )
     _run(_config(incident_id), Command(resume=approved))
     result = _incident_response(incident_id, _snapshot(incident_id))
+    outcome_status = (result.get("outcome") or {}).get("status")
+    app_metrics.record_human_decision(
+        decision=request.decision,
+        action=approval.get("action"),
+        outcome_status=outcome_status,
+    )
     _append_audit(
         "action_finished",
         incident_id,
         decision=request.decision,
         reviewed_by=reviewed_by,
-        outcome_status=(result.get("outcome") or {}).get("status"),
+        outcome_status=outcome_status,
     )
     return result
 

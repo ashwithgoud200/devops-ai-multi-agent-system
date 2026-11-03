@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    {
+      "name": "requests",
+      "version": "2.25.1",
+      "vulns": [
+        {
+          "id": "PYSEC-2023-62",
+          "fix_versions": [
+            "2.31.0"
+          ],
+          "aliases": [
+            "CVE-2023-32681",
+            "GHSA-j8r2-6x86-q33q"
+          ],
+          "description": "Requests is a HTTP library. Versions prior to 2.31.0 leak Proxy-Authorization headers."
+        }
+      ]
+    },
+    {
+      "name": "urllib3",
+      "version": "1.26.18",
+      "vulns": []
+    }
+  ]
+}

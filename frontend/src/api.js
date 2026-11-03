@@ -58,25 +58,78 @@ export async function getServiceStatus(path) {
   return response.text();
 }
 
-export function parseApplicationMetrics(text) {
-  const counters = { total: 0, successful: 0, failed: 0, byStatus: {} };
-  for (const line of text.split(/\r?\n/)) {
-    const match = line.match(/^calc_requests_total\{([^}]*)\}\s+([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)/i);
-    if (!match) continue;
+function parseLabels(labelText) {
+  if (!labelText) return {};
+  return Object.fromEntries(
+    [...labelText.matchAll(/(\w+)="((?:\\.|[^"])*)"/g)].map((item) => [
+      item[1],
+      item[2].replace(/\\"/g, '"').replace(/\\\\/g, "\\"),
+    ]),
+  );
+}
 
-    const labels = Object.fromEntries(
-      [...match[1].matchAll(/(\w+)="((?:\\.|[^"])*)"/g)].map((item) => [
-        item[1],
-        item[2].replace(/\\"/g, '"').replace(/\\\\/g, "\\"),
-      ]),
+export function parseApplicationMetrics(text) {
+  const counters = {
+    total: 0,
+    successful: 0,
+    failed: 0,
+    byStatus: {},
+    httpTotal: 0,
+    incidentsCreated: 0,
+    incidentsByStatus: {
+      pending_approval: 0,
+      completed: 0,
+      failed: 0,
+      rejected: 0,
+    },
+    approvals: { approve: 0, reject: 0 },
+    agentExecutionsTotal: 0,
+    agentByOutcome: {},
+    llmCalls: {
+      success: 0,
+      failure: 0,
+      timeout: 0,
+      unavailable: 0,
+      disabled: 0,
+    },
+  };
+  for (const line of text.split(/\r?\n/)) {
+    if (!line || line.startsWith("#")) continue;
+    const match = line.match(
+      /^([a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{([^}]*)\})?\s+([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)/i,
     );
-    const value = Number(match[2]);
+    if (!match) continue;
+    const [, metricName, rawLabels, rawVal] = match;
+    const value = Number(rawVal);
     if (!Number.isFinite(value)) continue;
-    const status = labels.status || "unknown";
-    counters.total += value;
-    counters.byStatus[status] = (counters.byStatus[status] || 0) + value;
-    if (status === "ok") counters.successful += value;
-    else counters.failed += value;
+    const labels = parseLabels(rawLabels);
+
+    if (metricName === "calc_requests_total") {
+      const status = labels.status || "unknown";
+      counters.total += value;
+      counters.byStatus[status] = (counters.byStatus[status] || 0) + value;
+      if (status === "ok") counters.successful += value;
+      else counters.failed += value;
+    } else if (metricName === "devops_http_requests_total") {
+      counters.httpTotal += value;
+    } else if (metricName === "devops_incidents_created_total") {
+      counters.incidentsCreated += value;
+    } else if (metricName === "devops_incidents_by_status_total") {
+      const st = labels.status || "unknown";
+      counters.incidentsByStatus[st] = (counters.incidentsByStatus[st] || 0) + value;
+    } else if (metricName === "devops_human_decisions_total") {
+      const dec = labels.decision;
+      if (dec === "approve" || dec === "reject") {
+        counters.approvals[dec] = (counters.approvals[dec] || 0) + value;
+      }
+    } else if (metricName === "devops_agent_executions_total") {
+      counters.agentExecutionsTotal += value;
+      const out = labels.outcome || "unknown";
+      counters.agentByOutcome[out] = (counters.agentByOutcome[out] || 0) + value;
+    } else if (metricName === "devops_llm_requests_total") {
+      const st = labels.status || "unknown";
+      counters.llmCalls[st] = (counters.llmCalls[st] || 0) + value;
+    }
   }
   return counters;
 }
@@ -120,4 +173,16 @@ export function formatTimestamp(value) {
   if (!value) return "Timestamp unavailable";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "Timestamp unavailable" : date.toLocaleString();
+}
+
+export function getIntegrationsStatus() {
+  return request("/integrations/status");
+}
+
+export function getLatestCiRun() {
+  return request("/ci/runs/latest");
+}
+
+export function getSecurityFindings() {
+  return request("/security/findings");
 }

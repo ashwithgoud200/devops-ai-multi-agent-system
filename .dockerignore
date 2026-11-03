@@ -9,3 +9,7 @@ __pycache__
 logs/*
 data/*
 .env
+frontend/node_modules
+frontend/dist
+reports
+docs

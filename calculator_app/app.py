@@ -1,11 +1,14 @@
 """Sample target app: a calculator API with Prometheus metrics, JSON logs,
 deploy history and an admin API the agents can use."""
 import json, logging, os, time
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
+from agents import llm_runtime
+from agents import metrics as app_metrics
 from agents.docker_telemetry import collect_docker_metrics
 from agents.incident_api import router as incident_router
+from agents.integration_api import router as integration_router
 from agents.prometheus_telemetry import collect_prometheus_metrics
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,6 +29,26 @@ STATE = {"version": "1.0", "bug": False,
          "history": [{"version": "1.0", "ts": time.time()}]}
 app = FastAPI(title="Calculator")
 app.include_router(incident_router)
+app.include_router(integration_router)
+
+
+@app.middleware("http")
+async def prometheus_http_middleware(request: Request, call_next):
+    started = time.perf_counter()
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        route = request.scope.get("route")
+        route_path = getattr(route, "path", None)
+        app_metrics.record_http_request(
+            endpoint=route_path,
+            method=request.method,
+            status_code=status_code,
+            duration_seconds=time.perf_counter() - started,
+        )
 
 @app.get("/calc/{op}")
 def calc(op: str, a: float, b: float):
@@ -53,11 +76,18 @@ def calc(op: str, a: float, b: float):
 @app.get("/health")
 def health():
     """Liveness/readiness endpoint used by Docker and deployment checks."""
+    app_metrics.APP_HEALTH_STATUS.set(1)
     return {"status": "ok", "version": STATE["version"]}
 
 
 @app.get("/metrics")
 def metrics():
+    app_metrics.APP_HEALTH_STATUS.set(1)
+    try:
+        cfg = llm_runtime.load_config()
+        app_metrics.LLM_ENABLED_STATUS.set(1 if cfg.get("enabled", False) else 0)
+    except Exception:
+        pass
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 

@@ -1,0 +1,22 @@
+[
+  {
+    "Description": "Generic API Key",
+    "StartLine": 42,
+    "EndLine": 42,
+    "StartColumn": 1,
+    "EndColumn": 45,
+    "Match": "SYNTHETIC_TEST_TOKEN_XYZ_DO_NOT_USE_12345",
+    "Secret": "SYNTHETIC_TEST_TOKEN_XYZ_DO_NOT_USE_12345",
+    "File": "config/synthetic_example.py",
+    "SymlinkFile": "",
+    "Commit": "0000000000000000000000000000000000000000",
+    "Entropy": 3.75,
+    "Author": "synthetic-test-user",
+    "Email": "test@example.com",
+    "Date": "2026-01-01T00:00:00Z",
+    "Message": "Add synthetic test config",
+    "Tags": [],
+    "RuleID": "generic-api-key",
+    "Fingerprint": "config/synthetic_example.py:generic-api-key:42"
+  }
+]

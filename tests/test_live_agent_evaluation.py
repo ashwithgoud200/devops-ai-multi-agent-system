@@ -775,11 +775,17 @@ def test_prompt72_reports_use_one_data_object_and_preserve_historical_reports(
         "runtime_matches_prompt6_for_context_and_output"
     ] is True
     assert report["historical_score_baselines"]["automated_interpretation"][
+        "prompt_6_0"
+    ] == 0.6190476190476191
+    assert report["historical_score_baselines"]["automated_interpretation"][
         "prompt_7_1"
-    ] == 0.12698412698412698
+    ] == 0.2714285714285714
+    assert report["historical_score_baselines"]["grounding_validator"][
+        "prompt_6_0"
+    ] == 0.9292929292929294
     assert report["historical_score_baselines"]["grounding_validator"][
         "prompt_7_1"
-    ] == 0.8333333333333334
+    ] == 0.8694444444444445
     assert report["historical_score_baselines"]["manual_semantic_audit"][
         "prompt_7_1_matched"
     ] == 10

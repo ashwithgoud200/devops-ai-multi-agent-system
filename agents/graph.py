@@ -17,6 +17,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
 from agents import llm_runtime
+from agents import metrics as app_metrics
 from agents.docker_telemetry import collect_docker_metrics
 from agents.evidence_extractor import (
     ROLE_CATEGORIES,
@@ -25,6 +26,11 @@ from agents.evidence_extractor import (
     validate_extraction,
 )
 from agents.prometheus_telemetry import collect_prometheus_metrics
+from agents.runtime_evidence import (
+    collect_ci_evidence,
+    collect_security_evidence,
+    summarize_security_for_incident,
+)
 from agents.telemetry import collect_system_metrics
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,6 +60,9 @@ class IncidentState(TypedDict, total=False):
     approval: bool
     outcome: dict[str, Any]
     report: dict[str, Any]
+    ci_pipeline: dict[str, Any]
+    security_scans: dict[str, Any]
+    security_summary: dict[str, Any]
 
 
 def _base_url() -> str:
@@ -349,6 +358,8 @@ def _collect_evidence(log_cursor: dict[str, Any] | None = None) -> dict[str, Any
             "detail": str(exc),
         }
     logs = _read_logs(log_cursor) if log_cursor is not None else _read_logs()
+    ci_pipeline = collect_ci_evidence()
+    security_scans = collect_security_evidence()
     return {
         "captured_at": time.time(),
         "health": _get_json("/health"),
@@ -358,6 +369,9 @@ def _collect_evidence(log_cursor: dict[str, Any] | None = None) -> dict[str, Any
         "prometheus": collect_prometheus_metrics(),
         "version": _get_json("/admin/version"),
         "logs": logs,
+        "ci_pipeline": ci_pipeline,
+        "pipeline": ci_pipeline if ci_pipeline.get("status") != "unavailable" else {"status": "unavailable", "detail": "Not collected"},
+        "security_scans": security_scans,
     }
 
 
@@ -955,6 +969,9 @@ def _collect_node(state: IncidentState) -> dict[str, Any]:
     return {
         "baseline": baseline,
         "evidence": evidence,
+        "ci_pipeline": evidence.get("ci_pipeline"),
+        "security_scans": evidence.get("security_scans"),
+        "security_summary": summarize_security_for_incident(evidence.get("security_scans", {})),
         "trace": _trace(
             state,
             "Collected application health, app-exported request/latency metrics, "
@@ -1004,9 +1021,42 @@ def _select_specialists(state: IncidentState) -> list[str]:
         word in query.lower() for word in ("incident", "error", "failure", "diagnos")
     ) or _docker_incident_signal(docker):
         selected.append("incident")
-    if comparison.get("regression_signal"):
+    code_changes = evidence.get("code_changes", {})
+    code_changes_available = (
+        isinstance(code_changes, dict)
+        and code_changes.get("status") in {"ok", "provided"}
+    )
+    pipeline = evidence.get("pipeline", {})
+    ci_pipeline = evidence.get("ci_pipeline", {})
+    version_data = (
+        evidence.get("version", {}).get("data", {})
+        if isinstance(evidence.get("version"), dict) else {}
+    )
+    if not isinstance(version_data, dict):
+        version_data = {}
+    pipeline_signal = (
+        isinstance(pipeline, dict)
+        and pipeline.get("status") in {"ok", "failed", "degraded"}
+    ) or (
+        isinstance(version_data.get("pipeline"), dict)
+        and version_data["pipeline"].get("status") in {"ok", "failed", "degraded"}
+    ) or (
+        version_data.get("deployment_status") in {"failed", "degraded", "rolled_back"}
+    )
+    ci_failure_signal = False
+    for pipe_candidate in (ci_pipeline, pipeline):
+        if isinstance(pipe_candidate, dict):
+            conc = str(pipe_candidate.get("conclusion", "")).lower()
+            stat = str(pipe_candidate.get("status", "")).lower()
+            tsum = pipe_candidate.get("test_summary", {})
+            failed_tests = tsum.get("failed", 0) if isinstance(tsum, dict) else 0
+            error_tests = tsum.get("errors", 0) if isinstance(tsum, dict) else 0
+            if conc in {"failure", "cancelled"} or stat in {"failed", "degraded"} or (isinstance(failed_tests, int) and failed_tests > 0) or (isinstance(error_tests, int) and error_tests > 0):
+                ci_failure_signal = True
+                break
+    if comparison.get("regression_signal") or code_changes_available:
         selected.append("code")
-    if comparison.get("deployment_changed"):
+    if comparison.get("deployment_changed") or pipeline_signal or ci_failure_signal:
         selected.append("cicd")
     if (
         evidence.get("health", {}).get("status") == "ok"
@@ -1027,7 +1077,15 @@ def _select_specialists(state: IncidentState) -> list[str]:
     log_text = " ".join(
         str(event.get("msg", "")) for event in evidence.get("logs", {}).get("events", [])
     )
-    if security_pattern.search(query) or security_pattern.search(log_text):
+    sec_scans = evidence.get("security_scans", {})
+    sec_scan_signal = False
+    if isinstance(sec_scans, dict):
+        scan_stat = str(sec_scans.get("status", "")).lower()
+        findings = sec_scans.get("findings", [])
+        total_findings = sec_scans.get("summary", {}).get("total_findings", 0)
+        if scan_stat in {"findings", "scanner_error"} or (isinstance(findings, list) and len(findings) > 0) or total_findings > 0:
+            sec_scan_signal = True
+    if security_pattern.search(query) or security_pattern.search(log_text) or sec_scan_signal:
         selected.append("security")
     return [agent for agent in SPECIALIST_ORDER if agent in selected]
 
@@ -1100,7 +1158,36 @@ def _specialist_evidence(agent: str, state: IncidentState) -> dict[str, Any]:
             if isinstance(event, dict)
             and security_pattern.search(str(event.get("msg", "")))
         ] if isinstance(events, list) else []
-        return attach_extraction({
+        sec_scans = evidence.get("security_scans", {
+            "status": "unavailable",
+            "detail": "No security scanner reports collected.",
+        })
+        scan_observations = []
+        if isinstance(sec_scans, dict) and sec_scans.get("status") in {"findings", "clean", "ok"}:
+            summary = sec_scans.get("summary", {})
+            scan_observations.append({
+                "statement": f"Security scanner status is {sec_scans.get('status')!r} with {summary.get('total_findings', 0)} total findings.",
+                "source": "security_scans.summary",
+                "timestamp": sec_scans.get("timestamp"),
+            })
+            for f_idx, finding in enumerate(sec_scans.get("findings", [])):
+                if isinstance(finding, dict):
+                    ident = finding.get("identifier", "unknown")
+                    sev = finding.get("severity", "unknown")
+                    cat = finding.get("category", "unknown")
+                    pkg = finding.get("package") or finding.get("location") or "unknown"
+                    scan_observations.append({
+                        "statement": f"Finding {ident} [{sev}] ({cat}) in {pkg}",
+                        "source": f"security_scans.findings[{f_idx}]",
+                        "timestamp": sec_scans.get("timestamp"),
+                    })
+        elif isinstance(sec_scans, dict) and sec_scans.get("status") == "scanner_error":
+            scan_observations.append({
+                "statement": f"Security scanner encountered error: {sec_scans.get('error', 'unknown error')}",
+                "source": "security_scans.error",
+                "timestamp": sec_scans.get("timestamp"),
+            })
+        sec_payload = {
             "security_events": {
                 "status": logs.get("status", "unavailable"),
                 "source": logs.get("source"),
@@ -1122,18 +1209,25 @@ def _specialist_evidence(agent: str, state: IncidentState) -> dict[str, Any]:
                     "timestamp": event.get("ts"),
                 }
                 for index, event in enumerate(security_events)
-            ],
-        })
+            ] + scan_observations,
+        }
+        if "security_scans" in evidence or sec_scans.get("status") != "unavailable":
+            sec_payload["security_scans"] = sec_scans
+        return attach_extraction(sec_payload)
     version_evidence = evidence.get("version", unavailable)
     version_data = (
         version_evidence.get("data", {})
         if isinstance(version_evidence, dict) else {}
     )
-    pipeline_evidence = evidence.get(
-        "pipeline",
-        version_data.get("pipeline", unavailable)
-        if isinstance(version_data, dict) else unavailable,
-    )
+    ci_pipe = evidence.get("ci_pipeline")
+    if isinstance(ci_pipe, dict) and ci_pipe.get("status") != "unavailable":
+        pipeline_evidence = ci_pipe
+    else:
+        pipeline_evidence = evidence.get(
+            "pipeline",
+            version_data.get("pipeline", unavailable)
+            if isinstance(version_data, dict) else unavailable,
+        )
     if not isinstance(pipeline_evidence, dict):
         pipeline_evidence = unavailable
     sources = {
@@ -1155,19 +1249,33 @@ def _specialist_evidence(agent: str, state: IncidentState) -> dict[str, Any]:
         ),
         "baseline_comparison": comparison,
     }
+    if "ci_pipeline" in evidence or pipeline_evidence.get("status") in {"ok", "stale"}:
+        sources["ci_pipeline"] = pipeline_evidence
+    sec_scans_input = evidence.get("security_scans") or state.get("security_scans")
+    if sec_scans_input is not None:
+        sources["security_summary"] = summarize_security_for_incident(sec_scans_input)
+
+    incident_source_list = [
+        "health", "metrics", "system_metrics", "deployment", "logs",
+        "docker", "prometheus", "baseline_comparison",
+    ]
+    if "security_summary" in sources:
+        incident_source_list.append("security_summary")
+
+    cicd_source_list = [
+        "health", "metrics", "deployment", "pipeline", "logs", "docker",
+        "baseline_comparison",
+    ]
+    if "ci_pipeline" in sources:
+        cicd_source_list.append("ci_pipeline")
+
     relevant_sources = {
         "monitoring": (
             "metrics", "system_metrics", "docker", "prometheus",
             "baseline_comparison",
         ),
-        "incident": (
-            "health", "metrics", "system_metrics", "deployment", "logs",
-            "docker", "prometheus", "baseline_comparison",
-        ),
-        "cicd": (
-            "health", "metrics", "deployment", "pipeline", "logs", "docker",
-            "baseline_comparison",
-        ),
+        "incident": tuple(incident_source_list),
+        "cicd": tuple(cicd_source_list),
         "infrastructure": (
             "health", "system_metrics", "docker", "prometheus",
             "baseline_comparison",
@@ -1192,10 +1300,10 @@ def _specialist_evidence(agent: str, state: IncidentState) -> dict[str, Any]:
         "incident": (
             "health.", "metrics.", "system_metrics.", "deployment.",
             "version.", "logs.", "docker.", "prometheus.",
-            "baseline_comparison.",
+            "baseline_comparison.", "security_summary.",
         ),
         "cicd": (
-            "health.", "metrics.", "deployment.", "version.", "pipeline.", "logs.",
+            "health.", "metrics.", "deployment.", "version.", "pipeline.", "ci_pipeline.", "logs.",
             "docker.", "prometheus.", "baseline_comparison.",
         ),
         "infrastructure": (
@@ -2243,6 +2351,57 @@ def _observed_facts(
                 f"security_alerts[{index}]",
                 alert.get("ts") if isinstance(alert, dict) else captured_at,
             ))
+
+    ci_data = evidence.get("ci_pipeline") or evidence.get("pipeline", {})
+    if isinstance(ci_data, dict) and ci_data.get("status") in {"ok", "stale"}:
+        ci_ts = ci_data.get("timestamp", captured_at)
+        wf_name = ci_data.get("workflow_name")
+        conclusion = ci_data.get("conclusion")
+        if wf_name and conclusion:
+            facts.append(_make_fact(
+                f"CI workflow {wf_name!r} concluded with status {conclusion!r}.",
+                "pipeline.conclusion",
+                ci_ts,
+            ))
+        test_summary = ci_data.get("test_summary", {})
+        if isinstance(test_summary, dict) and "total" in test_summary:
+            tot = test_summary.get("total", 0)
+            failed = test_summary.get("failed", 0)
+            errors = test_summary.get("errors", 0)
+            facts.append(_make_fact(
+                f"CI pipeline ran {tot} tests ({failed} failed, {errors} errors).",
+                "pipeline.test_summary",
+                ci_ts,
+            ))
+
+    sec_scans = evidence.get("security_scans", {})
+    if isinstance(sec_scans, dict) and sec_scans.get("status") in {"findings", "clean", "ok"}:
+        sec_ts = sec_scans.get("timestamp", captured_at)
+        summary = sec_scans.get("summary", {})
+        tot = summary.get("total_findings", 0)
+        facts.append(_make_fact(
+            f"Security scanner reports status {sec_scans.get('status')!r} with {tot} findings.",
+            "security_scans.summary",
+            sec_ts,
+        ))
+        facts.append(_make_fact(
+            f"Security summary reports {tot} total findings (status: {sec_scans.get('status')!r}).",
+            "security_summary.total_findings",
+            sec_ts,
+        ))
+        by_sev = summary.get("by_severity", {})
+        if isinstance(by_sev, dict) and tot > 0:
+            facts.append(_make_fact(
+                f"Security findings by severity: critical={by_sev.get('critical', 0)}, high={by_sev.get('high', 0)}, medium={by_sev.get('medium', 0)}, low={by_sev.get('low', 0)}, unknown={by_sev.get('unknown', 0)}.",
+                "security_scans.summary.by_severity",
+                sec_ts,
+            ))
+            facts.append(_make_fact(
+                f"Security summary severity breakdown: critical={by_sev.get('critical', 0)}, high={by_sev.get('high', 0)}, medium={by_sev.get('medium', 0)}, low={by_sev.get('low', 0)}, unknown={by_sev.get('unknown', 0)}.",
+                "security_summary.by_severity",
+                sec_ts,
+            ))
+
     return facts
 
 
@@ -2338,6 +2497,16 @@ def _telemetry_availability(evidence: dict[str, Any]) -> dict[str, Any]:
             prometheus.get("source"),
             prometheus.get("detail"),
         ),
+        "ci_pipeline": item(
+            evidence.get("ci_pipeline", {}).get("status", "unavailable"),
+            evidence.get("ci_pipeline", {}).get("source"),
+            evidence.get("ci_pipeline", {}).get("detail"),
+        ),
+        "security_scans": item(
+            evidence.get("security_scans", {}).get("status", "unavailable"),
+            evidence.get("security_scans", {}).get("source"),
+            evidence.get("security_scans", {}).get("detail"),
+        ),
     }
 
 
@@ -2410,6 +2579,7 @@ def _specialists_node(state: IncidentState) -> dict[str, Any]:
             "missing_evidence": category_missing_details,
             "verified_observations": role_package["observations"],
         }
+        agent_started = time.perf_counter()
         try:
             result = llm_runtime.analyze(
                 agent,
@@ -2418,6 +2588,7 @@ def _specialists_node(state: IncidentState) -> dict[str, Any]:
             )
         except Exception as exc:
             result = {"status": "error", "agent": agent, "detail": str(exc)}
+        agent_duration = time.perf_counter() - agent_started
         if not isinstance(result, dict):
             result = {
                 "status": "invalid_response",
@@ -2431,11 +2602,18 @@ def _specialists_node(state: IncidentState) -> dict[str, Any]:
                 "model": result.get("model"),
                 "detail": "Runtime result did not match the specialist analysis contract",
             }
+        app_metrics.record_agent_execution(
+            agent, result.get("status", "error"), agent_duration
+        )
+        configured_model = app_metrics.AGENT_DEFAULT_MODELS.get(agent)
         result = {
+            "model": result.get("model") or configured_model,
             **result,
             "deterministic_evidence": role_package,
             "evidence_delivery": evidence_delivery,
         }
+        if not result.get("model") and configured_model:
+            result["model"] = configured_model
         if result.get("status") == "ok":
             analysis = result["analysis"]
             validated_summary = _validate_finding(analysis["summary"], supplied_evidence)

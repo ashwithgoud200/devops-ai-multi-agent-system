@@ -1,0 +1,53 @@
+name: Local Docker Compose Deployment Validation
+
+# IMPORTANT: GitHub-hosted runners execute in isolated cloud VMs and NEVER access
+# or deploy to a user's personal local Windows Docker Desktop environment.
+# On GitHub-hosted runners, this workflow validates the Docker Compose deployment
+# lifecycle in an ephemeral runner network. If manually executed on an optional
+# local self-hosted runner, it updates/verifies the local Compose stack without
+# stopping running services or deleting named volumes.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional GHCR image reference to pull and validate (defaults to local build)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  DEVOPS_LLM_ENABLED: "false"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  deploy-local-compose:
+    name: Validate Local Docker Compose Deployment Lifecycle
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+
+      - name: Execute safe local deployment script
+        env:
+          INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          chmod +x scripts/deploy_local.sh
+          if [[ -n "${INPUT_IMAGE_TAG}" ]]; then
+            export APP_IMAGE="${INPUT_IMAGE_TAG}"
+            export PULL_IMAGE="true"
+          fi
+          ./scripts/deploy_local.sh
+
+      - name: Stop ephemeral containers on GitHub-hosted runner only (preserving volumes)
+        if: always() && runner.environment == 'github-hosted'
+        run: docker compose stop

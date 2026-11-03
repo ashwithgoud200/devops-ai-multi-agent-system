@@ -5,6 +5,7 @@ const paths = {
   approval: <><path d="M20 6 9 17l-5-5" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>,
   chart: <><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-5 5" /></>,
   audit: <><path d="M12 8v4l3 2" /><circle cx="12" cy="12" r="9" /><path d="M3.5 8h4" /></>,
+  shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>,
   refresh: <><path d="M20 7v5h-5M4 17v-5h5" /><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3" /></>,
   arrow: <><path d="M7 17 17 7M7 7h10v10" /></>,
   close: <><path d="m18 6-12 12M6 6l12 12" /></>,

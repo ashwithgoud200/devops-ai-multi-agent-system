@@ -1,0 +1,246 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DEVOPS_LLM_ENABLED: "false"
+
+jobs:
+  secret-scan:
+    name: Repository Secret & Credential Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks secret scanner
+        id: gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e7d8ef52e496eb4e5a4ab46fc5970e459 # v2.3.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_SUMMARY: "true"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+          GITLEAKS_REPORT_PATH: "reports/gitleaks-raw.json"
+
+      - name: Sanitize Gitleaks report (remove Secret and Match values)
+        if: always()
+        run: |
+          mkdir -p reports
+          python3 -c "
+          import json, pathlib
+          raw_path = pathlib.Path('reports/gitleaks-raw.json')
+          out_path = pathlib.Path('reports/gitleaks.json')
+          if raw_path.exists() and raw_path.stat().st_size > 0:
+              try:
+                  items = json.loads(raw_path.read_text(encoding='utf-8'))
+                  if isinstance(items, list):
+                      sanitized = []
+                      for item in items:
+                          if isinstance(item, dict):
+                              safe = {
+                                  k: v for k, v in item.items()
+                                  if k not in {'Secret', 'Match'}
+                              }
+                              sanitized.append(safe)
+                      out_path.write_text(json.dumps(sanitized, indent=2), encoding='utf-8')
+              except Exception as e:
+                  out_path.write_text(json.dumps({'error': str(e)}), encoding='utf-8')
+          elif not out_path.exists():
+              out_path.write_text('[]', encoding='utf-8')
+          if raw_path.exists():
+              raw_path.unlink()
+          "
+
+      - name: Upload sanitized Gitleaks report
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: security-gitleaks-report
+          path: reports/gitleaks.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Verify repository secret-hygiene invariants
+        run: |
+          python3 -c "
+          import pathlib, re, subprocess
+          tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
+          forbidden_files = {'.env', 'id_rsa', 'id_ed25519'}
+          exposed = [f for f in tracked if pathlib.Path(f).name in forbidden_files or f.endswith(('.pem', '.key', '.pfx'))]
+          assert not exposed, f'Tracked secret or private key files detected: {exposed}'
+          secret_patterns = [
+              re.compile(r'sk-[A-Za-z0-9]{20,}'),
+              re.compile(r'ghp_[A-Za-z0-9]{36,}'),
+              re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
+          ]
+          findings = []
+          for rel_path in tracked:
+              path = pathlib.Path(rel_path)
+              if not path.is_file() or path.suffix in {'.png', '.jpg', '.ico', '.woff', '.woff2'}:
+                  continue
+              text = path.read_text(encoding='utf-8', errors='ignore')
+              for pat in secret_patterns:
+                  if pat.search(text):
+                      findings.append(rel_path)
+          assert not findings, f'Potential hardcoded secret patterns detected in: {findings}'
+          print(f'Verified {len(tracked)} tracked files: no .env, private keys, or credential tokens committed.')
+          "
+
+  python-dependency-scan:
+    name: Python Dependency Vulnerability Scan (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies and pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pip-audit
+
+      - name: Audit Python dependencies with pip-audit
+        run: |
+          mkdir -p reports
+          EXIT_CODE=0
+          python -m pip_audit -r requirements.txt -f json -o reports/pip_audit.json --desc on || EXIT_CODE=$?
+          python -m pip_audit -r requirements.txt --desc on || true
+          exit $EXIT_CODE
+
+      - name: Upload pip-audit report
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: security-pip-audit-report
+          path: reports/pip_audit.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  node-dependency-scan:
+    name: Node.js Dependency Vulnerability Scan (npm audit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@1d43b558a28a475868693a5581bf06cb059d64d1 # v4.2.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend lockfile dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run npm audit for known vulnerabilities
+        run: |
+          mkdir -p ../reports
+          npm audit --json > ../reports/npm_audit.json || true
+          npm audit --audit-level=high
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: security-npm-audit-report
+          path: reports/npm_audit.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  docker-trivy-scan:
+    name: Docker Image & Configuration Vulnerability Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Build application Docker image for scanning
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: devops-agents-calculator:security-scan
+          cache-from: type=gha
+
+      - name: Run Trivy config scan (JSON report)
+        uses: aquasecurity/trivy-action@c5967f85626795f647d4bf6eb67227f9b79e02f5 # 0.28.0
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          format: "json"
+          output: "reports/trivy_config.json"
+          severity: "HIGH,CRITICAL"
+          exit-code: "0"
+
+      - name: Enforce Trivy config scan gate (table)
+        uses: aquasecurity/trivy-action@c5967f85626795f647d4bf6eb67227f9b79e02f5 # 0.28.0
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          format: "table"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+
+      - name: Run Trivy vulnerability scan on built Docker image (JSON report)
+        if: always()
+        uses: aquasecurity/trivy-action@c5967f85626795f647d4bf6eb67227f9b79e02f5 # 0.28.0
+        with:
+          image-ref: "devops-agents-calculator:security-scan"
+          format: "json"
+          output: "reports/trivy_image.json"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          exit-code: "0"
+
+      - name: Enforce Trivy vulnerability scan gate (table)
+        if: always()
+        uses: aquasecurity/trivy-action@c5967f85626795f647d4bf6eb67227f9b79e02f5 # 0.28.0
+        with:
+          image-ref: "devops-agents-calculator:security-scan"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          exit-code: "1"
+
+      - name: Upload Trivy scan reports
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: security-trivy-reports
+          path: |
+            reports/trivy_config.json
+            reports/trivy_image.json
+          retention-days: 7
+          if-no-files-found: ignore
