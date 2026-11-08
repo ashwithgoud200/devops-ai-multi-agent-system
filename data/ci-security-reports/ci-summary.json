@@ -1,0 +1,32 @@
+{
+  "workflow_name": "CI Build & Regression Tests",
+  "workflow_run_id": "4829104",
+  "branch": "main",
+  "commit_sha": "8f4c2e109ab76d543210fe9876543210abcdef01",
+  "conclusion": "success",
+  "timestamp": 1793720627.2841613,
+  "tests": 245,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "jobs": [
+    {
+      "name": "test-python-3.12",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "duration_seconds": 1.1
+        },
+        {
+          "name": "run-pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "duration_seconds": 4.2
+        }
+      ]
+    }
+  ]
+}

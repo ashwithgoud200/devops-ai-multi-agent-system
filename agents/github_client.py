@@ -37,16 +37,48 @@ DEFAULT_GITHUB_API_URL = "https://api.github.com"
 DEFAULT_GITHUB_TIMEOUT = 10.0
 DEFAULT_MAX_ARTIFACT_BYTES = 10 * 1024 * 1024  # 10 MB per zip archive
 DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024  # 5 MB per decompressed file
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _ensure_env() -> None:
+    import sys
+    if "pytest" in sys.modules or any("pytest" in arg.lower() for arg in sys.argv):
+        return
+    env_file = os.path.join(ROOT, ".env")
+    if os.path.isfile(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k, v = k.strip(), v.strip().strip("'\"")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except OSError:
+            pass
 
 
 def get_github_enabled() -> bool:
     """Return whether GitHub API integration is enabled."""
+    _ensure_env()
     return os.getenv("DEVOPS_GITHUB_ENABLED", "false").strip().lower() in ("true", "1", "yes")
 
 
 def get_github_repo() -> str:
     """Return the configured GitHub repository in owner/repo format."""
-    return os.getenv("DEVOPS_GITHUB_REPO", "").strip()
+    _ensure_env()
+    raw = os.getenv("DEVOPS_GITHUB_REPO", "").strip()
+    if not raw:
+        return ""
+    prefixes = ["https://github.com/", "http://github.com/", "git@github.com:"]
+    for prefix in prefixes:
+        if raw.startswith(prefix):
+            raw = raw[len(prefix):]
+            break
+    if raw.endswith(".git"):
+        raw = raw[:-4]
+    return raw.strip("/")
 
 
 def get_github_token() -> str | None:
@@ -525,3 +557,169 @@ class GitHubClient:
         normalized["freshness"] = "stale" if is_stale else "observed"
 
         return normalized
+
+    def create_pull_request(
+        self,
+        title: str,
+        body: str,
+        head_branch: str,
+        base_branch: str = "main",
+    ) -> tuple[dict[str, Any] | None, str | None]:
+        """Create a Pull Request if GitHub token and repo are configured."""
+        if not self.enabled:
+            return None, "GitHub integration is disabled (DEVOPS_GITHUB_ENABLED=false)"
+        if not self.repo:
+            return None, "No GitHub repository configured (DEVOPS_GITHUB_REPO is empty)"
+        if not self.token:
+            return None, "No GitHub token configured (DEVOPS_GITHUB_TOKEN is missing)"
+
+        url = f"{self.api_url}/repos/{self.repo}/pulls"
+        headers = self._headers()
+        payload = {
+            "title": title,
+            "body": body,
+            "head": head_branch,
+            "base": base_branch,
+        }
+        try:
+            resp = self.session.post(url, headers=headers, json=payload, timeout=self.timeout)
+            if resp.status_code in (200, 201):
+                return resp.json(), None
+            return None, f"GitHub PR creation failed (HTTP {resp.status_code}): {resp.text[:300]}"
+        except requests.RequestException as exc:
+            return None, f"GitHub PR request failed: {exc}"
+
+    def dispatch_workflow(
+        self,
+        workflow_id_or_file: str = "ci.yml",
+        ref: str = "main",
+        inputs: dict[str, Any] | None = None,
+    ) -> tuple[bool, str | None]:
+        """Dispatch a GitHub Actions workflow if token and repo are configured."""
+        if not self.enabled or not self.repo or not self.token:
+            return False, "GitHub integration disabled or unauthenticated"
+
+        url = f"{self.api_url}/repos/{self.repo}/actions/workflows/{workflow_id_or_file}/dispatches"
+        headers = self._headers()
+        payload: dict[str, Any] = {"ref": ref}
+        if inputs:
+            payload["inputs"] = inputs
+        try:
+            resp = self.session.post(url, headers=headers, json=payload, timeout=self.timeout)
+            if resp.status_code in (200, 204):
+                return True, None
+            return False, f"Dispatch failed HTTP {resp.status_code}: {resp.text[:200]}"
+        except requests.RequestException as exc:
+            return False, f"Workflow dispatch request failed: {exc}"
+
+    def get_default_branch(self) -> str:
+        """Fetch default branch name from GitHub API, defaulting to 'main'."""
+        resp, _, _ = self._request_get(f"repos/{self.repo}")
+        if resp and resp.status_code == 200:
+            return resp.json().get("default_branch") or "main"
+        return "main"
+
+    def get_branch_sha(self, branch: str = "main") -> str | None:
+        """Get the commit SHA for a branch."""
+        resp, _, _ = self._request_get(f"repos/{self.repo}/git/ref/heads/{branch}")
+        if resp and resp.status_code == 200:
+            return resp.json().get("object", {}).get("sha")
+        return None
+
+    def create_or_update_branch(
+        self, branch_name: str, base_branch: str = "main"
+    ) -> tuple[str | None, str | None]:
+        """Create a new branch from base_branch or return existing branch SHA."""
+        if not self.enabled or not self.repo or not self.token:
+            return None, "GitHub integration disabled or unauthenticated"
+
+        existing_sha = self.get_branch_sha(branch_name)
+        if existing_sha:
+            return existing_sha, None
+
+        base_sha = self.get_branch_sha(base_branch)
+        if not base_sha:
+            return None, f"Could not find base branch '{base_branch}' in {self.repo}"
+
+        url = f"{self.api_url}/repos/{self.repo}/git/refs"
+        headers = self._headers()
+        payload = {
+            "ref": f"refs/heads/{branch_name}",
+            "sha": base_sha,
+        }
+        try:
+            resp = self.session.post(url, headers=headers, json=payload, timeout=self.timeout)
+            if resp.status_code in (200, 201):
+                return resp.json().get("object", {}).get("sha"), None
+            return None, f"Create branch failed (HTTP {resp.status_code}): {resp.text[:200]}"
+        except requests.RequestException as exc:
+            return None, f"Create branch request failed: {exc}"
+
+    def commit_feature_file(
+        self,
+        path: str,
+        content: str,
+        message: str,
+        branch: str,
+    ) -> tuple[dict[str, Any] | None, str | None]:
+        """Create or update a feature file in the GitHub repo on a specific branch."""
+        if not self.enabled or not self.repo or not self.token:
+            return None, "GitHub integration disabled or unauthenticated"
+
+        import base64
+        url = f"{self.api_url}/repos/{self.repo}/contents/{path}"
+        headers = self._headers()
+
+        # Ensure branch exists in GitHub repo; auto-create from default branch if needed
+        default_branch = self.get_default_branch()
+        if branch and branch != default_branch:
+            if not self.get_branch_sha(branch):
+                self.create_or_update_branch(branch, base_branch=default_branch)
+
+        existing_sha = None
+        try:
+            resp_check = self.session.get(f"{url}?ref={branch}", headers=headers, timeout=self.timeout)
+            if resp_check.status_code == 200:
+                existing_sha = resp_check.json().get("sha")
+        except requests.RequestException:
+            pass
+
+        payload: dict[str, Any] = {
+            "message": message,
+            "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
+            "branch": branch,
+        }
+        if existing_sha:
+            payload["sha"] = existing_sha
+
+        try:
+            resp = self.session.put(url, headers=headers, json=payload, timeout=self.timeout)
+            if resp.status_code in (200, 201):
+                data = resp.json()
+                return {
+                    "commit_sha": data.get("commit", {}).get("sha"),
+                    "commit_url": data.get("commit", {}).get("html_url"),
+                    "file_url": data.get("content", {}).get("html_url"),
+                }, None
+            if resp.status_code == 409 and "empty" in resp.text.lower():
+                payload_init = {
+                    "message": message,
+                    "content": payload["content"],
+                }
+                resp_init = self.session.put(url, headers=headers, json=payload_init, timeout=self.timeout)
+                if resp_init.status_code in (200, 201):
+                    data = resp_init.json()
+                    return {
+                        "commit_sha": data.get("commit", {}).get("sha"),
+                        "commit_url": data.get("commit", {}).get("html_url"),
+                        "file_url": data.get("content", {}).get("html_url"),
+                    }, None
+            if resp.status_code == 403:
+                return None, (
+                    "GitHub Permission Denied (HTTP 403): Personal Access Token lacks write access. "
+                    "In GitHub Settings -> Developer Settings -> Personal access tokens, ensure 'Contents: Read and write' "
+                    "and 'Pull requests: Read and write' are enabled."
+                )
+            return None, f"Commit failed (HTTP {resp.status_code}): {resp.text[:250]}"
+        except requests.RequestException as exc:
+            return None, f"Commit request failed: {exc}"

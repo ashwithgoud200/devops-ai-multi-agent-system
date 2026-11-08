@@ -38,6 +38,14 @@ ROLE_CATEGORIES = {
     "cicd": {"deployment", "application_metrics", "application_log"},
     "infrastructure": {"infrastructure", "application_metrics"},
     "security": {"security"},
+    "incident_rca": {
+        "application_metrics", "infrastructure", "deployment",
+        "application_log", "code", "security",
+    },
+    "change_analysis": {
+        "deployment", "code", "application_log", "application_metrics",
+    },
+    "security_analysis": {"security"},
 }
 FRESHNESS_SECONDS = {
     "application_metrics": 300.0,
@@ -51,8 +59,11 @@ PROMETHEUS_UNITS = {
     "request_rate": "requests/second",
     "http_error_rate": "percent",
     "latency_p95": "seconds",
+    "process_cpu_seconds": "seconds/second",
     "cpu_utilization": "percent_of_one_cpu",
     "memory_usage": "bytes",
+    "app_health_status": "status",
+    "llm_requests_total": "requests/second",
     "host_cpu_utilization": "percent",
     "host_memory_utilization": "percent",
     "container_cpu": "percent_of_one_cpu",
@@ -130,6 +141,9 @@ def validate_observation(observation: Any) -> dict[str, Any]:
     for field in ("value", "baseline_value", "current_value", "change"):
         if not _json_value(observation[field]):
             raise ValueError(f"{field} must contain finite JSON-compatible values")
+    if observation["unit"] in {"percent", "bytes", "restarts", "seconds"} and _is_number(observation.get("value")):
+        if observation["value"] < 0:
+            raise ValueError(f"{observation['metric_or_event']} value must be non-negative")
     return dict(observation)
 
 
@@ -748,6 +762,85 @@ class _Extractor:
                     ),
                 )
 
+    def extract_security_scans(self) -> None:
+        sec_scans = self.evidence.get("security_scans")
+        if not isinstance(sec_scans, dict):
+            return
+        status = sec_scans.get("status")
+        if status not in {"findings", "clean", "ok"}:
+            if status == "scanner_error":
+                self.missing.append({
+                    "category": "security",
+                    "source_path": "security_scans",
+                    "status": "scanner_error",
+                    "detail": sec_scans.get("detail", "Security scanner encountered error"),
+                })
+            return
+
+        summary = sec_scans.get("summary", {})
+        timestamp = sec_scans.get("timestamp", self.evidence.get("captured_at"))
+        source = sec_scans.get("source", "security_scans")
+        origin = sec_scans.get("report_origin", "seeded_offline_fixture")
+
+        self.add(
+            "security",
+            "security_findings_count",
+            summary.get("total_findings", 0),
+            "security_scans.summary.total_findings",
+            source,
+            timestamp,
+            "findings",
+            status="observed",
+            evidence_text=f"Total security scanner findings: {summary.get('total_findings', 0)} [status={status}, origin={origin}]",
+        )
+
+        findings = sec_scans.get("findings", [])
+        if isinstance(findings, list):
+            for idx, finding in enumerate(findings):
+                if not isinstance(finding, dict):
+                    continue
+                finding_id = finding.get("finding_id") or finding.get("identifier") or f"sec-{idx}"
+                identifier = finding.get("identifier", "unknown")
+                severity = finding.get("severity", "unknown")
+                category = finding.get("category", "vulnerability")
+                package = finding.get("package")
+                installed_version = finding.get("installed_version")
+                fixed_versions = finding.get("fixed_versions", [])
+                location = finding.get("location")
+                target_name = package or location or "unknown"
+                scanners = finding.get("scanners", [finding.get("scanner", "scanner")])
+                report_origin = finding.get("report_origin", origin)
+                verification_status = finding.get("verification_status", "unverified_fixture")
+
+                finding_record = {
+                    "finding_id": finding_id,
+                    "identifier": identifier,
+                    "severity": severity,
+                    "category": category,
+                    "package": package,
+                    "installed_version": installed_version,
+                    "fixed_versions": fixed_versions,
+                    "location": location,
+                    "scanners": scanners,
+                    "report_origin": report_origin,
+                    "verification_status": verification_status,
+                }
+                scanners_str = ",".join(scanners) if isinstance(scanners, list) else str(scanners)
+                desc = finding.get("title") or finding.get("description") or f"{identifier} in {target_name}"
+                evidence_text = f"Security finding {identifier} [{severity}] ({category}) in {target_name} detected by {scanners_str}: {desc} [origin={report_origin}]"
+
+                self.add(
+                    "security",
+                    f"finding_{identifier}",
+                    finding_record,
+                    f"security_scans.findings[{idx}]",
+                    source,
+                    timestamp,
+                    unit=None,
+                    status="observed",
+                    evidence_text=evidence_text,
+                )
+
     def extract_baseline_comparison(self) -> None:
         deltas = self.comparison.get("request_deltas")
         if not isinstance(deltas, dict):
@@ -808,6 +901,7 @@ class _Extractor:
             self.extract_logs,
             self.extract_code_source,
             self.extract_security,
+            self.extract_security_scans,
             self.extract_baseline_comparison,
         ):
             try:

@@ -1,0 +1,5344 @@
+{
+  "schema_version": 1,
+  "snapshot": {
+    "captured_at": 1793718426.4802735,
+    "health": {
+      "status": "ok",
+      "source": "http://127.0.0.1:8100/health",
+      "timestamp": 1793718426.495632,
+      "data": {
+        "status": "ok",
+        "version": "1.0"
+      }
+    },
+    "metrics": {
+      "status": "ok",
+      "request_counters": {
+        "status": "ok"
+      },
+      "requests": {
+        "pow": {
+          "ok": 16.0
+        },
+        "add": {
+          "ok": 23.0
+        },
+        "mul": {
+          "ok": 18.0
+        },
+        "div": {
+          "ok": 29.0,
+          "error": 20.0
+        },
+        "sub": {
+          "ok": 34.0
+        }
+      },
+      "request_totals": {
+        "pow": 16.0,
+        "add": 23.0,
+        "mul": 18.0,
+        "div": 49.0,
+        "sub": 34.0
+      },
+      "latency_observations": {
+        "status": "ok",
+        "by_operation": {
+          "pow": 16.0,
+          "add": 23.0,
+          "mul": 18.0,
+          "div": 49.0,
+          "sub": 34.0
+        }
+      },
+      "source": "http://127.0.0.1:8100/metrics",
+      "timestamp": 1793718426.569104,
+      "detail": null
+    },
+    "system_metrics": {
+      "status": "ok",
+      "source": "host OS: Windows GetSystemTimes and GlobalMemoryStatusEx",
+      "timestamp": 1793718426.4590433,
+      "measurements": {
+        "cpu_utilization_percent": 23.076923076923077,
+        "memory_utilization_percent": 96.12994787032633,
+        "memory_total_bytes": 16849256448,
+        "memory_available_bytes": 652075008
+      },
+      "detail": null
+    },
+    "docker": {
+      "status": "ok",
+      "source": "Docker Engine via read-only Docker CLI",
+      "timestamp": 1793718426.5700922,
+      "containers": [
+        {
+          "id": "8fc31c78d47efd4b0a788397acc6779628c877375e6f415a94f0bb59856d1a9a",
+          "name": "supabase_studio_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/studio:2026.01.27-sha-2a37755",
+          "image_name": "public.ecr.aws/supabase/studio",
+          "image_tag": "2026.01.27-sha-2a37755",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.01,
+          "memory_usage_bytes": 246205644,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 3.02,
+          "network_rx_bytes": 23900,
+          "network_tx_bytes": 126,
+          "block_read_bytes": 122000000,
+          "block_write_bytes": 0,
+          "started_at": 1793711865.605692,
+          "uptime_seconds": 6560.964400291443,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "554773d26138b179949b51b4217740d2777a7d48673432e7d91e4600b2e12c4c",
+          "name": "supabase_pg_meta_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/postgres-meta:v0.95.2",
+          "image_name": "public.ecr.aws/supabase/postgres-meta",
+          "image_tag": "v0.95.2",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.64,
+          "memory_usage_bytes": 135371161,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 1.66,
+          "network_rx_bytes": 25000,
+          "network_tx_bytes": 126,
+          "block_read_bytes": 72300000,
+          "block_write_bytes": 0,
+          "started_at": 1793711864.652169,
+          "uptime_seconds": 6561.917923212051,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "28714314ef765bdb1e929041002d35809367a4eb1d789be5a719aa33b9778c01",
+          "name": "supabase_realtime_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/realtime:v2.73.2",
+          "image_name": "public.ecr.aws/supabase/realtime",
+          "image_tag": "v2.73.2",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.37,
+          "memory_usage_bytes": 257005977,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 3.15,
+          "network_rx_bytes": 2680000,
+          "network_tx_bytes": 3390000,
+          "block_read_bytes": 23100000,
+          "block_write_bytes": 20500,
+          "started_at": 1793711895.580011,
+          "uptime_seconds": 6530.990081310272,
+          "restart_count": 1,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "4e68d2823a2f1ec73bb6d9298ff9e20467c6e0061b48a5290ac89488405b5216",
+          "name": "supabase_inbucket_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/mailpit:v1.22.3",
+          "image_name": "public.ecr.aws/supabase/mailpit",
+          "image_tag": "v1.22.3",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.0,
+          "memory_usage_bytes": 20237516,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 0.25,
+          "network_rx_bytes": 25600,
+          "network_tx_bytes": 126,
+          "block_read_bytes": 17400000,
+          "block_write_bytes": 487000,
+          "started_at": 1793711864.633146,
+          "uptime_seconds": 6561.936946153641,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "a02e487b78970fa8e9e8265c735e0287e69fdb683f03914e0f0f4ede1cd585cd",
+          "name": "supabase_storage_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/storage-api:v1.35.3",
+          "image_name": "public.ecr.aws/supabase/storage-api",
+          "image_tag": "v1.35.3",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.92,
+          "memory_usage_bytes": 145227776,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 1.78,
+          "network_rx_bytes": 69000,
+          "network_tx_bytes": 41700,
+          "block_read_bytes": 126000000,
+          "block_write_bytes": 0,
+          "started_at": 1793711864.644297,
+          "uptime_seconds": 6561.925795316696,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "59b99842d60aa361f66f0919e89051a3843b24835593b29939bfeff4cf7e169c",
+          "name": "supabase_auth_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/gotrue:v2.186.0",
+          "image_name": "public.ecr.aws/supabase/gotrue",
+          "image_tag": "v2.186.0",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.07,
+          "memory_usage_bytes": 10737418,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 0.13,
+          "network_rx_bytes": 37000,
+          "network_tx_bytes": 12300,
+          "block_read_bytes": 1910000,
+          "block_write_bytes": 0,
+          "started_at": 1793711893.601084,
+          "uptime_seconds": 6532.969008207321,
+          "restart_count": 6,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "b94c10c27936277b9a763935dccf02a1f24435c15274d32444f906ed950afbc0",
+          "name": "supabase_rest_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/postgrest:v14.3",
+          "image_name": "public.ecr.aws/supabase/postgrest",
+          "image_tag": "v14.3",
+          "status": "running",
+          "health_status": "not_configured",
+          "cpu_usage_percent": 0.13,
+          "memory_usage_bytes": 19094568,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 0.23,
+          "network_rx_bytes": 136000,
+          "network_tx_bytes": 60900,
+          "block_read_bytes": 17100000,
+          "block_write_bytes": 0,
+          "started_at": 1793711864.446919,
+          "uptime_seconds": 6562.123173236847,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "95af59a42c0b72d35554055c98b3502439a9fc2c0f2367614dd04d71e09ea9c4",
+          "name": "supabase_kong_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/kong:2.8.1",
+          "image_name": "public.ecr.aws/supabase/kong",
+          "image_tag": "2.8.1",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.0,
+          "memory_usage_bytes": 113246208,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 1.39,
+          "network_rx_bytes": 30400,
+          "network_tx_bytes": 2240,
+          "block_read_bytes": 18500000,
+          "block_write_bytes": 111000,
+          "started_at": 1793711864.626435,
+          "uptime_seconds": 6561.943657159805,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "dcd458adf9d972f2026a39f525f30a13175bc201f75e872ddb5f6cbe97559c89",
+          "name": "supabase_vector_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/vector:0.28.1-alpine",
+          "image_name": "public.ecr.aws/supabase/vector",
+          "image_tag": "0.28.1-alpine",
+          "status": "restarting",
+          "health_status": "unhealthy",
+          "cpu_usage_percent": 0.0,
+          "memory_usage_bytes": 0,
+          "memory_limit_bytes": 0,
+          "memory_usage_percent": 0.0,
+          "network_rx_bytes": 0,
+          "network_tx_bytes": 0,
+          "block_read_bytes": 0,
+          "block_write_bytes": 0,
+          "started_at": 1793718396.014363,
+          "uptime_seconds": 30.555729150772095,
+          "restart_count": 108,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "1739adf4f8a4977500653f1208846d9e284900999505fd1a4238050849fdedd7",
+          "name": "supabase_analytics_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/logflare:1.30.5",
+          "image_name": "public.ecr.aws/supabase/logflare",
+          "image_tag": "1.30.5",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 1.86,
+          "memory_usage_bytes": 589509427,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 7.22,
+          "network_rx_bytes": 15100000,
+          "network_tx_bytes": 10700000,
+          "block_read_bytes": 93600000,
+          "block_write_bytes": 28700,
+          "started_at": 1793711864.565762,
+          "uptime_seconds": 6562.004330158234,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        },
+        {
+          "id": "c188a075a8381383cf0e2809e3c1c34b6370557df7bb351324184c6e1e28ca48",
+          "name": "supabase_db_leetcodecomparison-main",
+          "image": "public.ecr.aws/supabase/postgres:17.6.1.075",
+          "image_name": "public.ecr.aws/supabase/postgres",
+          "image_tag": "17.6.1.075",
+          "status": "running",
+          "health_status": "healthy",
+          "cpu_usage_percent": 0.15,
+          "memory_usage_bytes": 164521574,
+          "memory_limit_bytes": 8162585346,
+          "memory_usage_percent": 2.02,
+          "network_rx_bytes": 14300000,
+          "network_tx_bytes": 17900000,
+          "block_read_bytes": 69300000,
+          "block_write_bytes": 17300000,
+          "started_at": 1793711864.662861,
+          "uptime_seconds": 6561.907231092453,
+          "restart_count": 0,
+          "metrics_status": "ok",
+          "source": "Docker Engine via read-only Docker CLI",
+          "timestamp": 1793718426.5700922
+        }
+      ],
+      "errors": [],
+      "detail": null
+    },
+    "prometheus": {
+      "status": "unavailable",
+      "source": "Prometheus HTTP API",
+      "url": "http://127.0.0.1:9090",
+      "timestamp": 1793718472.4362319,
+      "range_seconds": 300,
+      "step_seconds": 60,
+      "metrics": {
+        "request_rate": {
+          "status": "unavailable",
+          "query": "sum(rate(devops_http_requests_total[5m]))",
+          "unit": "requests/second",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum%28rate%28devops_http_requests_total%5B5m%5D%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "http_error_rate": {
+          "status": "unavailable",
+          "query": "100 * sum(rate(devops_http_requests_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(devops_http_requests_total[5m])), 0.001)",
+          "unit": "percent",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+sum%28rate%28devops_http_requests_total%7Bstatus%3D~%225..%22%7D%5B5m%5D%29%29+%2F+clamp_min%28sum%28rate%28devops_http_requests_total%5B5m%5D%29%29%2C+0.001%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "latency_p95": {
+          "status": "unavailable",
+          "query": "histogram_quantile(0.95, sum by (le) (rate(devops_http_request_duration_seconds_bucket[5m])))",
+          "unit": "seconds",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=histogram_quantile%280.95%2C+sum+by+%28le%29+%28rate%28devops_http_request_duration_seconds_bucket%5B5m%5D%29%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "process_cpu_seconds": {
+          "status": "unavailable",
+          "query": "rate(process_cpu_seconds_total[5m])",
+          "unit": "seconds/second",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=rate%28process_cpu_seconds_total%5B5m%5D%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "memory_usage": {
+          "status": "unavailable",
+          "query": "process_resident_memory_bytes",
+          "unit": "bytes",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=process_resident_memory_bytes&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "app_health_status": {
+          "status": "unavailable",
+          "query": "devops_app_health_status",
+          "unit": "status",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=devops_app_health_status&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "llm_requests_total": {
+          "status": "unavailable",
+          "query": "sum by (agent, status) (rate(devops_llm_requests_total[5m]))",
+          "unit": "requests/second",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum+by+%28agent%2C+status%29+%28rate%28devops_llm_requests_total%5B5m%5D%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "host_cpu_utilization": {
+          "status": "unavailable",
+          "query": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+          "unit": "percent",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+%281+-+avg+by+%28instance%29+%28rate%28node_cpu_seconds_total%7Bmode%3D%22idle%22%7D%5B5m%5D%29%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "host_memory_utilization": {
+          "status": "unavailable",
+          "query": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+          "unit": "percent",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+%281+-+node_memory_MemAvailable_bytes+%2F+node_memory_MemTotal_bytes%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "container_cpu": {
+          "status": "unavailable",
+          "query": "sum by (container, image) (rate(container_cpu_usage_seconds_total[5m])) * 100",
+          "unit": "percent_of_one_cpu",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum+by+%28container%2C+image%29+%28rate%28container_cpu_usage_seconds_total%5B5m%5D%29%29+%2A+100&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "container_memory": {
+          "status": "unavailable",
+          "query": "container_memory_working_set_bytes",
+          "unit": "bytes",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=container_memory_working_set_bytes&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        "container_memory_utilization": {
+          "status": "unavailable",
+          "query": "100 * container_memory_working_set_bytes / (container_spec_memory_limit_bytes > 0)",
+          "unit": "percent",
+          "observations": [],
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+container_memory_working_set_bytes+%2F+%28container_spec_memory_limit_bytes+%3E+0%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        }
+      },
+      "errors": [
+        {
+          "metric": "request_rate",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum%28rate%28devops_http_requests_total%5B5m%5D%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "http_error_rate",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+sum%28rate%28devops_http_requests_total%7Bstatus%3D~%225..%22%7D%5B5m%5D%29%29+%2F+clamp_min%28sum%28rate%28devops_http_requests_total%5B5m%5D%29%29%2C+0.001%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "latency_p95",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=histogram_quantile%280.95%2C+sum+by+%28le%29+%28rate%28devops_http_request_duration_seconds_bucket%5B5m%5D%29%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "process_cpu_seconds",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=rate%28process_cpu_seconds_total%5B5m%5D%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "memory_usage",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=process_resident_memory_bytes&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "app_health_status",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=devops_app_health_status&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "llm_requests_total",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum+by+%28agent%2C+status%29+%28rate%28devops_llm_requests_total%5B5m%5D%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "host_cpu_utilization",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+%281+-+avg+by+%28instance%29+%28rate%28node_cpu_seconds_total%7Bmode%3D%22idle%22%7D%5B5m%5D%29%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "host_memory_utilization",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+%281+-+node_memory_MemAvailable_bytes+%2F+node_memory_MemTotal_bytes%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "container_cpu",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum+by+%28container%2C+image%29+%28rate%28container_cpu_usage_seconds_total%5B5m%5D%29%29+%2A+100&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "container_memory",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=container_memory_working_set_bytes&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        },
+        {
+          "metric": "container_memory_utilization",
+          "detail": "Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+container_memory_working_set_bytes+%2F+%28container_spec_memory_limit_bytes+%3E+0%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+        }
+      ],
+      "detail": "request_rate: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum%28rate%28devops_http_requests_total%5B5m%5D%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); http_error_rate: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+sum%28rate%28devops_http_requests_total%7Bstatus%3D~%225..%22%7D%5B5m%5D%29%29+%2F+clamp_min%28sum%28rate%28devops_http_requests_total%5B5m%5D%29%29%2C+0.001%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); latency_p95: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=histogram_quantile%280.95%2C+sum+by+%28le%29+%28rate%28devops_http_request_duration_seconds_bucket%5B5m%5D%29%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); process_cpu_seconds: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=rate%28process_cpu_seconds_total%5B5m%5D%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); memory_usage: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=process_resident_memory_bytes&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); app_health_status: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=devops_app_health_status&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); llm_requests_total: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum+by+%28agent%2C+status%29+%28rate%28devops_llm_requests_total%5B5m%5D%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); host_cpu_utilization: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+%281+-+avg+by+%28instance%29+%28rate%28node_cpu_seconds_total%7Bmode%3D%22idle%22%7D%5B5m%5D%29%29%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); host_memory_utilization: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+%281+-+node_memory_MemAvailable_bytes+%2F+node_memory_MemTotal_bytes%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); container_cpu: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=sum+by+%28container%2C+image%29+%28rate%28container_cpu_usage_seconds_total%5B5m%5D%29%29+%2A+100&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); container_memory: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=container_memory_working_set_bytes&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\")); container_memory_utilization: Prometheus HTTP request failed: HTTPConnectionPool(host='127.0.0.1', port=9090): Max retries exceeded with url: /api/v1/query_range?query=100+%2A+container_memory_working_set_bytes+%2F+%28container_spec_memory_limit_bytes+%3E+0%29&start=1793718147.858649&end=1793718447.858649&step=60 (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=9090): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "version": {
+      "status": "ok",
+      "source": "http://127.0.0.1:8100/admin/version",
+      "timestamp": 1793718472.45201,
+      "data": {
+        "version": "1.0",
+        "history": [
+          {
+            "version": "1.0",
+            "ts": 1793718030.2386198
+          },
+          {
+            "version": "1.1",
+            "ts": 1793718169.521982
+          },
+          {
+            "version": "1.0",
+            "ts": 1793718244.3367653
+          }
+        ]
+      }
+    },
+    "logs": {
+      "status": "ok",
+      "source": "D:\\devops-agents-six-model-agents\\devops-agents\\logs\\app.log",
+      "timestamp": 1793718426.479268,
+      "events": [
+        {
+          "ts": 1793563086.758806,
+          "level": "INFO",
+          "op": "mul",
+          "a": 33.0,
+          "b": 8.0,
+          "result": 264.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563086.7628107,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563086.7688131,
+          "level": "INFO",
+          "op": "sub",
+          "a": 6.0,
+          "b": 2.0,
+          "result": 4.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563086.7748067,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563086.777851,
+          "level": "INFO",
+          "op": "sub",
+          "a": 43.0,
+          "b": 9.0,
+          "result": 34.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563086.7818084,
+          "level": "INFO",
+          "op": "add",
+          "a": 13.0,
+          "b": 1.0,
+          "result": 14.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.5949807,
+          "level": "INFO",
+          "op": "pow",
+          "a": 35.0,
+          "b": 8.0,
+          "result": 2251875390625.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6009717,
+          "level": "INFO",
+          "op": "mul",
+          "a": 29.0,
+          "b": 2.0,
+          "result": 58.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6071286,
+          "level": "INFO",
+          "op": "mul",
+          "a": 7.0,
+          "b": 9.0,
+          "result": 63.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6121373,
+          "level": "INFO",
+          "op": "sub",
+          "a": 43.0,
+          "b": 6.0,
+          "result": 37.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6181483,
+          "level": "INFO",
+          "op": "add",
+          "a": 36.0,
+          "b": 9.0,
+          "result": 45.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6251597,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6292195,
+          "level": "INFO",
+          "op": "mul",
+          "a": 21.0,
+          "b": 7.0,
+          "result": 147.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.634161,
+          "level": "INFO",
+          "op": "pow",
+          "a": 18.0,
+          "b": 3.0,
+          "result": 5832.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.640919,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.643819,
+          "level": "INFO",
+          "op": "sub",
+          "a": 30.0,
+          "b": 6.0,
+          "result": 24.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6468155,
+          "level": "INFO",
+          "op": "add",
+          "a": 43.0,
+          "b": 3.0,
+          "result": 46.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6498811,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6539085,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 3.0,
+          "result": 4.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6569,
+          "level": "INFO",
+          "op": "pow",
+          "a": 19.0,
+          "b": 8.0,
+          "result": 16983563041.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6588976,
+          "level": "INFO",
+          "op": "mul",
+          "a": 43.0,
+          "b": 1.0,
+          "result": 43.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.661881,
+          "level": "INFO",
+          "op": "add",
+          "a": 37.0,
+          "b": 2.0,
+          "result": 39.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6648173,
+          "level": "INFO",
+          "op": "sub",
+          "a": 17.0,
+          "b": 4.0,
+          "result": 13.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6688254,
+          "level": "INFO",
+          "op": "pow",
+          "a": 31.0,
+          "b": 3.0,
+          "result": 29791.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6718926,
+          "level": "INFO",
+          "op": "pow",
+          "a": 42.0,
+          "b": 9.0,
+          "result": 406671383849472.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6748192,
+          "level": "INFO",
+          "op": "mul",
+          "a": 45.0,
+          "b": 7.0,
+          "result": 315.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6778166,
+          "level": "INFO",
+          "op": "add",
+          "a": 5.0,
+          "b": 9.0,
+          "result": 14.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.680817,
+          "level": "INFO",
+          "op": "sub",
+          "a": 33.0,
+          "b": 5.0,
+          "result": 28.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.683819,
+          "level": "INFO",
+          "op": "pow",
+          "a": 22.0,
+          "b": 2.0,
+          "result": 484.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6879134,
+          "level": "INFO",
+          "op": "pow",
+          "a": 17.0,
+          "b": 1.0,
+          "result": 17.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.690817,
+          "level": "INFO",
+          "op": "sub",
+          "a": 10.0,
+          "b": 9.0,
+          "result": 1.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6929023,
+          "level": "INFO",
+          "op": "sub",
+          "a": 18.0,
+          "b": 7.0,
+          "result": 11.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6959045,
+          "level": "INFO",
+          "op": "mul",
+          "a": 28.0,
+          "b": 2.0,
+          "result": 56.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.6988158,
+          "level": "INFO",
+          "op": "add",
+          "a": 29.0,
+          "b": 9.0,
+          "result": 38.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7030723,
+          "level": "INFO",
+          "op": "sub",
+          "a": 41.0,
+          "b": 9.0,
+          "result": 32.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7070837,
+          "level": "INFO",
+          "op": "add",
+          "a": 14.0,
+          "b": 9.0,
+          "result": 23.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.710085,
+          "level": "INFO",
+          "op": "add",
+          "a": 17.0,
+          "b": 1.0,
+          "result": 18.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.713187,
+          "level": "INFO",
+          "op": "add",
+          "a": 28.0,
+          "b": 4.0,
+          "result": 32.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7160869,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.721168,
+          "level": "INFO",
+          "op": "mul",
+          "a": 27.0,
+          "b": 6.0,
+          "result": 162.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7251797,
+          "level": "INFO",
+          "op": "mul",
+          "a": 49.0,
+          "b": 2.0,
+          "result": 98.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.728102,
+          "level": "INFO",
+          "op": "mul",
+          "a": 31.0,
+          "b": 7.0,
+          "result": 217.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7311034,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7361841,
+          "level": "INFO",
+          "op": "add",
+          "a": 6.0,
+          "b": 7.0,
+          "result": 13.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7381015,
+          "level": "INFO",
+          "op": "pow",
+          "a": 46.0,
+          "b": 6.0,
+          "result": 9474296896.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7427158,
+          "level": "INFO",
+          "op": "add",
+          "a": 10.0,
+          "b": 5.0,
+          "result": 15.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7457204,
+          "level": "INFO",
+          "op": "pow",
+          "a": 27.0,
+          "b": 3.0,
+          "result": 19683.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7487943,
+          "level": "INFO",
+          "op": "sub",
+          "a": 45.0,
+          "b": 9.0,
+          "result": 36.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7517133,
+          "level": "INFO",
+          "op": "add",
+          "a": 8.0,
+          "b": 5.0,
+          "result": 13.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.754767,
+          "level": "INFO",
+          "op": "sub",
+          "a": 16.0,
+          "b": 6.0,
+          "result": 10.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7577677,
+          "level": "INFO",
+          "op": "pow",
+          "a": 31.0,
+          "b": 3.0,
+          "result": 29791.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.760792,
+          "level": "INFO",
+          "op": "pow",
+          "a": 16.0,
+          "b": 8.0,
+          "result": 4294967296.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7637134,
+          "level": "INFO",
+          "op": "add",
+          "a": 47.0,
+          "b": 5.0,
+          "result": 52.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7667131,
+          "level": "INFO",
+          "op": "sub",
+          "a": 27.0,
+          "b": 1.0,
+          "result": 26.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.772806,
+          "level": "INFO",
+          "op": "add",
+          "a": 31.0,
+          "b": 7.0,
+          "result": 38.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.776714,
+          "level": "INFO",
+          "op": "add",
+          "a": 40.0,
+          "b": 4.0,
+          "result": 44.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7797647,
+          "level": "INFO",
+          "op": "mul",
+          "a": 29.0,
+          "b": 3.0,
+          "result": 87.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7827117,
+          "level": "INFO",
+          "op": "pow",
+          "a": 16.0,
+          "b": 1.0,
+          "result": 16.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7867956,
+          "level": "INFO",
+          "op": "pow",
+          "a": 22.0,
+          "b": 2.0,
+          "result": 484.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7907128,
+          "level": "INFO",
+          "op": "pow",
+          "a": 5.0,
+          "b": 3.0,
+          "result": 125.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.792765,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.7957957,
+          "level": "INFO",
+          "op": "sub",
+          "a": 25.0,
+          "b": 3.0,
+          "result": 22.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.798766,
+          "level": "INFO",
+          "op": "add",
+          "a": 9.0,
+          "b": 2.0,
+          "result": 11.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.8027136,
+          "level": "INFO",
+          "op": "add",
+          "a": 4.0,
+          "b": 7.0,
+          "result": 11.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.8068042,
+          "level": "INFO",
+          "op": "mul",
+          "a": 4.0,
+          "b": 8.0,
+          "result": 32.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563090.8097134,
+          "level": "INFO",
+          "op": "pow",
+          "a": 15.0,
+          "b": 1.0,
+          "result": 15.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.140594,
+          "level": "INFO",
+          "msg": "deployed v1.1"
+        },
+        {
+          "ts": 1793563092.1483645,
+          "level": "INFO",
+          "op": "pow",
+          "a": 24.0,
+          "b": 3.0,
+          "result": 13824.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.1551926,
+          "level": "INFO",
+          "op": "sub",
+          "a": 23.0,
+          "b": 6.0,
+          "result": 17.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.1611905,
+          "level": "INFO",
+          "op": "mul",
+          "a": 43.0,
+          "b": 5.0,
+          "result": 215.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.1682718,
+          "level": "INFO",
+          "op": "pow",
+          "a": 45.0,
+          "b": 7.0,
+          "result": 373669453125.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.176278,
+          "level": "INFO",
+          "op": "mul",
+          "a": 9.0,
+          "b": 2.0,
+          "result": 18.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.1831946,
+          "level": "INFO",
+          "op": "mul",
+          "a": 14.0,
+          "b": 7.0,
+          "result": 98.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.1922674,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2001965,
+          "level": "INFO",
+          "op": "mul",
+          "a": 23.0,
+          "b": 1.0,
+          "result": 23.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.20921,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2171943,
+          "level": "INFO",
+          "op": "pow",
+          "a": 32.0,
+          "b": 4.0,
+          "result": 1048576.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.226266,
+          "level": "INFO",
+          "op": "add",
+          "a": 8.0,
+          "b": 2.0,
+          "result": 10.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2342327,
+          "level": "INFO",
+          "op": "add",
+          "a": 44.0,
+          "b": 6.0,
+          "result": 50.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2427497,
+          "level": "INFO",
+          "op": "mul",
+          "a": 37.0,
+          "b": 8.0,
+          "result": 296.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2497776,
+          "level": "INFO",
+          "op": "pow",
+          "a": 16.0,
+          "b": 8.0,
+          "result": 4294967296.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2577672,
+          "level": "INFO",
+          "op": "mul",
+          "a": 3.0,
+          "b": 7.0,
+          "result": 21.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2657754,
+          "level": "INFO",
+          "op": "pow",
+          "a": 4.0,
+          "b": 4.0,
+          "result": 256.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.274774,
+          "level": "INFO",
+          "op": "pow",
+          "a": 44.0,
+          "b": 6.0,
+          "result": 7256313856.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2828555,
+          "level": "INFO",
+          "op": "pow",
+          "a": 15.0,
+          "b": 6.0,
+          "result": 11390625.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.2908504,
+          "level": "INFO",
+          "op": "mul",
+          "a": 30.0,
+          "b": 8.0,
+          "result": 240.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.299783,
+          "level": "INFO",
+          "op": "sub",
+          "a": 18.0,
+          "b": 1.0,
+          "result": 17.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3077765,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 9.0,
+          "result": 10.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3158407,
+          "level": "INFO",
+          "op": "pow",
+          "a": 7.0,
+          "b": 5.0,
+          "result": 16807.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.323851,
+          "level": "INFO",
+          "op": "add",
+          "a": 20.0,
+          "b": 4.0,
+          "result": 24.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3309455,
+          "level": "INFO",
+          "op": "pow",
+          "a": 43.0,
+          "b": 8.0,
+          "result": 11688200277601.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3388577,
+          "level": "INFO",
+          "op": "pow",
+          "a": 43.0,
+          "b": 2.0,
+          "result": 1849.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.345563,
+          "level": "INFO",
+          "op": "pow",
+          "a": 23.0,
+          "b": 3.0,
+          "result": 12167.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.353567,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3606346,
+          "level": "INFO",
+          "op": "sub",
+          "a": 45.0,
+          "b": 5.0,
+          "result": 40.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3685668,
+          "level": "INFO",
+          "op": "sub",
+          "a": 6.0,
+          "b": 7.0,
+          "result": -1.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3755643,
+          "level": "INFO",
+          "op": "sub",
+          "a": 23.0,
+          "b": 6.0,
+          "result": 17.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.383638,
+          "level": "INFO",
+          "op": "sub",
+          "a": 19.0,
+          "b": 7.0,
+          "result": 12.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3926368,
+          "level": "INFO",
+          "op": "add",
+          "a": 47.0,
+          "b": 9.0,
+          "result": 56.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.3995655,
+          "level": "INFO",
+          "op": "pow",
+          "a": 18.0,
+          "b": 8.0,
+          "result": 11019960576.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4065578,
+          "level": "INFO",
+          "op": "mul",
+          "a": 37.0,
+          "b": 2.0,
+          "result": 74.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.41365,
+          "level": "INFO",
+          "op": "sub",
+          "a": 16.0,
+          "b": 6.0,
+          "result": 10.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4206412,
+          "level": "INFO",
+          "op": "sub",
+          "a": 32.0,
+          "b": 9.0,
+          "result": 23.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4276352,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4336572,
+          "level": "INFO",
+          "op": "sub",
+          "a": 33.0,
+          "b": 8.0,
+          "result": 25.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.440725,
+          "level": "INFO",
+          "op": "add",
+          "a": 25.0,
+          "b": 5.0,
+          "result": 30.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4473526,
+          "level": "INFO",
+          "op": "pow",
+          "a": 34.0,
+          "b": 3.0,
+          "result": 39304.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4543517,
+          "level": "INFO",
+          "op": "pow",
+          "a": 46.0,
+          "b": 7.0,
+          "result": 435817657216.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4603422,
+          "level": "INFO",
+          "op": "pow",
+          "a": 22.0,
+          "b": 5.0,
+          "result": 5153632.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.469286,
+          "level": "INFO",
+          "op": "add",
+          "a": 12.0,
+          "b": 5.0,
+          "result": 17.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4782708,
+          "level": "INFO",
+          "op": "mul",
+          "a": 5.0,
+          "b": 9.0,
+          "result": 45.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4862638,
+          "level": "INFO",
+          "op": "add",
+          "a": 22.0,
+          "b": 3.0,
+          "result": 25.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.4943507,
+          "level": "INFO",
+          "op": "mul",
+          "a": 41.0,
+          "b": 7.0,
+          "result": 287.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5053458,
+          "level": "INFO",
+          "op": "mul",
+          "a": 12.0,
+          "b": 5.0,
+          "result": 60.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.514272,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5242748,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5323699,
+          "level": "INFO",
+          "op": "mul",
+          "a": 36.0,
+          "b": 6.0,
+          "result": 216.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.540292,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.546904,
+          "level": "INFO",
+          "op": "mul",
+          "a": 46.0,
+          "b": 9.0,
+          "result": 414.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5548956,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.560903,
+          "level": "INFO",
+          "op": "mul",
+          "a": 19.0,
+          "b": 8.0,
+          "result": 152.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5658216,
+          "level": "INFO",
+          "op": "mul",
+          "a": 10.0,
+          "b": 2.0,
+          "result": 20.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5738325,
+          "level": "INFO",
+          "op": "pow",
+          "a": 14.0,
+          "b": 5.0,
+          "result": 537824.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.580901,
+          "level": "INFO",
+          "op": "pow",
+          "a": 19.0,
+          "b": 8.0,
+          "result": 16983563041.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5878975,
+          "level": "INFO",
+          "op": "pow",
+          "a": 40.0,
+          "b": 3.0,
+          "result": 64000.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.5949008,
+          "level": "INFO",
+          "op": "sub",
+          "a": 11.0,
+          "b": 4.0,
+          "result": 7.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6008308,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6079059,
+          "level": "INFO",
+          "op": "sub",
+          "a": 36.0,
+          "b": 9.0,
+          "result": 27.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6129262,
+          "level": "INFO",
+          "op": "pow",
+          "a": 6.0,
+          "b": 3.0,
+          "result": 216.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6178272,
+          "level": "INFO",
+          "op": "sub",
+          "a": 9.0,
+          "b": 2.0,
+          "result": 7.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6238313,
+          "level": "INFO",
+          "op": "mul",
+          "a": 30.0,
+          "b": 7.0,
+          "result": 210.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.628924,
+          "level": "INFO",
+          "op": "mul",
+          "a": 17.0,
+          "b": 7.0,
+          "result": 119.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6359231,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6419868,
+          "level": "INFO",
+          "op": "mul",
+          "a": 31.0,
+          "b": 2.0,
+          "result": 62.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6475987,
+          "level": "INFO",
+          "op": "sub",
+          "a": 7.0,
+          "b": 5.0,
+          "result": 2.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6546688,
+          "level": "INFO",
+          "op": "pow",
+          "a": 16.0,
+          "b": 1.0,
+          "result": 16.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.658596,
+          "level": "INFO",
+          "op": "sub",
+          "a": 24.0,
+          "b": 8.0,
+          "result": 16.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6656735,
+          "level": "INFO",
+          "op": "mul",
+          "a": 35.0,
+          "b": 9.0,
+          "result": 315.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.672599,
+          "level": "INFO",
+          "op": "add",
+          "a": 35.0,
+          "b": 6.0,
+          "result": 41.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.677587,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6835911,
+          "level": "INFO",
+          "op": "mul",
+          "a": 46.0,
+          "b": 6.0,
+          "result": 276.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6906729,
+          "level": "INFO",
+          "op": "mul",
+          "a": 37.0,
+          "b": 7.0,
+          "result": 259.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.6975956,
+          "level": "INFO",
+          "op": "mul",
+          "a": 25.0,
+          "b": 7.0,
+          "result": 175.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.704671,
+          "level": "INFO",
+          "op": "pow",
+          "a": 44.0,
+          "b": 4.0,
+          "result": 3748096.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.7115867,
+          "level": "INFO",
+          "op": "pow",
+          "a": 37.0,
+          "b": 6.0,
+          "result": 2565726409.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.7185915,
+          "level": "INFO",
+          "op": "add",
+          "a": 2.0,
+          "b": 7.0,
+          "result": 9.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793563092.7256753,
+          "level": "INFO",
+          "op": "mul",
+          "a": 34.0,
+          "b": 5.0,
+          "result": 170.0,
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609767.9194212,
+          "level": "INFO",
+          "op": "pow",
+          "a": 50.0,
+          "b": 4.0,
+          "result": 6250000.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9466012,
+          "level": "INFO",
+          "op": "sub",
+          "a": 10.0,
+          "b": 3.0,
+          "result": 7.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9520507,
+          "level": "INFO",
+          "op": "pow",
+          "a": 45.0,
+          "b": 3.0,
+          "result": 91125.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9596255,
+          "level": "INFO",
+          "op": "sub",
+          "a": 2.0,
+          "b": 9.0,
+          "result": -7.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9777498,
+          "level": "INFO",
+          "op": "pow",
+          "a": 25.0,
+          "b": 8.0,
+          "result": 152587890625.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9814708,
+          "level": "INFO",
+          "op": "mul",
+          "a": 40.0,
+          "b": 2.0,
+          "result": 80.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9864995,
+          "level": "INFO",
+          "op": "mul",
+          "a": 44.0,
+          "b": 9.0,
+          "result": 396.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9905012,
+          "level": "INFO",
+          "op": "div",
+          "a": 47.0,
+          "b": 1.0,
+          "result": 47.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9925034,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 4.0,
+          "result": 5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609767.9961598,
+          "level": "INFO",
+          "op": "div",
+          "a": 37.0,
+          "b": 3.0,
+          "result": 12.333333333333334,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.008476,
+          "level": "INFO",
+          "op": "mul",
+          "a": 11.0,
+          "b": 1.0,
+          "result": 11.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0249991,
+          "level": "INFO",
+          "op": "pow",
+          "a": 20.0,
+          "b": 9.0,
+          "result": 512000000000.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0287786,
+          "level": "INFO",
+          "op": "pow",
+          "a": 22.0,
+          "b": 1.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0307796,
+          "level": "INFO",
+          "op": "add",
+          "a": 50.0,
+          "b": 6.0,
+          "result": 56.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0566833,
+          "level": "INFO",
+          "op": "pow",
+          "a": 33.0,
+          "b": 8.0,
+          "result": 1406408618241.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0642195,
+          "level": "INFO",
+          "op": "pow",
+          "a": 25.0,
+          "b": 9.0,
+          "result": 3814697265625.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0863264,
+          "level": "INFO",
+          "op": "pow",
+          "a": 35.0,
+          "b": 7.0,
+          "result": 64339296875.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.091666,
+          "level": "INFO",
+          "op": "pow",
+          "a": 41.0,
+          "b": 5.0,
+          "result": 115856201.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.0981975,
+          "level": "INFO",
+          "op": "add",
+          "a": 31.0,
+          "b": 3.0,
+          "result": 34.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.105115,
+          "level": "INFO",
+          "op": "sub",
+          "a": 30.0,
+          "b": 4.0,
+          "result": 26.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1121018,
+          "level": "INFO",
+          "op": "add",
+          "a": 43.0,
+          "b": 5.0,
+          "result": 48.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1356218,
+          "level": "INFO",
+          "op": "add",
+          "a": 23.0,
+          "b": 3.0,
+          "result": 26.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1424737,
+          "level": "INFO",
+          "op": "pow",
+          "a": 15.0,
+          "b": 2.0,
+          "result": 225.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1642447,
+          "level": "INFO",
+          "op": "pow",
+          "a": 19.0,
+          "b": 3.0,
+          "result": 6859.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1689463,
+          "level": "INFO",
+          "op": "pow",
+          "a": 7.0,
+          "b": 4.0,
+          "result": 2401.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1719544,
+          "level": "INFO",
+          "op": "pow",
+          "a": 7.0,
+          "b": 5.0,
+          "result": 16807.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.1956172,
+          "level": "INFO",
+          "op": "sub",
+          "a": 21.0,
+          "b": 5.0,
+          "result": 16.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.203007,
+          "level": "INFO",
+          "op": "div",
+          "a": 49.0,
+          "b": 5.0,
+          "result": 9.8,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2062237,
+          "level": "INFO",
+          "op": "div",
+          "a": 4.0,
+          "b": 3.0,
+          "result": 1.3333333333333333,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.226716,
+          "level": "INFO",
+          "op": "div",
+          "a": 40.0,
+          "b": 1.0,
+          "result": 40.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2297208,
+          "level": "INFO",
+          "op": "div",
+          "a": 43.0,
+          "b": 4.0,
+          "result": 10.75,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2325735,
+          "level": "INFO",
+          "op": "pow",
+          "a": 23.0,
+          "b": 6.0,
+          "result": 148035889.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2349977,
+          "level": "INFO",
+          "op": "pow",
+          "a": 19.0,
+          "b": 4.0,
+          "result": 130321.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2580101,
+          "level": "INFO",
+          "op": "pow",
+          "a": 14.0,
+          "b": 2.0,
+          "result": 196.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2728052,
+          "level": "INFO",
+          "op": "pow",
+          "a": 28.0,
+          "b": 7.0,
+          "result": 13492928512.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.27531,
+          "level": "INFO",
+          "op": "sub",
+          "a": 33.0,
+          "b": 8.0,
+          "result": 25.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.282403,
+          "level": "INFO",
+          "op": "sub",
+          "a": 46.0,
+          "b": 5.0,
+          "result": 41.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.2899399,
+          "level": "INFO",
+          "op": "pow",
+          "a": 2.0,
+          "b": 6.0,
+          "result": 64.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3046284,
+          "level": "INFO",
+          "op": "mul",
+          "a": 1.0,
+          "b": 4.0,
+          "result": 4.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3197079,
+          "level": "INFO",
+          "op": "add",
+          "a": 21.0,
+          "b": 1.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3514032,
+          "level": "INFO",
+          "op": "add",
+          "a": 3.0,
+          "b": 2.0,
+          "result": 5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.356256,
+          "level": "INFO",
+          "op": "pow",
+          "a": 8.0,
+          "b": 1.0,
+          "result": 8.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3590002,
+          "level": "INFO",
+          "op": "div",
+          "a": 37.0,
+          "b": 4.0,
+          "result": 9.25,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3625138,
+          "level": "INFO",
+          "op": "div",
+          "a": 38.0,
+          "b": 5.0,
+          "result": 7.6,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3672605,
+          "level": "INFO",
+          "op": "div",
+          "a": 8.0,
+          "b": 3.0,
+          "result": 2.6666666666666665,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3951347,
+          "level": "INFO",
+          "op": "add",
+          "a": 50.0,
+          "b": 3.0,
+          "result": 53.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.3991408,
+          "level": "INFO",
+          "op": "sub",
+          "a": 43.0,
+          "b": 9.0,
+          "result": 34.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.4021423,
+          "level": "INFO",
+          "op": "sub",
+          "a": 32.0,
+          "b": 4.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.4275856,
+          "level": "INFO",
+          "op": "div",
+          "a": 8.0,
+          "b": 1.0,
+          "result": 8.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609768.4345891,
+          "level": "INFO",
+          "op": "add",
+          "a": 21.0,
+          "b": 1.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.455356,
+          "level": "INFO",
+          "op": "add",
+          "a": 23.0,
+          "b": 6.0,
+          "result": 29.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4574382,
+          "level": "INFO",
+          "op": "mul",
+          "a": 10.0,
+          "b": 1.0,
+          "result": 10.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.46058,
+          "level": "INFO",
+          "op": "add",
+          "a": 46.0,
+          "b": 5.0,
+          "result": 51.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4640036,
+          "level": "INFO",
+          "op": "mul",
+          "a": 7.0,
+          "b": 4.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.465548,
+          "level": "INFO",
+          "op": "pow",
+          "a": 12.0,
+          "b": 1.0,
+          "result": 12.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4675324,
+          "level": "INFO",
+          "op": "add",
+          "a": 49.0,
+          "b": 9.0,
+          "result": 58.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4695334,
+          "level": "INFO",
+          "op": "add",
+          "a": 18.0,
+          "b": 1.0,
+          "result": 19.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.470531,
+          "level": "INFO",
+          "op": "pow",
+          "a": 39.0,
+          "b": 4.0,
+          "result": 2313441.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4729638,
+          "level": "INFO",
+          "op": "add",
+          "a": 18.0,
+          "b": 8.0,
+          "result": 26.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4749668,
+          "level": "INFO",
+          "op": "sub",
+          "a": 13.0,
+          "b": 8.0,
+          "result": 5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.476963,
+          "level": "INFO",
+          "op": "pow",
+          "a": 19.0,
+          "b": 3.0,
+          "result": 6859.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4789634,
+          "level": "INFO",
+          "op": "mul",
+          "a": 45.0,
+          "b": 1.0,
+          "result": 45.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.4919453,
+          "level": "INFO",
+          "op": "add",
+          "a": 36.0,
+          "b": 1.0,
+          "result": 37.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.507486,
+          "level": "INFO",
+          "op": "add",
+          "a": 4.0,
+          "b": 9.0,
+          "result": 13.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.511,
+          "level": "INFO",
+          "op": "mul",
+          "a": 29.0,
+          "b": 5.0,
+          "result": 145.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.523524,
+          "level": "INFO",
+          "op": "pow",
+          "a": 11.0,
+          "b": 5.0,
+          "result": 161051.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5262377,
+          "level": "INFO",
+          "op": "add",
+          "a": 35.0,
+          "b": 5.0,
+          "result": 40.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5294852,
+          "level": "INFO",
+          "op": "div",
+          "a": 10.0,
+          "b": 3.0,
+          "result": 3.3333333333333335,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5321283,
+          "level": "INFO",
+          "op": "div",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 0.5,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5347872,
+          "level": "INFO",
+          "op": "pow",
+          "a": 44.0,
+          "b": 9.0,
+          "result": 618121839509504.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5385444,
+          "level": "INFO",
+          "op": "div",
+          "a": 25.0,
+          "b": 3.0,
+          "result": 8.333333333333334,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5411367,
+          "level": "INFO",
+          "op": "mul",
+          "a": 14.0,
+          "b": 2.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5548954,
+          "level": "INFO",
+          "op": "sub",
+          "a": 7.0,
+          "b": 5.0,
+          "result": 2.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.557369,
+          "level": "INFO",
+          "op": "sub",
+          "a": 21.0,
+          "b": 8.0,
+          "result": 13.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.560401,
+          "level": "INFO",
+          "op": "mul",
+          "a": 20.0,
+          "b": 3.0,
+          "result": 60.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.5844069,
+          "level": "INFO",
+          "op": "mul",
+          "a": 19.0,
+          "b": 2.0,
+          "result": 38.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.587451,
+          "level": "INFO",
+          "op": "pow",
+          "a": 45.0,
+          "b": 4.0,
+          "result": 4100625.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6002662,
+          "level": "INFO",
+          "op": "mul",
+          "a": 50.0,
+          "b": 2.0,
+          "result": 100.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6033263,
+          "level": "INFO",
+          "op": "mul",
+          "a": 13.0,
+          "b": 4.0,
+          "result": 52.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6071591,
+          "level": "INFO",
+          "op": "add",
+          "a": 26.0,
+          "b": 2.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6331463,
+          "level": "INFO",
+          "op": "div",
+          "a": 23.0,
+          "b": 6.0,
+          "result": 3.8333333333333335,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6492426,
+          "level": "INFO",
+          "op": "div",
+          "a": 24.0,
+          "b": 2.0,
+          "result": 12.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6638296,
+          "level": "INFO",
+          "op": "sub",
+          "a": 14.0,
+          "b": 6.0,
+          "result": 8.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.6796885,
+          "level": "INFO",
+          "op": "pow",
+          "a": 27.0,
+          "b": 9.0,
+          "result": 7625597484987.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.69378,
+          "level": "INFO",
+          "op": "pow",
+          "a": 40.0,
+          "b": 3.0,
+          "result": 64000.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7087016,
+          "level": "INFO",
+          "op": "add",
+          "a": 22.0,
+          "b": 6.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7117097,
+          "level": "INFO",
+          "op": "mul",
+          "a": 20.0,
+          "b": 2.0,
+          "result": 40.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7252734,
+          "level": "INFO",
+          "op": "sub",
+          "a": 41.0,
+          "b": 2.0,
+          "result": 39.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7272637,
+          "level": "INFO",
+          "op": "div",
+          "a": 29.0,
+          "b": 6.0,
+          "result": 4.833333333333333,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7292676,
+          "level": "INFO",
+          "op": "div",
+          "a": 19.0,
+          "b": 1.0,
+          "result": 19.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7337866,
+          "level": "INFO",
+          "op": "pow",
+          "a": 2.0,
+          "b": 4.0,
+          "result": 16.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7357936,
+          "level": "INFO",
+          "op": "pow",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 1.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7367918,
+          "level": "INFO",
+          "op": "pow",
+          "a": 39.0,
+          "b": 3.0,
+          "result": 59319.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7387931,
+          "level": "INFO",
+          "op": "div",
+          "a": 20.0,
+          "b": 7.0,
+          "result": 2.857142857142857,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.740792,
+          "level": "INFO",
+          "op": "sub",
+          "a": 48.0,
+          "b": 7.0,
+          "result": 41.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.741796,
+          "level": "INFO",
+          "op": "mul",
+          "a": 35.0,
+          "b": 8.0,
+          "result": 280.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7466798,
+          "level": "INFO",
+          "op": "div",
+          "a": 49.0,
+          "b": 2.0,
+          "result": 24.5,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7481892,
+          "level": "INFO",
+          "op": "div",
+          "a": 25.0,
+          "b": 3.0,
+          "result": 8.333333333333334,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7512004,
+          "level": "INFO",
+          "op": "mul",
+          "a": 47.0,
+          "b": 2.0,
+          "result": 94.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609917.7718565,
+          "level": "INFO",
+          "op": "add",
+          "a": 48.0,
+          "b": 9.0,
+          "result": 57.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793609945.9972343,
+          "level": "INFO",
+          "msg": "deployed v1.1"
+        },
+        {
+          "ts": 1793609946.0022109,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0282512,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0443697,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0509653,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0560758,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.059508,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0622127,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0642514,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0682642,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0714219,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.0747006,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.076711,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1052766,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1380067,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.149447,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1620688,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1727622,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1822033,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1887133,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793609946.1939847,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610016.6874142,
+          "level": "INFO",
+          "msg": "deployed v1.0"
+        },
+        {
+          "ts": 1793610016.7177947,
+          "level": "INFO",
+          "op": "div",
+          "a": 10.0,
+          "b": 2.0,
+          "result": 5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.2221951,
+          "level": "INFO",
+          "op": "add",
+          "a": 6.0,
+          "b": 9.0,
+          "result": 15.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.2252066,
+          "level": "INFO",
+          "op": "sub",
+          "a": 7.0,
+          "b": 7.0,
+          "result": 0.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.2530742,
+          "level": "INFO",
+          "op": "pow",
+          "a": 20.0,
+          "b": 3.0,
+          "result": 8000.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.2847972,
+          "level": "INFO",
+          "op": "add",
+          "a": 10.0,
+          "b": 9.0,
+          "result": 19.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.3140383,
+          "level": "INFO",
+          "op": "mul",
+          "a": 2.0,
+          "b": 6.0,
+          "result": 12.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.3482575,
+          "level": "INFO",
+          "op": "pow",
+          "a": 29.0,
+          "b": 4.0,
+          "result": 707281.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.3585134,
+          "level": "INFO",
+          "op": "div",
+          "a": 3.0,
+          "b": 9.0,
+          "result": 0.3333333333333333,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.391968,
+          "level": "INFO",
+          "op": "pow",
+          "a": 20.0,
+          "b": 2.0,
+          "result": 400.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.3952563,
+          "level": "INFO",
+          "op": "pow",
+          "a": 27.0,
+          "b": 5.0,
+          "result": 14348907.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.4232962,
+          "level": "INFO",
+          "op": "pow",
+          "a": 19.0,
+          "b": 3.0,
+          "result": 6859.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.453303,
+          "level": "INFO",
+          "op": "div",
+          "a": 39.0,
+          "b": 9.0,
+          "result": 4.333333333333333,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.4693072,
+          "level": "INFO",
+          "op": "sub",
+          "a": 45.0,
+          "b": 8.0,
+          "result": 37.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.4744039,
+          "level": "INFO",
+          "op": "pow",
+          "a": 1.0,
+          "b": 6.0,
+          "result": 1.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.4780307,
+          "level": "INFO",
+          "op": "add",
+          "a": 13.0,
+          "b": 5.0,
+          "result": 18.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.479986,
+          "level": "INFO",
+          "op": "pow",
+          "a": 2.0,
+          "b": 9.0,
+          "result": 512.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.499962,
+          "level": "INFO",
+          "op": "div",
+          "a": 13.0,
+          "b": 4.0,
+          "result": 3.25,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.5163128,
+          "level": "INFO",
+          "op": "div",
+          "a": 24.0,
+          "b": 3.0,
+          "result": 8.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.5203216,
+          "level": "INFO",
+          "op": "add",
+          "a": 29.0,
+          "b": 2.0,
+          "result": 31.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.5486367,
+          "level": "INFO",
+          "op": "div",
+          "a": 20.0,
+          "b": 2.0,
+          "result": 10.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.5802774,
+          "level": "INFO",
+          "op": "sub",
+          "a": 30.0,
+          "b": 9.0,
+          "result": 21.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.6119568,
+          "level": "INFO",
+          "op": "mul",
+          "a": 8.0,
+          "b": 4.0,
+          "result": 32.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.622991,
+          "level": "INFO",
+          "op": "pow",
+          "a": 18.0,
+          "b": 1.0,
+          "result": 18.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.634037,
+          "level": "INFO",
+          "op": "pow",
+          "a": 28.0,
+          "b": 6.0,
+          "result": 481890304.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.6557117,
+          "level": "INFO",
+          "op": "add",
+          "a": 41.0,
+          "b": 7.0,
+          "result": 48.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.670606,
+          "level": "INFO",
+          "op": "add",
+          "a": 28.0,
+          "b": 4.0,
+          "result": 32.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.6733003,
+          "level": "INFO",
+          "op": "sub",
+          "a": 2.0,
+          "b": 5.0,
+          "result": -3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.676543,
+          "level": "INFO",
+          "op": "mul",
+          "a": 50.0,
+          "b": 8.0,
+          "result": 400.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7015827,
+          "level": "INFO",
+          "op": "div",
+          "a": 34.0,
+          "b": 5.0,
+          "result": 6.8,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7035706,
+          "level": "INFO",
+          "op": "pow",
+          "a": 17.0,
+          "b": 1.0,
+          "result": 17.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7057066,
+          "level": "INFO",
+          "op": "pow",
+          "a": 35.0,
+          "b": 9.0,
+          "result": 78815638671875.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7091353,
+          "level": "INFO",
+          "op": "mul",
+          "a": 26.0,
+          "b": 7.0,
+          "result": 182.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7119575,
+          "level": "INFO",
+          "op": "mul",
+          "a": 7.0,
+          "b": 2.0,
+          "result": 14.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7314413,
+          "level": "INFO",
+          "op": "mul",
+          "a": 1.0,
+          "b": 3.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7467604,
+          "level": "INFO",
+          "op": "add",
+          "a": 19.0,
+          "b": 3.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7616587,
+          "level": "INFO",
+          "op": "add",
+          "a": 18.0,
+          "b": 7.0,
+          "result": 25.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7644129,
+          "level": "INFO",
+          "op": "add",
+          "a": 36.0,
+          "b": 5.0,
+          "result": 41.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7918034,
+          "level": "INFO",
+          "op": "mul",
+          "a": 26.0,
+          "b": 8.0,
+          "result": 208.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.794435,
+          "level": "INFO",
+          "op": "mul",
+          "a": 9.0,
+          "b": 2.0,
+          "result": 18.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7964377,
+          "level": "INFO",
+          "op": "add",
+          "a": 33.0,
+          "b": 2.0,
+          "result": 35.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.7997973,
+          "level": "INFO",
+          "op": "pow",
+          "a": 18.0,
+          "b": 8.0,
+          "result": 11019960576.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8033037,
+          "level": "INFO",
+          "op": "div",
+          "a": 33.0,
+          "b": 5.0,
+          "result": 6.6,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.823599,
+          "level": "INFO",
+          "op": "div",
+          "a": 8.0,
+          "b": 9.0,
+          "result": 0.8888888888888888,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8270116,
+          "level": "INFO",
+          "op": "add",
+          "a": 6.0,
+          "b": 3.0,
+          "result": 9.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.829664,
+          "level": "INFO",
+          "op": "mul",
+          "a": 20.0,
+          "b": 9.0,
+          "result": 180.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8327117,
+          "level": "INFO",
+          "op": "pow",
+          "a": 26.0,
+          "b": 3.0,
+          "result": 17576.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8363547,
+          "level": "INFO",
+          "op": "sub",
+          "a": 1.0,
+          "b": 5.0,
+          "result": -4.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8392875,
+          "level": "INFO",
+          "op": "div",
+          "a": 24.0,
+          "b": 4.0,
+          "result": 6.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.841454,
+          "level": "INFO",
+          "op": "pow",
+          "a": 23.0,
+          "b": 7.0,
+          "result": 3404825447.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8541117,
+          "level": "INFO",
+          "op": "div",
+          "a": 44.0,
+          "b": 1.0,
+          "result": 44.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610671.8557677,
+          "level": "INFO",
+          "op": "sub",
+          "a": 2.0,
+          "b": 8.0,
+          "result": -6.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793610700.2241745,
+          "level": "INFO",
+          "msg": "deployed v1.1"
+        },
+        {
+          "ts": 1793610700.2300882,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.2545424,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.2566702,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.2596688,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.2621808,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.2853408,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.315306,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3212824,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3236413,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.328195,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3487623,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3529913,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3562412,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3593888,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.361462,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3781664,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3799882,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3837569,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.3860357,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610700.4088929,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793610782.1944532,
+          "level": "INFO",
+          "msg": "rolled back to v1.0"
+        },
+        {
+          "ts": 1793610782.564199,
+          "level": "INFO",
+          "op": "div",
+          "a": 10.0,
+          "b": 2.0,
+          "result": 5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793642799.710701,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793642860.1365032,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793642904.0129073,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793642946.0106933,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793643013.3254738,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793643032.5605063,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793644001.6237643,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793660404.3128934,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793660764.0575826,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793661487.5888295,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793662891.1092267,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793664298.366041,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793665206.1024241,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793665353.6157875,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793714680.5717585,
+          "level": "INFO",
+          "op": "add",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.2592072,
+          "level": "INFO",
+          "op": "pow",
+          "a": 4.0,
+          "b": 4.0,
+          "result": 256.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.2764065,
+          "level": "INFO",
+          "op": "pow",
+          "a": 21.0,
+          "b": 3.0,
+          "result": 9261.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.2789178,
+          "level": "INFO",
+          "op": "add",
+          "a": 6.0,
+          "b": 6.0,
+          "result": 12.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.3087027,
+          "level": "INFO",
+          "op": "add",
+          "a": 11.0,
+          "b": 1.0,
+          "result": 12.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.3239808,
+          "level": "INFO",
+          "op": "mul",
+          "a": 49.0,
+          "b": 7.0,
+          "result": 343.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.3274956,
+          "level": "INFO",
+          "op": "div",
+          "a": 27.0,
+          "b": 7.0,
+          "result": 3.857142857142857,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.3552542,
+          "level": "INFO",
+          "op": "sub",
+          "a": 8.0,
+          "b": 7.0,
+          "result": 1.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.3711674,
+          "level": "INFO",
+          "op": "pow",
+          "a": 18.0,
+          "b": 5.0,
+          "result": 1889568.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.385461,
+          "level": "INFO",
+          "op": "sub",
+          "a": 5.0,
+          "b": 3.0,
+          "result": 2.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4009407,
+          "level": "INFO",
+          "op": "mul",
+          "a": 12.0,
+          "b": 3.0,
+          "result": 36.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4049475,
+          "level": "INFO",
+          "op": "sub",
+          "a": 1.0,
+          "b": 6.0,
+          "result": -5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4323661,
+          "level": "INFO",
+          "op": "div",
+          "a": 17.0,
+          "b": 5.0,
+          "result": 3.4,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4469836,
+          "level": "INFO",
+          "op": "pow",
+          "a": 1.0,
+          "b": 4.0,
+          "result": 1.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4530342,
+          "level": "INFO",
+          "op": "add",
+          "a": 28.0,
+          "b": 2.0,
+          "result": 30.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4813092,
+          "level": "INFO",
+          "op": "sub",
+          "a": 37.0,
+          "b": 3.0,
+          "result": 34.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.4841788,
+          "level": "INFO",
+          "op": "sub",
+          "a": 9.0,
+          "b": 9.0,
+          "result": 0.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.510469,
+          "level": "INFO",
+          "op": "pow",
+          "a": 25.0,
+          "b": 8.0,
+          "result": 152587890625.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5134683,
+          "level": "INFO",
+          "op": "sub",
+          "a": 37.0,
+          "b": 9.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5165377,
+          "level": "INFO",
+          "op": "sub",
+          "a": 35.0,
+          "b": 7.0,
+          "result": 28.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5195374,
+          "level": "INFO",
+          "op": "mul",
+          "a": 21.0,
+          "b": 7.0,
+          "result": 147.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5225408,
+          "level": "INFO",
+          "op": "sub",
+          "a": 4.0,
+          "b": 9.0,
+          "result": -5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5253708,
+          "level": "INFO",
+          "op": "pow",
+          "a": 49.0,
+          "b": 9.0,
+          "result": 1628413597910449.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5283759,
+          "level": "INFO",
+          "op": "add",
+          "a": 39.0,
+          "b": 4.0,
+          "result": 43.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5311685,
+          "level": "INFO",
+          "op": "div",
+          "a": 39.0,
+          "b": 5.0,
+          "result": 7.8,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.55649,
+          "level": "INFO",
+          "op": "div",
+          "a": 42.0,
+          "b": 4.0,
+          "result": 10.5,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5594952,
+          "level": "INFO",
+          "op": "sub",
+          "a": 4.0,
+          "b": 1.0,
+          "result": 3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5624998,
+          "level": "INFO",
+          "op": "mul",
+          "a": 47.0,
+          "b": 5.0,
+          "result": 235.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5878823,
+          "level": "INFO",
+          "op": "sub",
+          "a": 2.0,
+          "b": 5.0,
+          "result": -3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.5939538,
+          "level": "INFO",
+          "op": "sub",
+          "a": 26.0,
+          "b": 6.0,
+          "result": 20.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.618273,
+          "level": "INFO",
+          "op": "add",
+          "a": 21.0,
+          "b": 1.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.6223216,
+          "level": "INFO",
+          "op": "div",
+          "a": 12.0,
+          "b": 5.0,
+          "result": 2.4,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.649902,
+          "level": "INFO",
+          "op": "mul",
+          "a": 33.0,
+          "b": 9.0,
+          "result": 297.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.65203,
+          "level": "INFO",
+          "op": "mul",
+          "a": 43.0,
+          "b": 5.0,
+          "result": 215.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.6811633,
+          "level": "INFO",
+          "op": "mul",
+          "a": 26.0,
+          "b": 1.0,
+          "result": 26.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.6867716,
+          "level": "INFO",
+          "op": "sub",
+          "a": 40.0,
+          "b": 6.0,
+          "result": 34.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7111993,
+          "level": "INFO",
+          "op": "pow",
+          "a": 48.0,
+          "b": 9.0,
+          "result": 1352605460594688.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7164304,
+          "level": "INFO",
+          "op": "sub",
+          "a": 20.0,
+          "b": 7.0,
+          "result": 13.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.720719,
+          "level": "INFO",
+          "op": "sub",
+          "a": 4.0,
+          "b": 8.0,
+          "result": -4.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7425573,
+          "level": "INFO",
+          "op": "div",
+          "a": 8.0,
+          "b": 9.0,
+          "result": 0.8888888888888888,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7585878,
+          "level": "INFO",
+          "op": "div",
+          "a": 1.0,
+          "b": 6.0,
+          "result": 0.16666666666666666,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.762832,
+          "level": "INFO",
+          "op": "sub",
+          "a": 29.0,
+          "b": 7.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7659829,
+          "level": "INFO",
+          "op": "div",
+          "a": 31.0,
+          "b": 9.0,
+          "result": 3.4444444444444446,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.768573,
+          "level": "INFO",
+          "op": "add",
+          "a": 43.0,
+          "b": 3.0,
+          "result": 46.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7717047,
+          "level": "INFO",
+          "op": "div",
+          "a": 43.0,
+          "b": 1.0,
+          "result": 43.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7743833,
+          "level": "INFO",
+          "op": "mul",
+          "a": 35.0,
+          "b": 3.0,
+          "result": 105.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.776477,
+          "level": "INFO",
+          "op": "pow",
+          "a": 39.0,
+          "b": 1.0,
+          "result": 39.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.7890062,
+          "level": "INFO",
+          "op": "mul",
+          "a": 22.0,
+          "b": 1.0,
+          "result": 22.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8042777,
+          "level": "INFO",
+          "op": "sub",
+          "a": 50.0,
+          "b": 6.0,
+          "result": 44.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.807919,
+          "level": "INFO",
+          "op": "pow",
+          "a": 31.0,
+          "b": 4.0,
+          "result": 923521.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8111017,
+          "level": "INFO",
+          "op": "sub",
+          "a": 48.0,
+          "b": 1.0,
+          "result": 47.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8141444,
+          "level": "INFO",
+          "op": "sub",
+          "a": 18.0,
+          "b": 5.0,
+          "result": 13.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8356345,
+          "level": "INFO",
+          "op": "div",
+          "a": 6.0,
+          "b": 9.0,
+          "result": 0.6666666666666666,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8396628,
+          "level": "INFO",
+          "op": "div",
+          "a": 9.0,
+          "b": 4.0,
+          "result": 2.25,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8668509,
+          "level": "INFO",
+          "op": "div",
+          "a": 31.0,
+          "b": 3.0,
+          "result": 10.333333333333334,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.871637,
+          "level": "INFO",
+          "op": "sub",
+          "a": 33.0,
+          "b": 8.0,
+          "result": 25.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8746326,
+          "level": "INFO",
+          "op": "div",
+          "a": 1.0,
+          "b": 1.0,
+          "result": 1.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.877156,
+          "level": "INFO",
+          "op": "sub",
+          "a": 4.0,
+          "b": 7.0,
+          "result": -3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.881168,
+          "level": "INFO",
+          "op": "add",
+          "a": 3.0,
+          "b": 5.0,
+          "result": 8.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8841834,
+          "level": "INFO",
+          "op": "div",
+          "a": 17.0,
+          "b": 6.0,
+          "result": 2.8333333333333335,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718121.8876953,
+          "level": "INFO",
+          "op": "add",
+          "a": 26.0,
+          "b": 3.0,
+          "result": 29.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718169.521982,
+          "level": "INFO",
+          "msg": "deployed v1.1"
+        },
+        {
+          "ts": 1793718169.5508704,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.5836754,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.5948205,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.607473,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.6164916,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.6437848,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.649808,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.6755486,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.6798592,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.6852896,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.690651,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.720105,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7230043,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7259831,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7294161,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7327635,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7367644,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7392857,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.7428443,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718169.744842,
+          "level": "ERROR",
+          "op": "div",
+          "msg": "v1.1 regression: div handler crashed",
+          "version": "1.1"
+        },
+        {
+          "ts": 1793718244.3367653,
+          "level": "INFO",
+          "msg": "rolled back to v1.0"
+        },
+        {
+          "ts": 1793718425.758848,
+          "level": "INFO",
+          "op": "div",
+          "a": 23.0,
+          "b": 7.0,
+          "result": 3.2857142857142856,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.7651856,
+          "level": "INFO",
+          "op": "add",
+          "a": 18.0,
+          "b": 2.0,
+          "result": 20.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.7707047,
+          "level": "INFO",
+          "op": "mul",
+          "a": 45.0,
+          "b": 4.0,
+          "result": 180.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.7910779,
+          "level": "INFO",
+          "op": "mul",
+          "a": 4.0,
+          "b": 5.0,
+          "result": 20.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.806026,
+          "level": "INFO",
+          "op": "sub",
+          "a": 32.0,
+          "b": 1.0,
+          "result": 31.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.8099751,
+          "level": "INFO",
+          "op": "div",
+          "a": 3.0,
+          "b": 4.0,
+          "result": 0.75,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.8367577,
+          "level": "INFO",
+          "op": "add",
+          "a": 3.0,
+          "b": 8.0,
+          "result": 11.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.8401616,
+          "level": "INFO",
+          "op": "mul",
+          "a": 43.0,
+          "b": 2.0,
+          "result": 86.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.8432214,
+          "level": "INFO",
+          "op": "pow",
+          "a": 21.0,
+          "b": 5.0,
+          "result": 4084101.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.8494031,
+          "level": "INFO",
+          "op": "div",
+          "a": 7.0,
+          "b": 6.0,
+          "result": 1.1666666666666667,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.854239,
+          "level": "INFO",
+          "op": "sub",
+          "a": 10.0,
+          "b": 8.0,
+          "result": 2.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.882724,
+          "level": "INFO",
+          "op": "div",
+          "a": 14.0,
+          "b": 9.0,
+          "result": 1.5555555555555556,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.8847234,
+          "level": "INFO",
+          "op": "add",
+          "a": 12.0,
+          "b": 7.0,
+          "result": 19.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.9131749,
+          "level": "INFO",
+          "op": "sub",
+          "a": 1.0,
+          "b": 6.0,
+          "result": -5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.9291618,
+          "level": "INFO",
+          "op": "div",
+          "a": 32.0,
+          "b": 1.0,
+          "result": 32.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.9322383,
+          "level": "INFO",
+          "op": "div",
+          "a": 27.0,
+          "b": 7.0,
+          "result": 3.857142857142857,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.9447236,
+          "level": "INFO",
+          "op": "div",
+          "a": 1.0,
+          "b": 2.0,
+          "result": 0.5,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.9478364,
+          "level": "INFO",
+          "op": "sub",
+          "a": 33.0,
+          "b": 8.0,
+          "result": 25.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.975264,
+          "level": "INFO",
+          "op": "sub",
+          "a": 50.0,
+          "b": 9.0,
+          "result": 41.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.977774,
+          "level": "INFO",
+          "op": "pow",
+          "a": 36.0,
+          "b": 9.0,
+          "result": 101559956668416.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718425.9911335,
+          "level": "INFO",
+          "op": "sub",
+          "a": 39.0,
+          "b": 8.0,
+          "result": 31.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0072453,
+          "level": "INFO",
+          "op": "pow",
+          "a": 16.0,
+          "b": 9.0,
+          "result": 68719476736.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0150657,
+          "level": "INFO",
+          "op": "add",
+          "a": 34.0,
+          "b": 5.0,
+          "result": 39.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0373933,
+          "level": "INFO",
+          "op": "mul",
+          "a": 47.0,
+          "b": 8.0,
+          "result": 376.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0406528,
+          "level": "INFO",
+          "op": "sub",
+          "a": 40.0,
+          "b": 9.0,
+          "result": 31.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0594773,
+          "level": "INFO",
+          "op": "add",
+          "a": 21.0,
+          "b": 3.0,
+          "result": 24.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0625072,
+          "level": "INFO",
+          "op": "div",
+          "a": 28.0,
+          "b": 5.0,
+          "result": 5.6,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0657945,
+          "level": "INFO",
+          "op": "add",
+          "a": 34.0,
+          "b": 7.0,
+          "result": 41.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.0906477,
+          "level": "INFO",
+          "op": "div",
+          "a": 32.0,
+          "b": 7.0,
+          "result": 4.571428571428571,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1057267,
+          "level": "INFO",
+          "op": "mul",
+          "a": 50.0,
+          "b": 8.0,
+          "result": 400.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1082346,
+          "level": "INFO",
+          "op": "pow",
+          "a": 50.0,
+          "b": 9.0,
+          "result": 1953125000000000.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1102514,
+          "level": "INFO",
+          "op": "sub",
+          "a": 6.0,
+          "b": 9.0,
+          "result": -3.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.113263,
+          "level": "INFO",
+          "op": "add",
+          "a": 16.0,
+          "b": 2.0,
+          "result": 18.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1385536,
+          "level": "INFO",
+          "op": "mul",
+          "a": 36.0,
+          "b": 4.0,
+          "result": 144.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1511476,
+          "level": "INFO",
+          "op": "add",
+          "a": 17.0,
+          "b": 9.0,
+          "result": 26.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1556625,
+          "level": "INFO",
+          "op": "add",
+          "a": 27.0,
+          "b": 9.0,
+          "result": 36.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1833842,
+          "level": "INFO",
+          "op": "mul",
+          "a": 41.0,
+          "b": 1.0,
+          "result": 41.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1851597,
+          "level": "INFO",
+          "op": "sub",
+          "a": 2.0,
+          "b": 4.0,
+          "result": -2.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.1881726,
+          "level": "INFO",
+          "op": "mul",
+          "a": 47.0,
+          "b": 2.0,
+          "result": 94.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2140582,
+          "level": "INFO",
+          "op": "div",
+          "a": 2.0,
+          "b": 9.0,
+          "result": 0.2222222222222222,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.229564,
+          "level": "INFO",
+          "op": "pow",
+          "a": 49.0,
+          "b": 5.0,
+          "result": 282475249.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2315698,
+          "level": "INFO",
+          "op": "div",
+          "a": 43.0,
+          "b": 6.0,
+          "result": 7.166666666666667,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2334044,
+          "level": "INFO",
+          "op": "sub",
+          "a": 29.0,
+          "b": 6.0,
+          "result": 23.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.236921,
+          "level": "INFO",
+          "op": "add",
+          "a": 6.0,
+          "b": 7.0,
+          "result": 13.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2389197,
+          "level": "INFO",
+          "op": "add",
+          "a": 44.0,
+          "b": 7.0,
+          "result": 51.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2608,
+          "level": "INFO",
+          "op": "sub",
+          "a": 19.0,
+          "b": 7.0,
+          "result": 12.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2643032,
+          "level": "INFO",
+          "op": "add",
+          "a": 47.0,
+          "b": 2.0,
+          "result": 49.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.293338,
+          "level": "INFO",
+          "op": "div",
+          "a": 26.0,
+          "b": 2.0,
+          "result": 13.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.2962492,
+          "level": "INFO",
+          "op": "add",
+          "a": 14.0,
+          "b": 9.0,
+          "result": 23.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3232555,
+          "level": "INFO",
+          "op": "mul",
+          "a": 19.0,
+          "b": 3.0,
+          "result": 57.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3258789,
+          "level": "INFO",
+          "op": "div",
+          "a": 50.0,
+          "b": 5.0,
+          "result": 10.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.328998,
+          "level": "INFO",
+          "op": "add",
+          "a": 35.0,
+          "b": 5.0,
+          "result": 40.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3315852,
+          "level": "INFO",
+          "op": "add",
+          "a": 29.0,
+          "b": 2.0,
+          "result": 31.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.333699,
+          "level": "INFO",
+          "op": "pow",
+          "a": 17.0,
+          "b": 3.0,
+          "result": 4913.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.336949,
+          "level": "INFO",
+          "op": "pow",
+          "a": 5.0,
+          "b": 3.0,
+          "result": 125.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3400455,
+          "level": "INFO",
+          "op": "div",
+          "a": 30.0,
+          "b": 3.0,
+          "result": 10.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3430758,
+          "level": "INFO",
+          "op": "div",
+          "a": 35.0,
+          "b": 7.0,
+          "result": 5.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3463888,
+          "level": "INFO",
+          "op": "sub",
+          "a": 48.0,
+          "b": 6.0,
+          "result": 42.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.34874,
+          "level": "INFO",
+          "op": "sub",
+          "a": 35.0,
+          "b": 2.0,
+          "result": 33.0,
+          "version": "1.0"
+        },
+        {
+          "ts": 1793718426.3509822,
+          "level": "INFO",
+          "op": "sub",
+          "a": 2.0,
+          "b": 3.0,
+          "result": -1.0,
+          "version": "1.0"
+        }
+      ],
+      "event_offsets": [
+        377379,
+        377492,
+        377616,
+        377727,
+        377851,
+        377963,
+        378076,
+        378200,
+        378313,
+        378425,
+        378538,
+        378651,
+        378775,
+        378889,
+        379003,
+        379126,
+        379238,
+        379351,
+        379475,
+        379586,
+        379705,
+        379818,
+        379930,
+        380043,
+        380159,
+        380285,
+        380399,
+        380511,
+        380623,
+        380736,
+        380849,
+        380960,
+        381073,
+        381186,
+        381299,
+        381412,
+        381525,
+        381637,
+        381749,
+        381873,
+        381986,
+        382099,
+        382212,
+        382336,
+        382448,
+        382569,
+        382682,
+        382798,
+        382911,
+        383023,
+        383135,
+        383251,
+        383371,
+        383484,
+        383597,
+        383709,
+        383821,
+        383934,
+        384047,
+        384161,
+        384274,
+        384397,
+        384510,
+        384621,
+        384733,
+        384845,
+        384958,
+        385026,
+        385142,
+        385255,
+        385369,
+        385492,
+        385603,
+        385716,
+        385840,
+        385953,
+        386075,
+        386193,
+        386304,
+        386417,
+        386531,
+        386652,
+        386764,
+        386877,
+        386997,
+        387116,
+        387230,
+        387342,
+        387454,
+        387569,
+        387681,
+        387806,
+        387921,
+        388036,
+        388159,
+        388272,
+        388384,
+        388497,
+        388609,
+        388722,
+        388844,
+        388957,
+        389068,
+        389181,
+        389305,
+        389418,
+        389530,
+        389646,
+        389769,
+        389887,
+        389999,
+        390111,
+        390224,
+        390338,
+        390451,
+        390574,
+        390698,
+        390812,
+        390935,
+        391048,
+        391172,
+        391285,
+        391398,
+        391515,
+        391636,
+        391752,
+        391864,
+        391988,
+        392101,
+        392214,
+        392325,
+        392439,
+        392552,
+        392676,
+        392789,
+        392900,
+        393013,
+        393125,
+        393239,
+        393351,
+        393474,
+        393588,
+        393702,
+        393816,
+        393933,
+        394054,
+        394165,
+        394279,
+        394397,
+        394509,
+        394625,
+        394737,
+        394860,
+        394973,
+        395087,
+        395200,
+        395311,
+        395438,
+        395550,
+        395673,
+        395786,
+        395899,
+        396023,
+        396147,
+        396269,
+        396388,
+        396501,
+        396613,
+        396726,
+        396839,
+        396953,
+        397068,
+        397182,
+        397297,
+        397410,
+        397521,
+        397647,
+        397759,
+        397873,
+        397993,
+        398110,
+        398224,
+        398346,
+        398457,
+        398569,
+        398681,
+        398792,
+        398905,
+        399016,
+        399126,
+        399239,
+        399351,
+        399477,
+        399590,
+        399703,
+        399816,
+        399927,
+        400040,
+        400152,
+        400265,
+        400376,
+        400488,
+        400600,
+        400713,
+        400826,
+        400943,
+        401056,
+        401168,
+        401282,
+        401395,
+        401508,
+        401619,
+        401729,
+        401845,
+        401958,
+        402085,
+        402196,
+        402322,
+        402448,
+        402561,
+        402672,
+        402784,
+        402896,
+        403009,
+        403126,
+        403240,
+        403353,
+        403466,
+        403593,
+        403706,
+        403818,
+        403942,
+        404056,
+        404169,
+        404282,
+        404395,
+        404521,
+        404634,
+        404746,
+        404857,
+        404973,
+        405099,
+        405211,
+        405324,
+        405437,
+        405563,
+        405676,
+        405789,
+        405858,
+        405982,
+        406106,
+        406230,
+        406354,
+        406478,
+        406601,
+        406725,
+        406849,
+        406973,
+        407097,
+        407221,
+        407344,
+        407468,
+        407592,
+        407715,
+        407839,
+        407963,
+        408087,
+        408211,
+        408335,
+        408404,
+        408516,
+        408628,
+        408739,
+        408854,
+        408967,
+        409079,
+        409196,
+        409322,
+        409435,
+        409554,
+        409669,
+        409794,
+        409907,
+        410018,
+        410131,
+        410243,
+        410355,
+        410467,
+        410580,
+        410693,
+        410806,
+        410918,
+        411030,
+        411149,
+        411262,
+        411374,
+        411486,
+        411599,
+        411711,
+        411824,
+        411949,
+        412063,
+        412175,
+        412286,
+        412399,
+        412512,
+        412625,
+        412739,
+        412850,
+        412963,
+        413085,
+        413197,
+        413322,
+        413433,
+        413546,
+        413662,
+        413774,
+        413886,
+        414006,
+        414119,
+        414231,
+        414300,
+        414424,
+        414548,
+        414672,
+        414796,
+        414920,
+        415044,
+        415167,
+        415291,
+        415415,
+        415538,
+        415662,
+        415786,
+        415910,
+        416034,
+        416157,
+        416281,
+        416405,
+        416529,
+        416653,
+        416777,
+        416852,
+        416963,
+        417073,
+        417184,
+        417295,
+        417406,
+        417517,
+        417628,
+        417739,
+        417850,
+        417961,
+        418072,
+        418183,
+        418293,
+        418404,
+        418515,
+        418626,
+        418739,
+        418854,
+        418966,
+        419079,
+        419193,
+        419319,
+        419430,
+        419548,
+        419658,
+        419771,
+        419883,
+        419995,
+        420106,
+        420219,
+        420332,
+        420443,
+        420565,
+        420678,
+        420791,
+        420905,
+        421017,
+        421144,
+        421257,
+        421369,
+        421480,
+        421591,
+        421705,
+        421817,
+        421930,
+        422042,
+        422154,
+        422267,
+        422379,
+        422492,
+        422605,
+        422732,
+        422845,
+        422956,
+        423082,
+        423209,
+        423321,
+        423448,
+        423560,
+        423673,
+        423787,
+        423899,
+        424012,
+        424125,
+        424241,
+        424354,
+        424467,
+        424593,
+        424705,
+        424832,
+        424944,
+        425055,
+        425166,
+        425276,
+        425403,
+        425516,
+        425584,
+        425708,
+        425832,
+        425956,
+        426079,
+        426203,
+        426327,
+        426450,
+        426574,
+        426698,
+        426822,
+        426945,
+        427068,
+        427192,
+        427316,
+        427440,
+        427564,
+        427688,
+        427812,
+        427936,
+        428059,
+        428134,
+        428260,
+        428373,
+        428487,
+        428599,
+        428711,
+        428823,
+        428935,
+        429048,
+        429166,
+        429292,
+        429403,
+        429529,
+        429642,
+        429754,
+        429867,
+        429993,
+        430104,
+        430217,
+        430329,
+        430454,
+        430567,
+        430689,
+        430802,
+        430916,
+        431029,
+        431142,
+        431254,
+        431367,
+        431493,
+        431607,
+        431734,
+        431846,
+        431958,
+        432072,
+        432185,
+        432298,
+        432411,
+        432523,
+        432636,
+        432762,
+        432881,
+        433007,
+        433120,
+        433231,
+        433344,
+        433454,
+        433567,
+        433679,
+        433792,
+        433905,
+        434018,
+        434130,
+        434243,
+        434357,
+        434469,
+        434582,
+        434694,
+        434807,
+        434918
+      ],
+      "window_mode": "tail",
+      "window_start_offset": 377379,
+      "file_cursor": {
+        "source": "D:\\devops-agents-six-model-agents\\devops-agents\\logs\\app.log",
+        "device": 8415622299713773802,
+        "inode": 281474977535407,
+        "offset": 435030,
+        "boundary_digest": "51d5578d95f0389abd033c8148ddde6b001b0cef83736f1631e993f9a6347f32"
+      }
+    },
+    "ci_pipeline": {
+      "status": "unavailable",
+      "detail": "CI/CD evidence collection is disabled (DEVOPS_CI_EVIDENCE_ENABLED=false)."
+    },
+    "pipeline": {
+      "status": "unavailable",
+      "detail": "Not collected"
+    },
+    "security_scans": {
+      "status": "unavailable",
+      "detail": "Security evidence collection is disabled (DEVOPS_SECURITY_EVIDENCE_ENABLED=false)."
+    }
+  }
+}

@@ -57,7 +57,7 @@ def test_compose_services_all_bind_to_loopback_and_define_healthchecks():
     compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
     services = compose["services"]
 
-    assert {"calculator-app", "prometheus", "grafana", "frontend"} == set(services)
+    assert {"calculator-app", "prometheus", "grafana", "frontend", "loki", "tempo"} == set(services)
     assert services["frontend"]["ports"] == ["127.0.0.1:4173:4173"]
     for name, svc in services.items():
         for port_mapping in svc.get("ports", []):

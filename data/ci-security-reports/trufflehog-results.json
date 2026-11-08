@@ -1,0 +1,24 @@
+[
+  {
+    "SourceMetadata": {
+      "Data": {
+        "Git": {
+          "commit": "test-mock-sha-0000000000000000000000000000",
+          "file": "config/test-mock-credentials.env",
+          "line": 4
+        }
+      }
+    },
+    "SourceType": 14,
+    "SourceName": "trufflehog - git",
+    "DetectorType": 1,
+    "DetectorName": "GenericToken",
+    "DecoderName": "PLAIN",
+    "Verified": false,
+    "Raw": "SYNTHETIC_MOCK_TEST_TOKEN_NOT_REAL_CREDENTIAL",
+    "Redacted": "SYNTHETIC_MOCK_TEST_TOKEN_****",
+    "ExtraData": {
+      "synthetic_fixture": true
+    }
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "version": "1.65.0",
+  "results": [
+    {
+      "check_id": "python.lang.security.insecure-math.insecure-math-eval",
+      "path": "calculator_app/app.py",
+      "start": { "line": 80, "col": 13 },
+      "end": { "line": 80, "col": 45 },
+      "extra": {
+        "message": "SYNTHETIC_MOCK: Unvalidated mathematical input evaluated in division handler.",
+        "severity": "WARNING",
+        "metadata": {
+          "cwe": "CWE-20: Improper Input Validation",
+          "synthetic_test_fixture": true
+        }
+      }
+    }
+  ],
+  "errors": []
+}

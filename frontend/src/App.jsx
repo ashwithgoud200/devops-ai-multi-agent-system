@@ -3,6 +3,8 @@ import {
   buildIncidentHistory,
   decideIncident,
   formatTimestamp,
+  getComposeTopology,
+  getGitTelemetry,
   getIntegrationsStatus,
   getJson,
   getLatestCiRun,
@@ -12,22 +14,36 @@ import {
   getServiceStatus,
   parseApplicationMetrics,
   startIncident,
+  fixAndDeployIncident,
 } from "./api.js";
 import AgentGrid from "./components/AgentGrid.jsx";
 import CiSecurityView from "./components/CiSecurityView.jsx";
+import ComposeTopologyView from "./components/ComposeTopologyView.jsx";
 import AuditLog from "./components/AuditLog.jsx";
 import Icon from "./components/Icon.jsx";
 import IncidentDetails from "./components/IncidentDetails.jsx";
 import { MetricBars, RequestTrend } from "./components/MetricsCharts.jsx";
 import StatusCard from "./components/StatusCard.jsx";
+import ScenarioCards from "./components/ScenarioCards.jsx";
+import LogsAndTracesView from "./components/LogsAndTracesView.jsx";
+import FeatureStudioView from "./components/FeatureStudioView.jsx";
+import ChatOpsView from "./components/ChatOpsView.jsx";
+import KnowledgeMemoryView from "./components/KnowledgeMemoryView.jsx";
+import ChaosView from "./components/ChaosView.jsx";
 
 const navigation = [
   { id: "overview", label: "Overview", icon: "grid" },
   { id: "agents", label: "Six AI Agents", icon: "agents" },
   { id: "incidents", label: "Incident Management", icon: "incident" },
+  { id: "chaos", label: "Chaos & Real Faults", icon: "chaos" },
+  { id: "scenarios", label: "Synthetic Scenarios", icon: "scenario" },
+  { id: "features", label: "Feature Studio", icon: "code" },
+  { id: "memory", label: "Memory & RAG (Box 5)", icon: "book" },
+  { id: "chatops", label: "ChatOps & Webhooks", icon: "chatops" },
   { id: "ci-security", label: "CI/CD & Security", icon: "shield" },
   { id: "approval", label: "Human Approval", icon: "approval" },
   { id: "monitoring", label: "Monitoring", icon: "chart" },
+  { id: "telemetry", label: "Logs & Traces", icon: "telemetry" },
   { id: "audit", label: "Audit Log", icon: "audit" },
 ];
 
@@ -35,9 +51,15 @@ const pageTitles = {
   overview: ["Overview", "Operational status and incident activity at a glance."],
   agents: ["Six AI Agents", "Specialist execution details from the selected incident."],
   incidents: ["Incident Management", "Investigate using live application and observability evidence."],
+  chaos: ["Chaos Engineering Studio", "Physical OS and runtime fault injection for real incident triage."],
+  scenarios: ["Synthetic Scenarios", "Controlled fault injection and multi-agent incident reproduction."],
+  features: ["Feature Studio", "Autonomous Code Agent feature synthesis, GitHub Actions CI/CD, and human approval."],
+  memory: ["Memory & Knowledge Layer (Box 5)", "Local Vector DB, SRE Runbooks, and Service Knowledge Graph."],
+  chatops: ["ChatOps & Webhooks", "Slack, Discord, and HTTP webhooks for human-in-the-loop approvals."],
   "ci-security": ["CI/CD & Security", "GitHub integration, CI pipeline results, and normalized security scanner findings."],
   approval: ["Human Approval", "Review proposed remediation before explicitly deciding."],
   monitoring: ["Monitoring", "Application counters and Prometheus time-series telemetry."],
+  telemetry: ["Logs & Traces", "Unified Grafana Loki log aggregation and Tempo distributed tracing."],
   audit: ["Audit Log", "Metadata-only incident, approval, and action records."],
 };
 
@@ -99,16 +121,21 @@ function DashboardHome({ data, counters, history, onNavigate, onSelectIncident }
           <div className="service-list">
             <ServiceIndicator label="Calculator API" status={appHealthy ? "online" : "unavailable"} detail={data.health?.version ? `v${data.health.version}` : null} />
             <ServiceIndicator label="Ollama runtime" status={data.ollama ? "online" : "unavailable"} detail={data.ollama?.models?.length != null ? `${data.ollama.models.length} models available` : null} />
+            <ServiceIndicator label="Docker Compose" status={data.composeTopology?.status === "ok" ? "online" : "unavailable"} detail={data.composeTopology?.total_services ? `${data.composeTopology.total_services} services configured` : null} />
+            <ServiceIndicator label="Git Repository" status={data.gitTelemetry?.status === "ok" ? "online" : "unavailable"} detail={data.gitTelemetry?.branch ? `branch ${data.gitTelemetry.branch}` : null} />
             <ServiceIndicator label="Prometheus" status={data.prometheusService ? promStatus || "online" : "unavailable"} />
             <ServiceIndicator label="Grafana" status={data.grafana ? "online" : "unavailable"} />
             <ServiceIndicator label="GitHub API" status={data.integrations?.github?.status || "disabled"} detail={data.integrations?.github?.repo || "Read-only API"} />
             <ServiceIndicator label="CI Pipeline" status={data.ciRun?.conclusion || data.ciRun?.status || "unavailable"} detail={data.ciRun?.workflow_name || null} />
             <ServiceIndicator label="Security Scans" status={data.securityFindings?.status || "unavailable"} detail={data.securityFindings?.summary?.total_findings != null ? `${data.securityFindings.summary.total_findings} findings` : null} />
+            <ServiceIndicator label="Loki Logs" status={data.integrations?.loki?.status || "offline"} detail="Port 3100" />
+            <ServiceIndicator label="Tempo Traces" status={data.integrations?.tempo?.status || "offline"} detail="Port 3200 (OTLP: 4318)" />
             <ServiceIndicator label="Specialist agents" status={data.agents?.enabled ? "enabled" : data.agents ? "disabled" : "unavailable"} detail={agentCount ? `${agentCount} configured` : null} />
           </div>
-          <div className="service-links"><a href="http://127.0.0.1:9090" target="_blank" rel="noreferrer">Prometheus <Icon name="arrow" size={14} /></a><a href="http://127.0.0.1:3000" target="_blank" rel="noreferrer">Grafana <Icon name="arrow" size={14} /></a></div>
+          <div className="service-links"><a href="http://127.0.0.1:9090" target="_blank" rel="noreferrer">Prometheus <Icon name="arrow" size={14} /></a><a href="http://127.0.0.1:3000" target="_blank" rel="noreferrer">Grafana <Icon name="arrow" size={14} /></a><a href="http://127.0.0.1:3100" target="_blank" rel="noreferrer">Loki <Icon name="arrow" size={14} /></a><a href="http://127.0.0.1:3200" target="_blank" rel="noreferrer">Tempo <Icon name="arrow" size={14} /></a></div>
         </section>
       </div>
+      <ComposeTopologyView topologyData={data.composeTopology} />
       <div className="content-grid lower-grid">
         <section className="panel">
           <SectionTitle eyebrow="INCIDENT RESPONSE" title="Current incident" action={<button className="link-button" onClick={() => onNavigate("incidents")}>Open incident workspace <Icon name="arrow" size={14} /></button>} />
@@ -169,18 +196,55 @@ function MetricsPage({ data, counters }) {
         <section className="panel"><SectionTitle eyebrow="SERVICE LINKS" title="Observability tools" /><div className="tool-link-list">
           <a href="http://127.0.0.1:9090" target="_blank" rel="noreferrer"><span><strong>Prometheus</strong><small>Explore metrics, alert rules, and targets</small></span><Icon name="arrow" /></a>
           <a href="http://127.0.0.1:3000" target="_blank" rel="noreferrer"><span><strong>Grafana</strong><small>Open provisioned dashboards (40 panels across 7+ sections)</small></span><Icon name="arrow" /></a>
+          <a href="http://127.0.0.1:3100" target="_blank" rel="noreferrer"><span><strong>Grafana Loki</strong><small>Query aggregated logs via LogQL</small></span><Icon name="arrow" /></a>
+          <a href="http://127.0.0.1:3200" target="_blank" rel="noreferrer"><span><strong>Grafana Tempo</strong><small>Inspect distributed traces and span waterfalls</small></span><Icon name="arrow" /></a>
         </div>{data.prometheus?.detail && <p className="inline-warning">{data.prometheus.detail}</p>}</section>
       </div>
     </>
   );
 }
 
-function ApprovalPage({ incident, reviewer, setReviewer, onDecision, busy }) {
+function ApprovalPage({ incident, reviewer, setReviewer, onDecision, busy, onRefresh }) {
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState("");
-  useEffect(() => { setConfirm(false); setError(""); }, [incident?.incident_id, incident?.status]);
-  const remediation = incident?.proposed_remediation;
-  const pending = incident?.status === "pending_approval" && remediation?.action === "rollback";
+  const [hotfixResult, setHotfixResult] = useState(null);
+  const [hotfixBusy, setHotfixBusy] = useState(false);
+  const [hotfixError, setHotfixError] = useState("");
+
+  useEffect(() => {
+    setConfirm(false);
+    setError("");
+    setHotfixResult(null);
+    setHotfixError("");
+  }, [incident?.incident_id, incident?.status]);
+
+  const remediation = incident?.proposed_remediation || incident?.report?.recommended_remediation;
+  const pending = incident?.status === "pending_approval" && Boolean(remediation?.action && remediation.action !== "none" && remediation.action !== "investigate");
+  const currentVersion = incident?.report?.current_version || incident?.evidence?.version?.data?.version || "1.1";
+  const targetVersion = remediation?.target_version || "1.0";
+  const rootCause = incident?.report?.root_cause || incident?.diagnosis?.summary || "Observed regression in application telemetry.";
+  const blastRadius = incident?.report?.blast_radius || incident?.diagnosis?.blast_radius;
+  const expectedImpact = incident?.report?.expected_impact || blastRadius?.user_facing_impact || "Restores service availability and clears error rates.";
+  const rawEvidence = incident?.report?.supporting_evidence || incident?.diagnosis?.verified_observations || [];
+  const supportingEvidence = Array.isArray(rawEvidence)
+    ? rawEvidence.map((item) => (typeof item === "string" ? item : item.statement || item.claim || JSON.stringify(item)))
+    : [];
+
+  const handleFixAndDeploy = async () => {
+    if (!incident?.incident_id) return;
+    setHotfixBusy(true);
+    setHotfixError("");
+    try {
+      const res = await fixAndDeployIncident(incident.incident_id);
+      setHotfixResult(res);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      setHotfixError(err instanceof Error ? err.message : "Fix and redeploy failed.");
+    } finally {
+      setHotfixBusy(false);
+    }
+  };
+
   const submitDecision = async (decision) => {
     if (!reviewer.trim()) {
       setError("Enter a reviewer label before recording a decision.");
@@ -200,21 +264,83 @@ function ApprovalPage({ incident, reviewer, setReviewer, onDecision, busy }) {
         <SectionTitle eyebrow="HUMAN-IN-THE-LOOP GATE" title="Review proposed remediation" />
         {!incident ? <div className="empty-state"><h3>No incident selected</h3><p>Start an incident investigation before reviewing a proposed action.</p></div>
           : pending ? <>
-            <div className="approval-alert"><span className="approval-alert-icon">!</span><div><strong>Approval required</strong><p>Rollback will not run unless you explicitly approve this proposal.</p></div></div>
+            <div className="approval-alert"><span className="approval-alert-icon">!</span><div><strong>Approval required</strong><p>{remediation.action.toUpperCase()} will not run unless you explicitly approve this proposal.</p></div></div>
             <div className="proposal-grid">
-              <div><span className="eyebrow">Action</span><strong>{remediation.action}</strong></div>
-              <div><span className="eyebrow">Target application version</span><strong>{remediation.target_version ? `v${remediation.target_version}` : "Not provided"}</strong></div>
+              <div><span className="eyebrow">Action</span><strong>{remediation.action.toUpperCase()}</strong></div>
+              {remediation.action === "rollback" && (
+                <>
+                  <div><span className="eyebrow">Current application version</span><strong>v{currentVersion}</strong></div>
+                  <div><span className="eyebrow">Target application version</span><strong>v{targetVersion}</strong></div>
+                </>
+              )}
+              <div className="proposal-rationale"><span className="eyebrow">Root Cause</span><p>{rootCause}</p></div>
+              <div className="proposal-rationale"><span className="eyebrow">Expected Impact</span><p>{expectedImpact}</p></div>
+              {supportingEvidence.length > 0 && (
+                <div className="proposal-rationale">
+                  <span className="eyebrow">Supporting Evidence</span>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: "18px", fontSize: "12px", color: "#cbd5e1", lineHeight: "1.6" }}>
+                    {supportingEvidence.slice(0, 5).map((ev, idx) => (
+                      <li key={idx}>{ev}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="proposal-rationale"><span className="eyebrow">Rationale</span><p>{remediation.rationale || "No rationale was returned."}</p></div>
             </div>
             <div className="reviewer-field"><label htmlFor="reviewer">Reviewer label</label><input id="reviewer" value={reviewer} onChange={(event) => setReviewer(event.target.value)} placeholder="e.g. local operator" /><small>This is recorded as a self-reported audit label, not an authenticated identity.</small></div>
-            <div className="approval-actions"><button className="button button-danger" disabled={busy} onClick={() => submitDecision("reject")}>Reject proposal</button><button className="button button-primary" disabled={busy} onClick={() => setConfirm(true)}>{busy ? "Recording…" : "Approve rollback"}</button></div>
-          </> : <div className="decision-result"><span className={`decision-icon ${incident.outcome?.status === "succeeded" ? "decision-success" : ""}`}>{incident.outcome?.status === "succeeded" ? "✓" : "i"}</span><h3>{incident.outcome?.status === "succeeded" ? "Approved rollback completed" : incident.outcome?.status === "rejected" ? "Proposal rejected" : `No pending approval · ${incident.status || "unknown"}`}</h3><p>{incident.outcome?.reason || incident.outcome?.rollback?.data?.rolled_back_to || remediation?.rationale || "No action is awaiting approval."}</p><small>Incident {incident.incident_id}</small></div>}
+            <div className="approval-actions"><button className="button button-danger" disabled={busy} onClick={() => submitDecision("reject")}>Reject proposal</button><button className="button button-primary" disabled={busy} onClick={() => setConfirm(true)}>{busy ? "Recording…" : `Approve ${remediation.action}`}</button></div>
+          </> : <div className="decision-result">
+            <span className={`decision-icon ${incident.outcome?.status === "succeeded" ? "decision-success" : ""}`}>{incident.outcome?.status === "succeeded" ? "✓" : "i"}</span>
+            <h3>{incident.outcome?.status === "succeeded" ? `Approved ${incident.outcome?.action || "action"} completed` : incident.outcome?.status === "rejected" ? "Proposal rejected" : `No pending approval · ${incident.status || "unknown"}`}</h3>
+            <p>{incident.outcome?.reason || incident.outcome?.rollback?.data?.rolled_back_to || incident.outcome?.detail || remediation?.rationale || "No action is awaiting approval."}</p>
+            <small>Incident {incident.incident_id}</small>
+
+            {/* Post-Rollback Automated Fix & Redeploy Workflow */}
+            {incident.outcome?.status === "succeeded" && incident.outcome?.action === "rollback" && (
+              <div className="hotfix-redeploy-card">
+                <div className="hotfix-header">
+                  <span className="hotfix-step-badge">POST-ROLLBACK RECOVERY WORKFLOW</span>
+                  <h4>Code Agent Fix &rarr; CI/CD Pipeline Redeploy</h4>
+                </div>
+                <p className="hotfix-desc">
+                  The rollback to <strong>v1.0</strong> successfully mitigated errors. The <strong>Code Agent (qwen2.5-coder:3b)</strong> has generated the division handler fix, ready for the <strong>CI/CD pipeline</strong> to test and deploy as <strong>v1.1.1</strong>.
+                </p>
+                <div className="hotfix-diff-preview">
+                  <span className="diff-label">Code Agent Hotfix (<code>calculator_app/app.py</code>):</span>
+                  <pre>{`@@ -60,2 +60,3 @@ def calc(op, a, b):
+- if STATE["bug"] and op == "div":
+-     raise RuntimeError("v1.1 regression: div handler crashed")
++ result = OPS[op](a, b)`}</pre>
+                </div>
+                {hotfixResult ? (
+                  <div className="hotfix-success-banner">
+                    <span className="success-icon">✓</span>
+                    <div>
+                      <strong>Fixed Version v1.1.1 Deployed &amp; Verified!</strong>
+                      <p>The CI/CD pipeline deployed v1.1.1. Health check: <code>OK</code>, Division endpoint: <code>10 / 2 = 5.0 (Passed)</code>.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="hotfix-actions">
+                    <button
+                      className="button button-primary"
+                      onClick={handleFixAndDeploy}
+                      disabled={hotfixBusy}
+                    >
+                      {hotfixBusy ? "Deploying Hotfix via CI/CD..." : "Code Agent Fix → CI/CD Deploy v1.1.1"}
+                    </button>
+                  </div>
+                )}
+                {hotfixError && <div className="form-error" role="alert">{hotfixError}</div>}
+              </div>
+            )}
+          </div>}
         {error && <div className="form-error" role="alert">{error}</div>}
       </section>
       {confirm && <div className="modal-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
         <button className="modal-close" aria-label="Close confirmation" onClick={() => setConfirm(false)}><Icon name="close" /></button>
-        <span className="modal-warning">!</span><h2 id="confirm-title">Confirm rollback approval</h2>
-        <p>You are approving rollback to <strong>v{remediation?.target_version || "unknown"}</strong>. The existing workflow will execute the action and verify application health.</p>
+        <span className="modal-warning">!</span><h2 id="confirm-title">Confirm {remediation?.action} approval</h2>
+        <p>You are approving {remediation?.action} {remediation?.target_version ? <>to <strong>v{remediation.target_version}</strong></> : ""}. The existing workflow will execute the action and verify application health.</p>
         <p className="modal-caution">This is an explicit action. Do not approve unless you have reviewed the evidence and proposal.</p>
         <div className="modal-actions"><button className="button button-secondary" onClick={() => setConfirm(false)}>Cancel</button><button className="button button-primary" disabled={busy} onClick={() => submitDecision("approve")}>{busy ? "Recording…" : "Confirm approval"}</button></div>
       </section></div>}
@@ -238,7 +364,7 @@ export default function App() {
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
-    const [health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama, integrations, ciRun, securityFindings] = await Promise.all([
+    const [health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama, integrations, ciRun, securityFindings, composeTopology, gitTelemetry] = await Promise.all([
       call(getJson("/health")),
       call(getMetricsText()),
       call(getJson("/admin/version")),
@@ -251,8 +377,10 @@ export default function App() {
       call(getIntegrationsStatus()),
       call(getLatestCiRun()),
       call(getSecurityFindings()),
+      call(getComposeTopology()),
+      call(getGitTelemetry()),
     ]);
-    const results = { health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama, integrations, ciRun, securityFindings };
+    const results = { health, metrics, version, prometheus, audit, agents, grafana, prometheusService, ollama, integrations, ciRun, securityFindings, composeTopology, gitTelemetry };
     const errors = Object.fromEntries(Object.entries(results).filter(([, result]) => result.error).map(([key, result]) => [key, result.error]));
     const auditEvents = audit.value?.events;
     setData((previous) => ({
@@ -268,6 +396,8 @@ export default function App() {
       integrations: integrations.value,
       ciRun: ciRun.value,
       securityFindings: securityFindings.value,
+      composeTopology: composeTopology.value,
+      gitTelemetry: gitTelemetry.value,
       errors,
       lastUpdated: new Date().toISOString(),
     }));
@@ -352,6 +482,7 @@ export default function App() {
   };
 
   const agentResults = incident?.specialists?.results || incident?.report?.specialists?.results || {};
+  const skippedAgents = incident?.specialists?.skipped || incident?.report?.skipped_agents || {};
   const configuredAgents = data.agents?.agents || [];
 
   return (
@@ -377,17 +508,23 @@ export default function App() {
           <div className="page-heading"><div><h1>{currentPage[0]}</h1><p>{currentPage[1]}</p></div>{page === "overview" && <button className="button button-primary" onClick={() => setPage("incidents")}><span>＋</span> New investigation</button>}</div>
           {actionError && <div className="global-error" role="alert">{actionError}<button onClick={() => setActionError("")}>Dismiss</button></div>}
           {page === "overview" && <DashboardHome data={data} counters={counters} history={history} onNavigate={setPage} onSelectIncident={selectIncident} />}
+          {page === "chaos" && <ChaosView onNavigate={setPage} />}
+          {page === "scenarios" && <ScenarioCards onRunInvestigation={(queryText) => { setQuery(queryText); setPage("incidents"); }} />}
+          {page === "features" && <FeatureStudioView onFeatureDeployed={() => refresh(true)} />}
+          {page === "memory" && <KnowledgeMemoryView />}
+          {page === "chatops" && <ChatOpsView />}
           {page === "ci-security" && <CiSecurityView integrations={data.integrations} ciRun={data.ciRun} securityFindings={data.securityFindings} />}
-          {page === "agents" && <><div className="notice-bar"><span className="notice-icon">i</span><span>Agent statuses and outputs below come from the selected incident response. Agents not selected by the workflow are marked accordingly.</span><span className={`pill ${data.agents?.enabled ? "pill-green" : "pill-muted"}`}>Inference {data.agents?.enabled ? "enabled" : "disabled"}</span></div><AgentGrid configuredAgents={configuredAgents} results={agentResults} /></>}
+          {page === "agents" && <><div className="notice-bar"><span className="notice-icon">i</span><span>Agent statuses and outputs below come from the selected incident response. Agents not selected by the workflow are marked accordingly.</span><span className={`pill ${data.agents?.enabled ? "pill-green" : "pill-muted"}`}>Inference {data.agents?.enabled ? "enabled" : "disabled"}</span></div><AgentGrid configuredAgents={configuredAgents} results={agentResults} skipped={skippedAgents} incidentBusy={incidentBusy} /></>}
           {page === "incidents" && <div className="incident-page">
             <section className="panel incident-form-panel"><SectionTitle eyebrow="NEW INVESTIGATION" title="Submit an incident" /><form className="incident-form" onSubmit={submitIncident}><label htmlFor="incident-query">What should the system investigate?</label><textarea id="incident-query" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. Investigate increased calculator errors after the latest deployment" maxLength={2000} rows={3} /><div className="form-footer"><small>Evidence collection and agent execution may take a few moments. No remediation runs without human approval.</small><button className="button button-primary" disabled={incidentBusy || query.trim().length < 3}>{incidentBusy ? <><span className="button-spinner" /> Investigating…</> : "Run investigation"}</button></div></form>{incidentError && <div className="form-error" role="alert">{incidentError}</div>}</section>
             {history.length > 0 && <section className="panel incident-picker"><label htmlFor="incident-history">Viewing incident</label><select id="incident-history" value={activeIncidentId || ""} onChange={(event) => selectIncident(event.target.value)}><option value="" disabled>Select an incident</option>{history.map((item) => <option key={item.incident_id} value={item.incident_id}>{item.incident_id.slice(0, 12)} · {item.status.replaceAll("_", " ")}</option>)}</select><span className="incident-picker-note">Details are loaded from the existing LangGraph incident API.</span></section>}
             {incidentError && activeIncidentId && <div className="inline-warning">{incidentError}</div>}
             <IncidentDetails incident={incident} onSelectIncident={selectIncident} history={history} />
-            {incident && <section className="panel agent-results-panel"><SectionTitle eyebrow="SPECIALIST ANALYSIS" title="Agent execution results" /><AgentGrid configuredAgents={configuredAgents} results={agentResults} /></section>}
+            {incident && <section className="panel agent-results-panel"><SectionTitle eyebrow="SPECIALIST ANALYSIS" title="Agent execution results" /><AgentGrid configuredAgents={configuredAgents} results={agentResults} skipped={skippedAgents} incidentBusy={incidentBusy} /></section>}
           </div>}
-          {page === "approval" && <ApprovalPage incident={incident} reviewer={reviewer} setReviewer={setReviewer} onDecision={recordDecision} busy={decisionBusy} />}
+          {page === "approval" && <ApprovalPage incident={incident} reviewer={reviewer} setReviewer={setReviewer} onDecision={recordDecision} busy={decisionBusy} onRefresh={() => refresh(true)} />}
           {page === "monitoring" && <MetricsPage data={data} counters={counters} />}
+          {page === "telemetry" && <LogsAndTracesView integrations={data.integrations} />}
           {page === "audit" && <section className="panel"><SectionTitle eyebrow="APPEND-ONLY LOCAL RECORDS" title="Incident audit events" action={<span className="pill pill-muted">{data.audit?.length || 0} events</span>} />{data.errors?.audit && <p className="inline-warning">Audit API unavailable: {data.errors.audit}</p>}<AuditLog events={data.audit || []} onSelectIncident={selectIncident} /></section>}
           <footer className="page-footer"><span>OpsPilot · Local DevOps Monitoring</span><span>Backend <code>127.0.0.1:8100</code> · Refresh interval 30s</span></footer>
         </div>

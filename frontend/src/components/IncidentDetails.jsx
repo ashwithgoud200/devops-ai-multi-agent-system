@@ -12,12 +12,13 @@ function EvidenceCard({ title, data }) {
     <article className="evidence-card">
       <div className="evidence-heading">
         <h4>{title}</h4>
-        <span className={`pill ${status === "ok" ? "pill-green" : status === "partial" ? "pill-amber" : "pill-muted"}`}>{status}</span>
+        <span className={`pill ${status === "ok" || status === "findings" ? "pill-green" : status === "partial" ? "pill-amber" : "pill-muted"}`}>{status}</span>
       </div>
       <p>{detail}</p>
       {data?.events?.length > 0 && (
         <ul className="evidence-list">{data.events.slice(-4).reverse().map((event, index) => <li key={index}><b>{event.level || "LOG"}</b> {event.msg || event.message || valueText(event)}</li>)}</ul>
       )}
+      {data?.diff_stat && <p className="evidence-stat"><code>{data.diff_stat}</code></p>}
       {data?.metrics && <pre className="evidence-json">{valueText(data.metrics)}</pre>}
     </article>
   );
@@ -28,7 +29,7 @@ export function IncidentTimeline({ incident }) {
     ["Evidence collected", Boolean(incident?.evidence)],
     ["Diagnosis completed", Boolean(incident?.diagnosis)],
     ["Human decision", incident?.status === "pending_approval" || Boolean(incident?.outcome)],
-    ["Action outcome", Boolean(incident?.outcome)],
+    ["Observational verification", Boolean(incident?.outcome?.verification)],
   ];
   return (
     <div className="lifecycle">
@@ -61,11 +62,17 @@ export default function IncidentDetails({ incident, onSelectIncident, history = 
       </section>
     );
   }
-  const diagnosis = incident.diagnosis || {};
-  const evidence = incident.evidence || {};
+  const diagnosis = incident.diagnosis || incident.report?.diagnosis || {};
+  const evidence = incident.evidence || incident.report?.evidence || {};
   const hypotheses = diagnosis.hypotheses || [];
   const observations = diagnosis.verified_observations || diagnosis.verified_observed_facts || [];
   const remediation = incident.proposed_remediation || incident.report?.recommended_remediation;
+  const blastRadius = diagnosis.blast_radius || incident.report?.blast_radius;
+  const severity = diagnosis.severity || incident.report?.severity || "medium";
+  const confidence = diagnosis.confidence != null ? diagnosis.confidence : incident.report?.confidence != null ? incident.report.confidence : null;
+  const verification = incident.outcome?.verification || incident.report?.observational_verification;
+  const scenario = incident.scenario || incident.report?.scenario || incident.detected_scenarios?.[0];
+  const detectedScenarios = incident.detected_scenarios || incident.report?.detected_scenarios || (scenario ? [scenario] : []);
 
   return (
     <div className="incident-detail">
@@ -75,13 +82,89 @@ export default function IncidentDetails({ incident, onSelectIncident, history = 
             <span className="eyebrow">Incident investigation</span>
             <h2>{incident.incident_id}</h2>
           </div>
-          <span className={`pill ${incident.status === "pending_approval" ? "pill-amber" : incident.status === "completed" ? "pill-green" : "pill-muted"}`}>{incident.status || "unknown"}</span>
+          <div className="summary-badges">
+            <span className={`pill ${severity === "critical" || severity === "high" ? "pill-amber" : "pill-muted"}`}>
+              Severity: {severity.toUpperCase()}
+            </span>
+            {confidence != null && (
+              <span className="pill pill-blue">
+                Confidence: {(confidence * 100).toFixed(0)}%
+              </span>
+            )}
+            <span className={`pill ${incident.status === "pending_approval" ? "pill-amber" : incident.status === "completed" || incident.outcome?.status === "succeeded" ? "pill-green" : "pill-muted"}`}>
+              {incident.status || "unknown"}
+            </span>
+            {scenario && (
+              <span className="pill pill-amber" style={{ borderColor: "#d97706", color: "#f59e0b" }}>
+                Scenario: {scenario}
+              </span>
+            )}
+          </div>
         </div>
         <p className="incident-query">{incident.query || "Incident query is not present in the API response."}</p>
+        {detectedScenarios.length > 1 && (
+          <div style={{ margin: "-8px 0 12px", display: "flex", gap: "6px", alignItems: "center" }}>
+            <span className="eyebrow">Detected Scenarios:</span>
+            {detectedScenarios.map((sc, i) => (
+              <span key={i} className="scenario-badge">{sc}</span>
+            ))}
+          </div>
+        )}
         <IncidentTimeline incident={incident} />
-        {diagnosis.summary && <div className="diagnosis-callout"><span className="eyebrow">Diagnosis summary · hypothesis, not proof</span><p>{diagnosis.summary}</p></div>}
-        {incident.outcome && <div className={`outcome-callout outcome-${incident.outcome.status || "unknown"}`}><strong>Outcome: {incident.outcome.status}</strong><p>{incident.outcome.reason || incident.outcome.rollback?.data?.rolled_back_to || incident.outcome.rollback?.detail || "Workflow returned an outcome."}</p></div>}
-        {remediation && <div className="remediation-inline"><span className="eyebrow">Proposed action</span><strong>{remediation.action}{remediation.target_version ? ` → v${remediation.target_version}` : ""}</strong><p>{remediation.rationale || "No rationale supplied."}</p></div>}
+
+        {/* Blast radius callout */}
+        {blastRadius && (blastRadius.affected_endpoints?.length > 0 || blastRadius.impacted_services?.length > 0) && (
+          <div className="blast-radius-box">
+            <span className="eyebrow">BLAST RADIUS & SERVICE IMPACT</span>
+            <div className="blast-details">
+              {blastRadius.affected_endpoints?.length > 0 && (
+                <div>
+                  <strong>Affected Endpoints:</strong> <code>{blastRadius.affected_endpoints.join(", ")}</code>
+                </div>
+              )}
+              {blastRadius.impacted_services?.length > 0 && (
+                <div>
+                  <strong>Impacted Services:</strong> {blastRadius.impacted_services.join(", ")}
+                </div>
+              )}
+              {blastRadius.user_facing_impact && (
+                <div>
+                  <strong>User Impact:</strong> {blastRadius.user_facing_impact}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {diagnosis.summary && (
+          <div className="diagnosis-callout">
+            <span className="eyebrow">Root-cause diagnosis summary (advisory hypothesis)</span>
+            <p>{diagnosis.summary}</p>
+          </div>
+        )}
+
+        {incident.outcome && (
+          <div className={`outcome-callout outcome-${incident.outcome.status || "unknown"}`}>
+            <strong>Outcome: {incident.outcome.status}</strong>
+            <p>{incident.outcome.reason || incident.outcome.rollback?.data?.rolled_back_to || incident.outcome.rollback?.detail || "Workflow returned an outcome."}</p>
+            {verification && (
+              <div className="verification-badge-box">
+                <span className="eyebrow">Observational Verification:</span>
+                <span className={`pill ${verification.status === "ok" ? "pill-green" : "pill-muted"}`}>
+                  API Health {verification.status} · Version {verification.data?.version || "unknown"}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {remediation && (
+          <div className="remediation-inline">
+            <span className="eyebrow">Proposed remediation (recommendation only · requires approval)</span>
+            <strong>{remediation.action}{remediation.target_version ? ` → v${remediation.target_version}` : ""}</strong>
+            <p>{remediation.rationale || "No rationale supplied."}</p>
+          </div>
+        )}
       </section>
 
       <section className="panel">
@@ -95,6 +178,9 @@ export default function IncidentDetails({ incident, onSelectIncident, history = 
           <EvidenceCard title="Prometheus" data={evidence.prometheus} />
           <EvidenceCard title="Application health" data={evidence.health} />
           <EvidenceCard title="Deployment history" data={evidence.version} />
+          <EvidenceCard title="Git repository" data={evidence.git} />
+          <EvidenceCard title="CI/CD pipeline" data={evidence.ci_pipeline} />
+          <EvidenceCard title="Security scans" data={evidence.security_scans} />
         </div>
         <div className="claim-block">
           <div className="claim-heading"><h3>Verified observations</h3><span className="pill pill-green">Evidence-backed</span></div>

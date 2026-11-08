@@ -97,6 +97,7 @@ ALLOWED_HTTP_METHODS = (
     "HEAD",
 )
 ALLOWED_HTTP_ENDPOINTS = (
+    "/",
     "/calc/{op}",
     "/health",
     "/metrics",
@@ -115,6 +116,25 @@ ALLOWED_HTTP_ENDPOINTS = (
     "/integrations/status",
     "/ci/runs/latest",
     "/security/findings",
+    "/chatops/status",
+    "/chatops/history",
+    "/chatops/dispatch",
+    "/chatops/interactive",
+    "/chatops/config",
+    "/chatops/test",
+    "/memory/status",
+    "/memory/runbooks",
+    "/memory/runbooks/{runbook_id}",
+    "/memory/search",
+    "/memory/graph",
+    "/memory/reindex",
+    "/chaos/status",
+    "/chaos/stress/cpu",
+    "/chaos/stress/memory",
+    "/chaos/inject/latency",
+    "/chaos/trigger/crash",
+    "/chaos/run/security-audit",
+    "/chaos/stop",
     "/openapi.json",
     "/docs",
     "/redoc",
@@ -245,6 +265,22 @@ CI_TEST_FAILURES_TOTAL = Gauge(
     "Number of failed tests reported in the latest CI pipeline run.",
     ["workflow"],
 )
+CHATOPS_NOTIFICATIONS_TOTAL = Counter(
+    "devops_chatops_notifications_total",
+    "Total ChatOps webhook notifications dispatched by platform, event, and delivery status.",
+    ["platform", "event", "status"],
+)
+
+ALLOWED_CHATOPS_PLATFORMS = ("slack", "discord", "generic", "all", "other")
+ALLOWED_CHATOPS_EVENTS = (
+    "incident_alert",
+    "approval_requested",
+    "incident_resolved",
+    "decision_recorded",
+    "test_ping",
+    "other",
+)
+ALLOWED_CHATOPS_STATUSES = ("delivered", "simulated", "failed", "disabled", "other")
 
 
 def _bound(value: str | None, allowlist: tuple[str, ...], fallback: str) -> str:
@@ -413,6 +449,13 @@ def record_security_findings_metrics(summary: dict[str, Any]) -> None:
 def record_ci_run_metrics(workflow_name: str, failed_count: int) -> None:
     safe_wf = workflow_name[:50] if workflow_name else "CI Pipeline"
     CI_TEST_FAILURES_TOTAL.labels(workflow=safe_wf).set(max(0, failed_count))
+
+
+def record_chatops_notification(platform: str, event: str, status: str) -> None:
+    safe_platform = _bound(platform, ALLOWED_CHATOPS_PLATFORMS, "other")
+    safe_event = _bound(event, ALLOWED_CHATOPS_EVENTS, "other")
+    safe_status = _bound(status, ALLOWED_CHATOPS_STATUSES, "other")
+    CHATOPS_NOTIFICATIONS_TOTAL.labels(platform=safe_platform, event=safe_event, status=safe_status).inc()
 
 
 def reconstruct_incident_current_status(

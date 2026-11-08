@@ -8,7 +8,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from agents import metrics as app_metrics
+from agents.compose_topology import get_compose_topology
+from agents.git_telemetry import collect_git_evidence
 from agents.github_client import GitHubClient, get_github_enabled
+from agents.loki_client import get_loki_status, query_loki_logs
+from agents.tempo_client import get_tempo_status, query_trace, search_traces
 from agents.runtime_evidence import (
     collect_ci_evidence,
     collect_security_evidence,
@@ -18,6 +22,18 @@ from agents.runtime_evidence import (
 )
 
 router = APIRouter(tags=["integrations and telemetry"])
+
+
+@router.get("/topology/compose", summary="Get Docker Compose service topology and health")
+def get_docker_compose_topology() -> dict[str, Any]:
+    """Return configured Docker Compose services, container status, and dependency impact."""
+    return get_compose_topology()
+
+
+@router.get("/telemetry/git", summary="Get read-only local Git repository evidence")
+def get_git_telemetry() -> dict[str, Any]:
+    """Return current branch, recent commits, and sanitized diff without repository mutations."""
+    return collect_git_evidence()
 
 
 @router.get("/integrations/status", summary="Get status of external integrations")
@@ -62,10 +78,15 @@ def get_integrations_status() -> dict[str, Any]:
         get_security_evidence_enabled() and bool(sec_files),
     )
 
+    loki_stat = get_loki_status()
+    tempo_stat = get_tempo_status()
+
     return {
         "github": gh_status,
         "offline_ci": ci_offline_status,
         "offline_security": sec_offline_status,
+        "loki": loki_stat,
+        "tempo": tempo_stat,
     }
 
 
@@ -107,3 +128,24 @@ def get_security_findings() -> dict[str, Any]:
         "findings": sanitized_findings,
         "detail": evidence.get("detail"),
     }
+
+
+@router.get("/telemetry/loki", summary="Query Loki aggregated logs or local file fallback")
+def get_loki_telemetry(query: str = '{app="calculator-app"}', limit: int = 50, since: int = 3600) -> dict[str, Any]:
+    """Query logs from Loki via LogQL with fallback to local application log file."""
+    return query_loki_logs(query=query, limit=limit, since_seconds=since)
+
+
+@router.get("/telemetry/tempo", summary="Search distributed traces from Tempo or local buffer")
+def get_tempo_telemetry(limit: int = 25, service: str = "calculator-app") -> dict[str, Any]:
+    """Search recent distributed traces and latency spans from Tempo or in-memory fallback."""
+    return search_traces(limit=limit, service_name=service)
+
+
+@router.get("/telemetry/traces/{trace_id}", summary="Get trace details and span breakdown")
+def get_trace_details(trace_id: str) -> dict[str, Any]:
+    """Query span waterfall breakdown for a given trace_id."""
+    trace_res = query_trace(trace_id)
+    if trace_res.get("status") == "not_found":
+        raise HTTPException(status_code=404, detail=f"Trace '{trace_id}' not found.")
+    return trace_res

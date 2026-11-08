@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[1]
+
 from agents.ci_security_normalizer import (
     ALLOWED_CATEGORIES,
     ALLOWED_SEVERITIES,
@@ -53,7 +55,18 @@ def get_security_evidence_enabled() -> bool:
 def get_evidence_import_dir() -> Path:
     """Return the configured import directory path."""
     configured = os.getenv("DEVOPS_EVIDENCE_IMPORT_DIR", DEFAULT_IMPORT_DIR)
-    return Path(configured).resolve()
+    if str(configured).startswith("/app/"):
+        rel = str(configured).removeprefix("/app/")
+        path = ROOT / rel
+    else:
+        path = Path(configured)
+        if not path.is_absolute():
+            path = ROOT / path
+        elif not path.is_dir() and (ROOT / "data" / "ci-security-reports").is_dir():
+            path = ROOT / "data" / "ci-security-reports"
+    if not path.is_dir() and (ROOT / "data" / "ci-security-reports").is_dir():
+        path = ROOT / "data" / "ci-security-reports"
+    return path.resolve()
 
 
 def get_evidence_max_age_seconds() -> float:
@@ -284,6 +297,9 @@ def collect_ci_evidence(
     return {
         "status": effective_status,
         "freshness": freshness,
+        "provenance": "seeded_offline_fixture",
+        "report_file": target_file.name,
+        "report_identity": f"fixture:{target_file.name}",
         "source": target_file.name,
         "timestamp": report_ts,
         "workflow_name": workflow_name,
@@ -351,9 +367,11 @@ def collect_security_evidence(
     scanner_patterns = {
         "pip_audit": ["pip_audit.json", "pip-audit.json"],
         "npm_audit": ["npm_audit.json", "npm-audit.json"],
-        "trivy_image": ["trivy_image.json", "trivy-image.json"],
+        "trivy_image": ["trivy_image.json", "trivy-image.json", "trivy-results.json", "trivy_results.json"],
         "trivy_config": ["trivy_config.json", "trivy-config.json"],
         "gitleaks": ["gitleaks.json"],
+        "semgrep": ["semgrep.json", "semgrep-results.json", "semgrep_results.json"],
+        "trufflehog": ["trufflehog.json", "trufflehog-results.json", "trufflehog_results.json"],
     }
 
     report_payloads: dict[str, Any] = {}
@@ -401,6 +419,8 @@ def collect_security_evidence(
     normalized["timestamp"] = latest_ts
     normalized["freshness"] = "stale" if is_stale else "observed"
     normalized["source"] = str(base_dir)
+    normalized["provenance"] = "seeded_offline_fixture"
+    normalized["report_origin"] = "seeded_offline_fixture"
 
     return normalized
 

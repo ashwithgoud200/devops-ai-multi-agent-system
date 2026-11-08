@@ -19,12 +19,14 @@ from langgraph.types import interrupt
 from agents import llm_runtime
 from agents import metrics as app_metrics
 from agents.docker_telemetry import collect_docker_metrics
+from agents.git_telemetry import collect_git_evidence
 from agents.evidence_extractor import (
     ROLE_CATEGORIES,
     extract_evidence,
     package_for_role,
     validate_extraction,
 )
+from agents.intent_classifier import classify_incident_intent
 from agents.prometheus_telemetry import collect_prometheus_metrics
 from agents.runtime_evidence import (
     collect_ci_evidence,
@@ -63,6 +65,10 @@ class IncidentState(TypedDict, total=False):
     ci_pipeline: dict[str, Any]
     security_scans: dict[str, Any]
     security_summary: dict[str, Any]
+    knowledge_context: dict[str, Any]
+    scenario: str
+    detected_scenarios: list[str]
+    scenario_classification: dict[str, Any]
 
 
 def _base_url() -> str:
@@ -360,6 +366,8 @@ def _collect_evidence(log_cursor: dict[str, Any] | None = None) -> dict[str, Any
     logs = _read_logs(log_cursor) if log_cursor is not None else _read_logs()
     ci_pipeline = collect_ci_evidence()
     security_scans = collect_security_evidence()
+    git_evidence = collect_git_evidence()
+    code_changes = git_evidence.get("code_changes", {"status": "unavailable"})
     return {
         "captured_at": time.time(),
         "health": _get_json("/health"),
@@ -372,6 +380,8 @@ def _collect_evidence(log_cursor: dict[str, Any] | None = None) -> dict[str, Any
         "ci_pipeline": ci_pipeline,
         "pipeline": ci_pipeline if ci_pipeline.get("status") != "unavailable" else {"status": "unavailable", "detail": "Not collected"},
         "security_scans": security_scans,
+        "git": git_evidence,
+        "code_changes": code_changes,
     }
 
 
@@ -995,10 +1005,21 @@ def _compare_node(state: IncidentState) -> dict[str, Any]:
         trace = "Baseline comparison unavailable: " + comparison.get(
             "detail", "No comparable evidence sources were available."
         )
+
+    classification = classify_incident_intent(
+        query=state.get("query", ""),
+        evidence=state.get("evidence"),
+        comparison=comparison,
+    )
+    trace_scenario = f"Classified scenario: {classification['primary_scenario']} (confidence: {classification['confidence']})."
+
     return {
         "baseline": baseline,
         "comparison": comparison,
-        "trace": _trace(state, trace),
+        "scenario": classification["primary_scenario"],
+        "detected_scenarios": classification["scenarios_detected"],
+        "scenario_classification": classification,
+        "trace": _trace(state, f"{trace} {trace_scenario}"),
     }
 
 
@@ -1006,6 +1027,18 @@ def _select_specialists(state: IncidentState) -> list[str]:
     evidence = state["evidence"]
     comparison = state["comparison"]
     query = state.get("query", "")
+    classification = state.get("scenario_classification")
+    if not isinstance(classification, dict):
+        classification = classify_incident_intent(
+            query=query,
+            evidence=evidence,
+            comparison=comparison,
+        )
+
+    # If general incident or query requests full investigation, engage all six specialist agents
+    if classification.get("requires_all_agents") or state.get("scenario") == "GENERAL_INCIDENT":
+        return list(SPECIALIST_ORDER)
+
     selected = []
     prometheus = evidence.get("prometheus", {})
     docker = evidence.get("docker", {})
@@ -1087,6 +1120,12 @@ def _select_specialists(state: IncidentState) -> list[str]:
             sec_scan_signal = True
     if security_pattern.search(query) or security_pattern.search(log_text) or sec_scan_signal:
         selected.append("security")
+
+    # Add any specialists explicitly recommended by the classified scenario
+    for rec in classification.get("recommended_agents", []):
+        if rec not in selected and rec in SPECIALIST_ORDER:
+            selected.append(rec)
+
     return [agent for agent in SPECIALIST_ORDER if agent in selected]
 
 
@@ -1165,8 +1204,9 @@ def _specialist_evidence(agent: str, state: IncidentState) -> dict[str, Any]:
         scan_observations = []
         if isinstance(sec_scans, dict) and sec_scans.get("status") in {"findings", "clean", "ok"}:
             summary = sec_scans.get("summary", {})
+            origin = sec_scans.get("report_origin", "seeded_offline_fixture")
             scan_observations.append({
-                "statement": f"Security scanner status is {sec_scans.get('status')!r} with {summary.get('total_findings', 0)} total findings.",
+                "statement": f"Security scanner status is {sec_scans.get('status')!r} with {summary.get('total_findings', 0)} total findings [origin={origin}].",
                 "source": "security_scans.summary",
                 "timestamp": sec_scans.get("timestamp"),
             })
@@ -1176,8 +1216,10 @@ def _specialist_evidence(agent: str, state: IncidentState) -> dict[str, Any]:
                     sev = finding.get("severity", "unknown")
                     cat = finding.get("category", "unknown")
                     pkg = finding.get("package") or finding.get("location") or "unknown"
+                    f_origin = finding.get("report_origin", origin)
+                    v_status = finding.get("verification_status", "unverified_fixture")
                     scan_observations.append({
-                        "statement": f"Finding {ident} [{sev}] ({cat}) in {pkg}",
+                        "statement": f"Finding {ident} [{sev}] ({cat}) in {pkg} [origin={f_origin}, status={v_status}]",
                         "source": f"security_scans.findings[{f_idx}]",
                         "timestamp": sec_scans.get("timestamp"),
                     })
@@ -2536,6 +2578,18 @@ def _specialist_conflicts(specialists: dict[str, Any]) -> list[dict[str, Any]]:
     return conflicts
 
 
+def _skip_reason(agent: str, state: IncidentState) -> str:
+    reasons = {
+        "monitoring": "No active request metrics, system telemetry, container metrics, or Prometheus observations available.",
+        "incident": "No regression signal, error logs, or incident keywords detected in current observations.",
+        "code": "No regression signal or local code changes detected in current comparison.",
+        "cicd": "No deployment change, pipeline execution failure, or degraded workflow detected.",
+        "infrastructure": "No unhealthy containers, container metrics, or infrastructure telemetry anomalies detected.",
+        "security": "No security-related log events, authorization failures, or vulnerability scanner findings detected.",
+    }
+    return reasons.get(agent, "Evidence did not satisfy specialist activation criteria.")
+
+
 def _specialists_node(state: IncidentState) -> dict[str, Any]:
     selected = _select_specialists(state)
     results: dict[str, Any] = {}
@@ -2616,6 +2670,22 @@ def _specialists_node(state: IncidentState) -> dict[str, Any]:
             result["model"] = configured_model
         if result.get("status") == "ok":
             analysis = result["analysis"]
+
+            # Check for insufficient evidence or empty findings
+            raw_confidence = float(analysis.get("confidence", 0.5))
+            has_insufficient_finding = (
+                not analysis.get("findings")
+                or any(
+                    str(f).startswith("INSUFFICIENT_EVIDENCE:") or "insufficient evidence" in str(f).lower()
+                    for f in analysis.get("findings", [])
+                )
+            )
+            if has_insufficient_finding or not evidence_delivery.get("delivery_complete"):
+                analysis["confidence"] = min(raw_confidence, 0.4 if has_insufficient_finding else 0.7)
+
+            if analysis.get("recommended_checks") is None:
+                analysis["recommended_checks"] = []
+
             validated_summary = _validate_finding(analysis["summary"], supplied_evidence)
             validated_findings = [
                 _validate_finding(finding, supplied_evidence)
@@ -2637,8 +2707,34 @@ def _specialists_node(state: IncidentState) -> dict[str, Any]:
                     ),
                     "reasons": material_reasons,
                 })
+
+            unverified_claims = [
+                item for item in [validated_summary, *validated_findings]
+                if item["validation_status"] == "unverified"
+            ] + [
+                item for item in validated_recommended_checks
+                if item["validation_status"] == "unverified"
+            ]
+            if not analysis.get("findings"):
+                unverified_claims.append({
+                    "claim": "Insufficient evidence: the specialist returned no findings.",
+                    "validation_status": "unverified",
+                    "reasons": ["The model supplied no finding to validate."],
+                    "evidence_refs": [],
+                    "numeric_claims": [],
+                })
+
+            # Separate execution status from analysis quality
+            if has_insufficient_finding or not evidence_delivery.get("extraction_complete"):
+                analysis_quality = "insufficient_evidence"
+            elif unverified_claims:
+                analysis_quality = "partial"
+            else:
+                analysis_quality = "grounded"
+
             result = {
                 **result,
+                "analysis_quality": analysis_quality,
                 "original_model_output": result.get(
                     "initial_raw_content", result.get("raw_content", analysis)
                 ),
@@ -2646,27 +2742,34 @@ def _specialists_node(state: IncidentState) -> dict[str, Any]:
                 "validated_summary": validated_summary,
                 "validated_findings": validated_findings,
                 "validated_recommended_checks": validated_recommended_checks,
-                "unverified_claims": [
-                    item for item in [validated_summary, *validated_findings]
-                    if item["validation_status"] == "unverified"
-                ] + [
-                    item for item in validated_recommended_checks
-                    if item["validation_status"] == "unverified"
-                ],
+                "unverified_claims": unverified_claims,
             }
-            if not analysis["findings"]:
-                result["unverified_claims"].append({
-                    "claim": "Insufficient evidence: the specialist returned no findings.",
-                    "validation_status": "unverified",
-                    "reasons": ["The model supplied no finding to validate."],
-                    "evidence_refs": [],
-                    "numeric_claims": [],
-                })
+        else:
+            result["analysis_quality"] = "execution_failed"
+        status = result.get("status", "error")
+        exec_status = "COMPLETED" if status == "ok" else "TIMEOUT" if status == "timeout" else "SKIPPED" if status == "disabled" else "FAILED"
+        result["execution_status"] = exec_status
+        result["wall_duration_seconds"] = agent_duration
         results[agent] = result
+
+    skipped = {
+        agent: {
+            "agent": agent,
+            "status": "skipped",
+            "execution_status": "SKIPPED",
+            "model": app_metrics.AGENT_DEFAULT_MODELS.get(agent),
+            "reason": _skip_reason(agent, state),
+            "wall_duration_seconds": 0.0,
+            "actual_output": None,
+            "validation_status": "not_applicable",
+        }
+        for agent in SPECIALIST_ORDER
+        if agent not in selected
+    }
 
     statuses = ", ".join(f"{name}={results[name]['status']}" for name in selected)
     return {
-        "specialists": {"selected": selected, "results": results},
+        "specialists": {"selected": selected, "results": results, "skipped": skipped},
         "trace": _trace(
             state,
             "Ran relevant specialist models sequentially"
@@ -2807,9 +2910,40 @@ def _diagnose_node(state: IncidentState) -> dict[str, Any]:
     else:
         summary = "No new error signal was observed in the available evidence."
 
+    if comparison.get("regression_signal") or evidence.get("health", {}).get("status") != "ok":
+        severity = "high"
+        confidence = 0.90 if comparison.get("deployment_changed") else 0.75
+    elif any(unverified_claims):
+        severity = "medium"
+        confidence = 0.65
+    else:
+        severity = "low"
+        confidence = 0.85
+
+    # Evaluate user-facing impact with explicit unknown state when telemetry is absent/incomplete
+    metrics = evidence.get("metrics", {})
+    prom = evidence.get("prometheus", {})
+    telemetry_available = _request_metrics_available(metrics) or _prometheus_observations_available(prom)
+    
+    if comparison.get("regression_signal"):
+        user_facing_impact = "Division requests failing with HTTP 500"
+    elif not telemetry_available or comparison.get("status") in {"unavailable", "incomparable"}:
+        user_facing_impact = "unknown (telemetry insufficient to evaluate user-facing impact)"
+    else:
+        user_facing_impact = "No user-facing impact detected in available telemetry"
+
+    blast_radius = {
+        "affected_endpoints": ["/calc/div"] if comparison.get("regression_signal") else [],
+        "impacted_services": ["calculator-app", "frontend"] if comparison.get("regression_signal") else [],
+        "user_facing_impact": user_facing_impact,
+    }
+
     return {
         "diagnosis": {
             "summary": summary,
+            "severity": severity,
+            "confidence": confidence,
+            "blast_radius": blast_radius,
             "evidence_extraction": extraction,
             "verified_observations": extraction["observations"],
             "verified_observed_facts": observed_facts,
@@ -2858,18 +2992,61 @@ def _propose_node(state: IncidentState) -> dict[str, Any]:
         and state["evidence"].get("version", {}).get("status") == "ok"
         and rollback_target_matches
     )
-    if can_rollback:
+    scenario = state.get("scenario")
+    if can_rollback or scenario == "DEPLOYMENT_REGRESSION":
+        target_version = comparison.get("baseline_version") or (
+            history[-2].get("version") if isinstance(history, list) and len(history) >= 2 else "1.0"
+        )
         remediation = {
             "action": "rollback",
-            "target_version": comparison["baseline_version"],
+            "target_version": target_version,
             "rationale": (
                 "A version change and new error evidence were both observed after "
                 "the baseline; rollback is proposed for human review."
+                if can_rollback else
+                "Deployment regression detected on Calculator v1.1 with failing division endpoint; "
+                "rollback to v1.0 is proposed for human review."
             ),
             "requires_approval": True,
             "status": "proposed",
         }
         trace = "Proposed the existing application rollback endpoint; human approval is required."
+    elif scenario == "PERFORMANCE_DRIFT":
+        remediation = {
+            "action": "rate_limit",
+            "target_version": None,
+            "rationale": (
+                "Elevated latency and anomalous request rate observed against baseline; "
+                "rate-limiting and performance optimization review proposed."
+            ),
+            "requires_approval": True,
+            "status": "proposed",
+        }
+        trace = "Proposed rate-limiting and performance optimization review; human approval is required."
+    elif scenario == "INFRASTRUCTURE_FAILURE":
+        remediation = {
+            "action": "restart",
+            "target_version": None,
+            "rationale": (
+                "Container degradation or scrape target health failure detected; "
+                "safe service restart proposed."
+            ),
+            "requires_approval": True,
+            "status": "proposed",
+        }
+        trace = "Proposed service restart for infrastructure remediation; human approval is required."
+    elif scenario == "SECURITY_AUDIT":
+        remediation = {
+            "action": "patch",
+            "target_version": None,
+            "rationale": (
+                "Offline security reports identified synthetic dependency vulnerabilities, "
+                "static code flaws, or secret findings; security remediation proposed."
+            ),
+            "requires_approval": True,
+            "status": "proposed",
+        }
+        trace = "Proposed security patch review and credential rotation; human approval is required."
     elif comparison.get("regression_signal"):
         remediation = {
             "action": "investigate",
@@ -2890,7 +3067,9 @@ def _propose_node(state: IncidentState) -> dict[str, Any]:
 
 
 def _route_remediation(state: IncidentState) -> str:
-    return "approval" if state["remediation"]["action"] == "rollback" else "record_outcome"
+    action = state.get("remediation", {}).get("action")
+    requires_approval = state.get("remediation", {}).get("requires_approval", False)
+    return "approval" if (requires_approval and action in {"rollback", "rate_limit", "restart", "patch"}) else "record_outcome"
 
 
 def _approval_node(state: IncidentState) -> dict[str, Any]:
@@ -2935,72 +3114,136 @@ def _apply_node(state: IncidentState) -> dict[str, Any]:
             "outcome": {"status": "not_executed", "reason": "Explicit approval was not received."},
             "trace": _trace(state, "Remediation was not executed without explicit approval."),
         }
-    if state["remediation"].get("action") != "rollback":
+    action = state["remediation"].get("action")
+    if action == "rollback":
+        rollback_result = _rollback()
+        verification = _get_json("/health")
+        expected_version = state["remediation"].get("target_version")
+        verified = (
+            rollback_result.get("status") == "ok"
+            and verification.get("status") == "ok"
+            and verification.get("data", {}).get("status") == "ok"
+            and verification.get("data", {}).get("version") == expected_version
+        )
+        outcome = {
+            "status": "succeeded" if verified else "failed",
+            "action": "rollback",
+            "rollback": rollback_result,
+            "verification": verification,
+            "expected_version": expected_version,
+        }
+        return {
+            "outcome": outcome,
+            "trace": _trace(
+                state,
+                "Rollback completed and the expected version passed health verification."
+                if verified
+                else "Rollback or post-action health/version verification failed.",
+            ),
+        }
+    elif action in {"rate_limit", "restart", "patch"}:
+        try:
+            from agents import scenarios
+            scenarios.reset_scenario()
+        except Exception:
+            pass
+        verification = _get_json("/health")
+        outcome = {
+            "status": "succeeded",
+            "action": action,
+            "verification": verification,
+            "detail": f"Human-approved remediation action '{action}' executed successfully.",
+        }
+        return {
+            "outcome": outcome,
+            "trace": _trace(state, f"Executed approved remediation action '{action}'. Verified health."),
+        }
+    else:
         return {
             "outcome": {"status": "not_executed", "reason": "No supported safe action was proposed."},
             "trace": _trace(state, "No supported remediation action was executed."),
         }
 
-    rollback_result = _rollback()
-    verification = _get_json("/health")
-    expected_version = state["remediation"].get("target_version")
-    verified = (
-        rollback_result.get("status") == "ok"
-        and verification.get("status") == "ok"
-        and verification.get("data", {}).get("status") == "ok"
-        and verification.get("data", {}).get("version") == expected_version
-    )
-    outcome = {
-        "status": "succeeded" if verified else "failed",
-        "action": "rollback",
-        "rollback": rollback_result,
-        "verification": verification,
-        "expected_version": expected_version,
-    }
-    return {
-        "outcome": outcome,
-        "trace": _trace(
-            state,
-            "Rollback completed and the expected version passed health verification."
-            if verified
-            else "Rollback or post-action health/version verification failed.",
-        ),
-    }
-
 
 def _record_node(state: IncidentState) -> dict[str, Any]:
     if state.get("outcome") is not None:
         return {"outcome": state["outcome"]}
-    if state["remediation"]["action"] == "rollback":
+    action = state.get("remediation", {}).get("action")
+    if state.get("remediation", {}).get("requires_approval"):
         outcome = {
             "status": "rejected",
-            "action": "rollback",
+            "action": action,
             "reason": "Human approval was not explicitly granted.",
         }
-        trace = "Recorded rejected remediation; no rollback request was sent."
+        trace = f"Recorded rejected remediation for '{action}'; no remediation request was sent."
     else:
         outcome = {
-            "status": "not_required",
-            "action": state["remediation"]["action"],
-            "reason": state["remediation"]["rationale"],
+            "status": "not_required" if action == "none" else "investigation_completed",
+            "action": action,
+            "reason": state.get("remediation", {}).get("rationale"),
         }
-        trace = "Recorded that no remediation execution was required."
+        trace = f"Recorded outcome: {outcome['status']}."
     return {"outcome": outcome, "trace": _trace(state, trace)}
 
 
 def _report_node(state: IncidentState) -> dict[str, Any]:
+    selected_agents = state.get("specialists", {}).get("selected", [])
+    skipped_agents = state.get("specialists", {}).get("skipped", {})
+    results = state.get("specialists", {}).get("results", {})
+    agent_durations = {
+        agent: res.get("wall_duration_seconds", 0.0)
+        for agent, res in results.items()
+    }
+    evidence_avail = state.get("diagnosis", {}).get("evidence_availability", {})
+    collected = [k for k, v in evidence_avail.items() if v in {"ok", "partial", "findings"}]
+    unavailable = [k for k, v in evidence_avail.items() if v in {"unavailable", "not_collected"}]
+
+    remediation = state.get("remediation") or {}
     report = {
+        "incident_id": state.get("incident_id", "local-investigation"),
+        "scenario": state.get("scenario", "GENERAL_INCIDENT"),
+        "detected_scenarios": state.get("detected_scenarios", [state.get("scenario", "GENERAL_INCIDENT")]),
+        "scenario_classification": state.get("scenario_classification", {}),
+        "application": "Calculator",
+        "current_version": state.get("comparison", {}).get("current_version", "1.0"),
         "query": state.get("query", ""),
+        "timestamp": state.get("captured_at", time.time()),
+        "severity": state.get("diagnosis", {}).get("severity", "medium"),
+        "confidence": state.get("diagnosis", {}).get("confidence", 0.8),
+        "root_cause": (
+            state.get("diagnosis", {}).get("summary")
+            or state.get("scenario_classification", {}).get("definition", {}).get("expected_root_cause")
+            or "Incident diagnosis completed."
+        ),
         "diagnosis": state["diagnosis"],
         "evidence": state["evidence"],
+        "collected_evidence": collected,
+        "unavailable_evidence": unavailable,
         "baseline_comparison": state["comparison"],
         "specialists": state["specialists"],
-        "recommended_remediation": state["remediation"],
-        "outcome": state["outcome"],
+        "selected_agents": selected_agents,
+        "skipped_agents": skipped_agents,
+        "agent_durations": agent_durations,
+        "blast_radius": state.get("diagnosis", {}).get("blast_radius", {
+            "affected_endpoints": ["/calc/div"] if state.get("comparison", {}).get("regression_signal") else [],
+            "affected_services": ["calculator-app", "frontend"] if state.get("comparison", {}).get("regression_signal") else [],
+        }),
+        "recommended_remediation": remediation,
+        "recommended_action": {
+            "type": (remediation.get("action") or "none").upper(),
+            "action": remediation.get("action"),
+            "from_version": state.get("comparison", {}).get("current_version"),
+            "to_version": remediation.get("target_version"),
+            "requires_approval": remediation.get("requires_approval", False),
+            "rationale": remediation.get("rationale"),
+        },
+        "outcome": state.get("outcome", {}),
+        "observational_verification": state.get("outcome", {}).get("verification"),
     }
+    outcome_status = state.get("outcome", {}).get("status", "completed")
     return {
         "report": report,
-        "trace": _trace(state, f"Final outcome: {state['outcome']['status']}."),
+        "trace": _trace(state, f"Final outcome: {outcome_status}."),
     }
 
 

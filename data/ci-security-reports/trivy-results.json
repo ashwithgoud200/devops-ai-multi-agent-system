@@ -1,0 +1,28 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "devops-agents-calculator:1.1",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": { "Family": "alpine", "Name": "3.19.1" },
+    "ImageConfig": { "architecture": "amd64" }
+  },
+  "Results": [
+    {
+      "Target": "requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-99999",
+          "PkgName": "requests",
+          "InstalledVersion": "2.31.0",
+          "FixedVersion": "2.32.2",
+          "Severity": "HIGH",
+          "Title": "SYNTHETIC_MOCK: Simulated container dependency vulnerability in requests library.",
+          "Description": "Synthetic test vulnerability for AI DevOps specialist evaluation.",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-99999"
+        }
+      ]
+    }
+  ]
+}

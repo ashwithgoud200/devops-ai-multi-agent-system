@@ -395,3 +395,131 @@ python -m pytest -q
 ```
 
 The test suite checks the calculator API, direct metrics and Prometheus time-series collection, baseline comparisons, specialist routing and partial failures, approval/rejection safety, and the six-model registry/runtime behavior without requiring Ollama, Docker, or Prometheus to be running.
+
+
+---
+
+## Synthetic Incident Scenarios Engine
+
+The system supports five reproducible synthetic incident scenarios for testing the AI DevOps Multi-Agent System:
+
+| Scenario ID | Name | Trigger / Fault Injected | Expected Root Cause | Engaged Specialists | Recommended Remediation |
+|---|---|---|---|---|---|
+| `DEPLOYMENT_REGRESSION` | Deployment Regression | Deploy Calculator v1.1 with synthetic division crash (HTTP 500) | Division handler regression in release v1.1 | Monitoring, Incident, Code, CI/CD, Infrastructure | Rollback Calculator from v1.1 to v1.0 |
+| `PERFORMANCE_DRIFT` | Performance & Metric Drift | Injected 450ms latency delay and high traffic volume | Request volume spike combined with unoptimized computation | Monitoring, Incident, Infrastructure, Code | Rate-limiting and performance optimization review |
+| `INFRASTRUCTURE_FAILURE` | Infrastructure Failure | Simulated container memory/CPU pressure & scrape target drop | Container resource saturation and scrape target reachability | Infrastructure, Monitoring, Incident | Safe container service restart |
+| `SECURITY_AUDIT` | DevSecOps Security Audit | Offline ingestion of Trivy CVEs, Semgrep SAST, TruffleHog mock secrets | Synthetic dependency CVEs, static code flaws, and leaked test secrets | Security, CI/CD, Code | Security patch review and mock credential rotation |
+| `GENERAL_INCIDENT` | General NL Incident | Ambiguous operational incident query across entire stack | Multi-domain operational incident requiring cross-specialist triage | All 6 Specialist Models | Synthesized multi-perspective remediation |
+
+---
+
+### Specialist Agents and Model Grounding Table
+
+Each specialist agent is powered by a dedicated local Ollama model with strict grounding rules to eliminate hallucinations:
+
+| Specialist Agent | Model Name | Primary Domain Responsibility | Grounding Rules & Boundaries |
+|---|---|---|---|
+| **Monitoring Agent** | `qwen2.5:3b` | Metric deviations, baseline drift, request counters, error rates | Cites exact metric keys and numeric values. Never invents values outside `/metrics` or Prometheus observations. |
+| **Incident Agent** | `llama3.2:3b` | Triage, incident severity classification, correlation, blast radius | Grounded in verified observations only. Distinguishes confirmed evidence from advisory hypotheses. Never sees raw secrets. |
+| **Code / Repo Agent** | `qwen2.5-coder:3b` | Application exceptions, stack traces, version diffs | Cites exact exception messages and file lines (`calculator_app/app.py`). Never claims regressions without code/version evidence. |
+| **CI/CD Agent** | `stablelm-zephyr:3b` | Pipeline runs, deployment history, build artifacts | Inspects GitHub Actions metadata, commit SHAs, and release timestamps. Does not assume pipeline pass if status is failing. |
+| **Infrastructure Agent**| `phi3.5:3.8b` | Docker container telemetry, host CPU/memory, Prometheus targets | Cites exact container names, scrape readiness, and system load. Reports explicit `unavailable` if Docker socket is down. |
+| **Security Agent** | `granite3.1-dense:2b` | Vulnerability reports, SAST static flaws, leaked secret audit | Cites scanner names (`trivy`, `semgrep`, `trufflehog`) and finding IDs. Distinguishes synthetic fixtures from live scans. |
+
+---
+
+### Scenario Control Endpoints
+
+Manage synthetic fault injection using HTTP API commands:
+
+```powershell
+# 1. List all scenarios with status
+Invoke-RestMethod http://127.0.0.1:8100/scenarios
+
+# 2. Get status of active scenario
+Invoke-RestMethod http://127.0.0.1:8100/scenarios/status
+
+# 3. Activate Scenario 1 (Deployment Regression)
+Invoke-RestMethod -Method Post http://127.0.0.1:8100/scenarios/DEPLOYMENT_REGRESSION/activate
+
+# 4. Activate Scenario 2 (Performance Drift)
+Invoke-RestMethod -Method Post http://127.0.0.1:8100/scenarios/PERFORMANCE_DRIFT/activate
+
+# 5. Activate Scenario 3 (Infrastructure Failure)
+Invoke-RestMethod -Method Post http://127.0.0.1:8100/scenarios/INFRASTRUCTURE_FAILURE/activate
+
+# 6. Activate Scenario 4 (DevSecOps Security Audit)
+Invoke-RestMethod -Method Post http://127.0.0.1:8100/scenarios/SECURITY_AUDIT/activate
+
+# 7. Activate Scenario 5 (General Natural-Language Incident)
+Invoke-RestMethod -Method Post http://127.0.0.1:8100/scenarios/GENERAL_INCIDENT/activate
+
+# 8. Reset active scenario back to baseline
+Invoke-RestMethod -Method Post http://127.0.0.1:8100/scenarios/active/reset
+```
+
+---
+
+### Natural-Language Testing Prompts
+
+Submit these prompts directly into the **Incident Management** tab or via `POST /incidents`:
+
+- **Deployment Regression**:
+  ```text
+  Investigate elevated HTTP 500 errors and division handler crash following the version 1.1 deployment.
+  ```
+- **Performance Drift**:
+  ```text
+  Analyze calculator request rates, latency spikes, and anomalous HTTP error distributions against baseline.
+  ```
+- **Infrastructure Failure**:
+  ```text
+  Check Docker container health, host memory and CPU utilization, and Prometheus scrape target readiness.
+  ```
+- **Security Audit**:
+  ```text
+  Review recent build artifacts for container image CVEs, static code vulnerabilities, and leaked secrets.
+  ```
+- **General Incident (All 6 Agents)**:
+  ```text
+  Calculator is throwing errors. What is wrong and how do we fix it?
+  ```
+
+---
+
+### Verification and Inspection Procedures
+
+1. **Inspect Application Logs**:
+   ```powershell
+   Get-Content logs/calc.jsonl -Tail 15
+   ```
+2. **Inspect Prometheus Metrics**:
+   ```powershell
+   (Invoke-RestMethod http://127.0.0.1:8100/metrics) -split "`n" | Select-String "calc_requests_total"
+   ```
+3. **Verify Rollback Approval Card**:
+   - Navigate to the **Human Approval** tab.
+   - The card displays:
+     - **Action**: `ROLLBACK`
+     - **Current Version**: `v1.1`
+     - **Target Version**: `v1.0`
+     - **Root Cause**: Deployment regression in Calculator v1.1
+     - **Supporting Evidence**: HTTP 500 division failures
+     - **Expected Impact**: Restores arithmetic service availability
+     - **Actions**: Approve (with confirmation modal) and Reject buttons. No remediation runs without human review.
+
+---
+
+### Offline DevSecOps Security Reports
+
+Synthetic security scan reports are stored in:
+`data/ci-security-reports/`
+
+- `trivy-results.json`: Mock container image scan reporting simulated HIGH `CVE-2024-99999` in requests.
+- `semgrep-results.json`: Mock static analysis reporting insecure arithmetic input handling in `calculator_app/app.py`.
+- `trufflehog-results.json`: Mock test secret finding in `config/test-mock-credentials.env`.
+
+**Provenance and Safety Safeguards**:
+- Reports are tagged with `report_origin: seeded_offline_fixture` and `verification_status: unverified_fixture`.
+- Specialist agents explicitly distinguish synthetic fixtures from live pipeline scans.
+- Gitleaks/TruffleHog secret values are never reflected into agent prompts, API responses, or UI dashboards.

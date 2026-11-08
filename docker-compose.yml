@@ -5,8 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: devops-calculator
-    ports:
-      - "127.0.0.1:8100:8100"
+    # No host port mapping: local FastAPI uses port 8100.
     environment:
       - PYTHONUNBUFFERED=1
       - DEVOPS_LLM_ENABLED=${DEVOPS_LLM_ENABLED:-false}
@@ -15,6 +14,9 @@ services:
       - DEVOPS_AUDIT_LOG_PATH=/app/logs/incident_audit.jsonl
       - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
       - PROMETHEUS_URL=${PROMETHEUS_URL:-http://prometheus:9090}
+      - LOKI_URL=${LOKI_URL:-http://loki:3100}
+      - TEMPO_URL=${TEMPO_URL:-http://tempo:3200}
+      - TEMPO_OTLP_URL=${TEMPO_OTLP_URL:-http://tempo:4318}
       - DEVOPS_GITHUB_ENABLED=${DEVOPS_GITHUB_ENABLED:-false}
       - DEVOPS_GITHUB_REPO=${DEVOPS_GITHUB_REPO:-}
       - DEVOPS_GITHUB_TOKEN=${DEVOPS_GITHUB_TOKEN:-}
@@ -32,12 +34,14 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
   prometheus:
     image: prom/prometheus:v3.5.0
     container_name: devops-prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
     ports:
       - "127.0.0.1:9090:9090"
     volumes:
@@ -52,10 +56,50 @@ services:
       retries: 3
       start_period: 10s
 
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: devops-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ./loki/local-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3100/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: devops-tempo
+    command: -config.file=/etc/tempo/tempo.yaml
+    ports:
+      - "127.0.0.1:3200:3200"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3200/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   grafana:
     image: grafana/grafana:11.6.1
     depends_on:
       prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      tempo:
         condition: service_started
     ports:
       - "127.0.0.1:3000:3000"
@@ -83,8 +127,6 @@ services:
       dockerfile: Dockerfile
     container_name: devops-frontend
     depends_on:
-      calculator-app:
-        condition: service_started
       prometheus:
         condition: service_started
       grafana:
@@ -106,3 +148,5 @@ volumes:
   app_logs:
   prometheus_data:
   grafana_data:
+  loki_data:
+  tempo_data:

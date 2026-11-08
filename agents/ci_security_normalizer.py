@@ -256,6 +256,8 @@ def parse_pip_audit(content: Any) -> dict[str, Any]:
                 "location": "requirements.txt",
                 "title": title,
                 "remediation_hint": remediation,
+                "report_origin": "seeded_offline_fixture",
+                "verification_status": "unverified_fixture",
             })
 
     return {
@@ -357,6 +359,8 @@ def parse_npm_audit(content: Any) -> dict[str, Any]:
                             "location": location,
                             "title": vuln_title or f"Vulnerability in {pkg}",
                             "remediation_hint": remediation,
+                            "report_origin": "seeded_offline_fixture",
+                            "verification_status": "unverified_fixture",
                         })
 
     # Legacy v6 format
@@ -394,6 +398,8 @@ def parse_npm_audit(content: Any) -> dict[str, Any]:
                 "location": "package.json",
                 "title": sanitize_text(adv.get("title", "")),
                 "remediation_hint": sanitize_text(adv.get("recommendation", "")),
+                "report_origin": "seeded_offline_fixture",
+                "verification_status": "unverified_fixture",
             })
     elif "metadata" in data and data.get("metadata", {}).get("vulnerabilities", {}).get("total", 0) == 0:
         # Valid empty npm audit report
@@ -523,6 +529,8 @@ def parse_trivy_image(content: Any) -> dict[str, Any]:
                 "location": norm_location,
                 "title": title,
                 "remediation_hint": remediation,
+                "report_origin": "seeded_offline_fixture",
+                "verification_status": "unverified_fixture",
             })
 
     return {
@@ -611,6 +619,8 @@ def parse_trivy_config(content: Any) -> dict[str, Any]:
                 "location": target,
                 "title": title,
                 "remediation_hint": remediation,
+                "report_origin": "seeded_offline_fixture",
+                "verification_status": "unverified_fixture",
             })
 
     return {
@@ -680,10 +690,156 @@ def parse_gitleaks(content: Any) -> dict[str, Any]:
             "location": location,
             "title": desc,
             "remediation_hint": "Revoke and rotate the exposed secret immediately, and remove from git history.",
+            "report_origin": "seeded_offline_fixture",
+            "verification_status": "unverified_fixture",
         })
 
     return {
         "scanner": "gitleaks",
+        "status": "findings" if findings else "clean",
+        "error": None,
+        "findings": findings,
+    }
+
+
+def parse_semgrep(content: Any) -> dict[str, Any]:
+    """Parse Semgrep SAST scan JSON report into normalized static analysis findings."""
+    data, error, status = _load_and_validate_json(content)
+    if error or status != "ok":
+        return {
+            "scanner": "semgrep",
+            "status": status,
+            "error": error,
+            "findings": [],
+        }
+
+    if not isinstance(data, dict):
+        return {
+            "scanner": "semgrep",
+            "status": "scanner_error",
+            "error": "Invalid Semgrep structure: root must be a JSON object",
+            "findings": [],
+        }
+
+    results = data.get("results")
+    if results is None or not isinstance(results, list):
+        return {
+            "scanner": "semgrep",
+            "status": "scanner_error",
+            "error": "Invalid Semgrep structure: missing or invalid 'results' array",
+            "findings": [],
+        }
+
+    findings: list[dict[str, Any]] = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        check_id = sanitize_identifier(item.get("check_id") or "semgrep.rule")
+        path = sanitize_location(item.get("path") or "code")
+        extra = item.get("extra", {}) if isinstance(item.get("extra"), dict) else {}
+        raw_sev = str(extra.get("severity") or "WARNING").upper()
+        severity = "critical" if raw_sev == "ERROR" else "high" if raw_sev == "WARNING" else "medium"
+        message = sanitize_text(extra.get("message") or check_id)
+        start_line = item.get("start", {}).get("line", 1) if isinstance(item.get("start"), dict) else 1
+        location = f"{path}:{start_line}"
+
+        finding_id = compute_finding_id(
+            category="misconfiguration",
+            identifier=check_id,
+            package=None,
+            version=None,
+            location=location,
+        )
+
+        findings.append({
+            "finding_id": finding_id,
+            "scanners": ["semgrep"],
+            "category": "misconfiguration",
+            "severity": severity,
+            "identifier": check_id,
+            "aliases": [],
+            "package": None,
+            "installed_version": None,
+            "fixed_versions": [],
+            "location": location,
+            "title": f"Semgrep: {message[:120]}",
+            "remediation_hint": "Refactor code to resolve insecure pattern identified by static analysis.",
+            "report_origin": "seeded_offline_fixture",
+            "verification_status": "unverified_fixture",
+        })
+
+    return {
+        "scanner": "semgrep",
+        "status": "findings" if findings else "clean",
+        "error": None,
+        "findings": findings,
+    }
+
+
+def parse_trufflehog(content: Any) -> dict[str, Any]:
+    """Parse TruffleHog secret scanning JSON report. Never output raw secret text."""
+    data, error, status = _load_and_validate_json(content)
+    if error or status != "ok":
+        return {
+            "scanner": "trufflehog",
+            "status": status,
+            "error": error,
+            "findings": [],
+        }
+
+    items = []
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict):
+        items = data.get("findings") or data.get("results") or [data]
+    else:
+        return {
+            "scanner": "trufflehog",
+            "status": "scanner_error",
+            "error": "Invalid TruffleHog structure: expected array or object",
+            "findings": [],
+        }
+
+    findings: list[dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        detector = sanitize_identifier(item.get("DetectorName") or item.get("detector_name") or "Secret")
+        meta = item.get("SourceMetadata", {}) if isinstance(item.get("SourceMetadata"), dict) else {}
+        git_data = meta.get("Data", {}).get("Git", {}) if isinstance(meta.get("Data"), dict) else {}
+        file_path = sanitize_location(git_data.get("file") or item.get("path") or "config")
+        line = git_data.get("line") or item.get("line") or 1
+        location = f"{file_path}:{line}"
+        verified = bool(item.get("Verified", False))
+        severity = "critical" if verified else "high"
+
+        finding_id = compute_finding_id(
+            category="secret",
+            identifier=f"TRUFFLEHOG_{detector.upper()}",
+            package=None,
+            version=None,
+            location=location,
+        )
+
+        findings.append({
+            "finding_id": finding_id,
+            "scanners": ["trufflehog"],
+            "category": "secret",
+            "severity": severity,
+            "identifier": f"TRUFFLEHOG_{detector.upper()}",
+            "aliases": [],
+            "package": None,
+            "installed_version": None,
+            "fixed_versions": [],
+            "location": location,
+            "title": f"TruffleHog: Exposed {detector} secret detected",
+            "remediation_hint": "Revoke and rotate exposed credential immediately. Redact and purge from git history.",
+            "report_origin": "seeded_offline_fixture",
+            "verification_status": "unverified_fixture",
+        })
+
+    return {
+        "scanner": "trufflehog",
         "status": "findings" if findings else "clean",
         "error": None,
         "findings": findings,
@@ -765,6 +921,14 @@ def merge_two_findings(f1: dict[str, Any], f2: dict[str, Any]) -> dict[str, Any]
         location=location,
     )
 
+    report_origin = "seeded_offline_fixture"
+    if f1.get("report_origin") == "fresh_scanner_execution" or f2.get("report_origin") == "fresh_scanner_execution":
+        report_origin = "fresh_scanner_execution"
+
+    verification_status = "unverified_fixture"
+    if f1.get("verification_status") == "verified" or f2.get("verification_status") == "verified":
+        verification_status = "verified"
+
     return {
         "finding_id": finding_id,
         "scanners": scanners,
@@ -778,6 +942,8 @@ def merge_two_findings(f1: dict[str, Any], f2: dict[str, Any]) -> dict[str, Any]
         "location": location,
         "title": title,
         "remediation_hint": remediation,
+        "report_origin": report_origin,
+        "verification_status": verification_status,
     }
 
 
@@ -822,6 +988,8 @@ def normalize_security_scans(
         "trivy_image": parse_trivy_image,
         "trivy_config": parse_trivy_config,
         "gitleaks": parse_gitleaks,
+        "semgrep": parse_semgrep,
+        "trufflehog": parse_trufflehog,
     }
 
     scanners_status: dict[str, Any] = {}

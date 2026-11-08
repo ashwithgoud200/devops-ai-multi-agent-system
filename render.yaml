@@ -1,0 +1,25 @@
+# Render Blueprint specification for DevOps Multi-Agent Calculator
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: devops-calculator-live
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: DEVOPS_LLM_ENABLED
+        value: "false"
+      - key: DEVOPS_GITHUB_ENABLED
+        value: "true"
+      - key: DEVOPS_GITHUB_REPO
+        value: ashwithgoud200/Code-Agent
+      # Note: set DEVOPS_GITHUB_TOKEN securely in the Render dashboard under Environment Variables
+      - key: DEVOPS_GITHUB_TOKEN
+        sync: false
+
