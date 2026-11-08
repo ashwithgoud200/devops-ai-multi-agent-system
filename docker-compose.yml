@@ -1,11 +1,12 @@
 services:
   calculator-app:
-    image: ${APP_IMAGE:-devops-agents-calculator:local}
+    image: ${APP_IMAGE:-ashwithgoud200/calculator-app:local}
     build:
-      context: .
+      context: ../Code-Agent
       dockerfile: Dockerfile
     container_name: devops-calculator
-    # No host port mapping: local FastAPI uses port 8100.
+    ports:
+      - "127.0.0.1:8100:8100"
     environment:
       - PYTHONUNBUFFERED=1
       - DEVOPS_LLM_ENABLED=${DEVOPS_LLM_ENABLED:-false}

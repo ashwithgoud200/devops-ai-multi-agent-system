@@ -115,6 +115,23 @@ async def prometheus_http_middleware(request: Request, call_next):
 
 @app.get("/calc/{op}")
 def calc(op: str, a: float, b: float = 0.0):
+    # Attempt forwarding to standalone Code-Agent Calculator microservice first
+    target_url = os.getenv("DEVOPS_APP_URL", "http://127.0.0.1:8100").rstrip("/")
+    try:
+        import requests
+        resp = requests.get(f"{target_url}/calc/{op}", params={"a": a, "b": b}, timeout=1.5)
+        if resp.status_code in (200, 400, 404, 500):
+            status_tag = "ok" if resp.status_code == 200 else "client_error" if resp.status_code == 400 else "error"
+            REQ.labels(op, status_tag).inc()
+            if resp.status_code != 200:
+                raise HTTPException(status_code=resp.status_code, detail=resp.json().get("detail", resp.text))
+            return resp.json()
+    except (requests.RequestException, HTTPException) as re_exc:
+        if isinstance(re_exc, HTTPException):
+            raise re_exc
+        # Microservice on 8100 not reachable; fallback to control plane pipeline
+        pass
+
     if op not in OPS:
         raise HTTPException(404, "unknown op")
     start = time.time()

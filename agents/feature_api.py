@@ -426,6 +426,14 @@ def deploy_feature(req: DeployFeatureRequest) -> dict[str, Any]:
     else:
         smoke_result = fn(sample_a, sample_b)
 
+    # Notify external Code-Agent Calculator microservice to reload dynamic features
+    target_url = os.getenv("DEVOPS_APP_URL", "http://127.0.0.1:8100").rstrip("/")
+    try:
+        import requests
+        requests.post(f"{target_url}/admin/features/reload", timeout=2)
+    except Exception:
+        pass
+
     smoke_verification = {
         "status": "ok",
         "endpoint": f"/calc/{op_clean}",
