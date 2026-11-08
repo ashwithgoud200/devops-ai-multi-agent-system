@@ -5,6 +5,7 @@ and blast-radius impact analysis.
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 
@@ -12,14 +13,15 @@ class DevOpsKnowledgeGraph:
     """In-memory Knowledge Graph of service relationships, data flows, and infrastructure dependencies."""
 
     def __init__(self) -> None:
+        live_app_url = os.getenv("DEVOPS_APP_URL", "https://calculator-live-app.onrender.com").rstrip("/")
         self.nodes: dict[str, dict[str, Any]] = {
             "calculator-app": {
                 "id": "calculator-app",
-                "name": "Calculator Service",
+                "name": "Calculator Service (Render Live)",
                 "type": "microservice",
                 "tier": "backend",
-                "ports": [8100],
-                "health_endpoint": "http://127.0.0.1:8100/health",
+                "ports": [443 if live_app_url.startswith("https") else 8100],
+                "health_endpoint": f"{live_app_url}/health",
                 "description": "Core arithmetic API with live telemetry and admin controls.",
             },
             "frontend": {
