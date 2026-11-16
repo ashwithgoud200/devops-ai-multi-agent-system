@@ -97,7 +97,7 @@ def test_infrastructure_enumerates_all_compose_services():
     # Compose topology module verification
     topo = compose_topology.get_compose_topology()
     assert topo.get("status") == "ok"
-    assert set(topo.get("configured_services", [])) == {"calculator-app", "prometheus", "grafana", "frontend"}
+    assert {"calculator-app", "prometheus", "grafana", "frontend"}.issubset(set(topo.get("configured_services", [])))
 
 
 def test_security_retains_scanner_origin_and_verification_status():

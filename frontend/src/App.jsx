@@ -421,8 +421,23 @@ export default function App() {
 
   useEffect(() => {
     refresh();
-    const timer = window.setInterval(() => refresh(true), 30000);
-    return () => window.clearInterval(timer);
+    const timer = window.setInterval(() => {
+      if (!document.hidden) {
+        refresh(true);
+      }
+    }, 30000);
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        refresh(true);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [refresh]);
 
   const history = useMemo(() => buildIncidentHistory(data.audit || []), [data.audit]);

@@ -88,6 +88,7 @@ def query_loki_logs(
                 "source": f"loki:{base_url}",
                 "timestamp": time.time(),
                 "events": events[:limit],
+                "entries": events[:limit],
                 "count": len(events[:limit]),
             }
     except Exception as exc:
@@ -137,6 +138,7 @@ def query_loki_logs(
             "source": f"file:{path.name}",
             "timestamp": time.time(),
             "events": events,
+            "entries": events,
             "count": len(events),
         }
     except Exception as exc:

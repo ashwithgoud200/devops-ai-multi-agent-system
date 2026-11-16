@@ -1121,10 +1121,11 @@ def _select_specialists(state: IncidentState) -> list[str]:
     if security_pattern.search(query) or security_pattern.search(log_text) or sec_scan_signal:
         selected.append("security")
 
-    # Add any specialists explicitly recommended by the classified scenario
-    for rec in classification.get("recommended_agents", []):
-        if rec not in selected and rec in SPECIALIST_ORDER:
-            selected.append(rec)
+    # Add any specialists explicitly recommended by the classified scenario if confidence is high
+    if classification.get("confidence", 0) >= 0.85:
+        for rec in classification.get("recommended_agents", []):
+            if rec not in selected and rec in SPECIALIST_ORDER:
+                selected.append(rec)
 
     return [agent for agent in SPECIALIST_ORDER if agent in selected]
 

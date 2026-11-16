@@ -2,6 +2,7 @@
 deploy history and an admin API the agents can use."""
 import inspect, json, logging, math, os, sys, time, uuid
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 from agents import llm_runtime
@@ -64,6 +65,7 @@ OPS = {"add": lambda a, b: a + b, "sub": lambda a, b: a - b,
 STATE = {"version": "1.0", "bug": False,
          "history": [{"version": "1.0", "ts": time.time()}]}
 app = FastAPI(title="Calculator")
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.include_router(incident_router)
 app.include_router(integration_router)
 app.include_router(scenario_router)
@@ -101,7 +103,7 @@ async def prometheus_http_middleware(request: Request, call_next):
             record_trace_span(
                 trace_id=trace_id,
                 span_id=span_id,
-                name=f"{request.method} {route_path}",
+                name=f"{request.method} {request.url.path}",
                 start_time=started_wall,
                 end_time=time.time(),
                 status_code=status_code,
