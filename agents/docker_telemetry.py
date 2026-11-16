@@ -208,6 +208,39 @@ def _inspect_container(
         )
 
 
+_DOCKER_CACHE: dict[str, Any] = {"timestamp": 0.0, "data": None}
+
+
+def _parse_stats_obj(stats: dict[str, Any], container: dict[str, Any], timestamp: float) -> str | None:
+    cpu = _parse_percent(stats.get("CPUPerc"), maximum=None)
+    memory_usage, memory_limit = _parse_pair(stats.get("MemUsage"))
+    memory_percent = _parse_percent(stats.get("MemPerc"), maximum=None)
+    if (
+        memory_percent is None
+        and memory_usage is not None
+        and memory_limit is not None
+        and memory_limit > 0
+    ):
+        memory_percent = memory_usage / memory_limit * 100
+    network_rx, network_tx = _parse_pair(stats.get("NetIO"))
+    block_read, block_write = _parse_pair(stats.get("BlockIO"))
+    metrics = {
+        "cpu_usage_percent": cpu,
+        "memory_usage_bytes": memory_usage,
+        "memory_limit_bytes": memory_limit,
+        "memory_usage_percent": memory_percent,
+        "network_rx_bytes": network_rx,
+        "network_tx_bytes": network_tx,
+        "block_read_bytes": block_read,
+        "block_write_bytes": block_write,
+    }
+    container.update(metrics)
+    missing = [key for key, value in metrics.items() if value is None]
+    container["metrics_status"] = "partial" if missing else "ok"
+    container["timestamp"] = timestamp
+    return "Unavailable Docker stats fields: " + ", ".join(missing) if missing else None
+
+
 def _add_stats(container: dict[str, Any], timestamp: float) -> str | None:
     container_id = container.get("id")
     result, error = _run(
@@ -223,43 +256,18 @@ def _add_stats(container: dict[str, Any], timestamp: float) -> str | None:
         stats = json.loads(result.stdout.strip())
         if not isinstance(stats, dict):
             raise ValueError("stats response must be a JSON object")
-        cpu = _parse_percent(stats.get("CPUPerc"), maximum=None)
-        memory_usage, memory_limit = _parse_pair(stats.get("MemUsage"))
-        memory_percent = _parse_percent(stats.get("MemPerc"), maximum=None)
-        if (
-            memory_percent is None
-            and memory_usage is not None
-            and memory_limit is not None
-            and memory_limit > 0
-        ):
-            memory_percent = memory_usage / memory_limit * 100
-        network_rx, network_tx = _parse_pair(stats.get("NetIO"))
-        block_read, block_write = _parse_pair(stats.get("BlockIO"))
-        metrics = {
-            "cpu_usage_percent": cpu,
-            "memory_usage_bytes": memory_usage,
-            "memory_limit_bytes": memory_limit,
-            "memory_usage_percent": memory_percent,
-            "network_rx_bytes": network_rx,
-            "network_tx_bytes": network_tx,
-            "block_read_bytes": block_read,
-            "block_write_bytes": block_write,
-        }
-        container.update(metrics)
-        missing = [key for key, value in metrics.items() if value is None]
-        container["metrics_status"] = "partial" if missing else "ok"
-        container["timestamp"] = timestamp
-        return (
-            "Unavailable Docker stats fields: " + ", ".join(missing)
-            if missing else None
-        )
+        return _parse_stats_obj(stats, container, timestamp)
     except (ValueError, TypeError, json.JSONDecodeError) as exc:
         return f"Invalid Docker stats response: {exc}"
 
 
 def collect_docker_metrics() -> dict[str, Any]:
     """Collect read-only telemetry for running containers, preserving partial results."""
-    timestamp = time.time()
+    now = time.time()
+    if _DOCKER_CACHE["data"] is not None and (now - _DOCKER_CACHE["timestamp"]) < 4.0:
+        return dict(_DOCKER_CACHE["data"])
+
+    timestamp = now
     result, error = _run("ps", "--no-trunc", "--quiet")
     if error or result is None:
         error = error or "Docker container listing returned no result"
@@ -273,6 +281,27 @@ def collect_docker_metrics() -> dict[str, Any]:
         }
 
     container_ids = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+    # Fast batch-read of all container stats in one command
+    batch_stats_by_id: dict[str, dict[str, Any]] = {}
+    stats_res, stats_err = _run("stats", "--no-stream", "--format", "{{json .}}")
+    if stats_res and stats_res.stdout:
+        for line in stats_res.stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                item = json.loads(line)
+                if isinstance(item, dict):
+                    cid = item.get("ID", "")
+                    cname = item.get("Name", "")
+                    if cid:
+                        batch_stats_by_id[cid] = item
+                    if cname:
+                        batch_stats_by_id[cname] = item
+            except Exception:
+                pass
+
     containers = []
     errors = []
     for container_id in container_ids:
@@ -281,7 +310,23 @@ def collect_docker_metrics() -> dict[str, Any]:
             errors.append({"container_id": container_id, "detail": inspect_error})
             containers.append(inspected)
             continue
-        stats_error = _add_stats(inspected, timestamp)
+
+        matched_stat = None
+        cid_short = (inspected.get("id") or container_id)[:12]
+        cname = inspected.get("name", "")
+        for k in (container_id, cid_short, cname, inspected.get("id")):
+            if k and k in batch_stats_by_id:
+                matched_stat = batch_stats_by_id[k]
+                break
+
+        if matched_stat:
+            try:
+                stats_error = _parse_stats_obj(matched_stat, inspected, timestamp)
+            except Exception as e:
+                stats_error = str(e)
+        else:
+            stats_error = _add_stats(inspected, timestamp)
+
         if stats_error:
             inspected["metrics_status"] = "partial" if any(
                 inspected.get(key) is not None
@@ -296,7 +341,7 @@ def collect_docker_metrics() -> dict[str, Any]:
 
     status = "partial" if errors else "ok"
     detail = "; ".join(error["detail"] for error in errors) if errors else None
-    return {
+    res = {
         "status": status,
         "source": SOURCE,
         "timestamp": timestamp,
@@ -304,3 +349,6 @@ def collect_docker_metrics() -> dict[str, Any]:
         "errors": errors,
         "detail": detail,
     }
+    _DOCKER_CACHE["timestamp"] = now
+    _DOCKER_CACHE["data"] = res
+    return res
