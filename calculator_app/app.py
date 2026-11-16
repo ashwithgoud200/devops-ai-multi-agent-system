@@ -16,6 +16,7 @@ from agents.incident_api import router as incident_router
 from agents.integration_api import router as integration_router
 from agents.scenario_api import router as scenario_router
 from agents import scenarios
+from agents import remote_app_client
 from agents.prometheus_telemetry import collect_prometheus_metrics
 from agents.loki_client import push_loki_log
 from agents.tempo_client import record_trace_span
@@ -115,11 +116,31 @@ async def prometheus_http_middleware(request: Request, call_next):
 
 @app.get("/calc/{op}")
 def calc(op: str, a: float, b: float = 0.0):
-    # Attempt forwarding to standalone Code-Agent Calculator microservice first
+    # Check for real chaos latency or legacy scenario latency before dispatching
+    chaos_delay = chaos_engine.get_active_latency()
+    injected_delay = max(chaos_delay, scenarios.get_injected_latency())
+    if injected_delay > 0:
+        time.sleep(injected_delay)
+
+    # Check for real chaos crash mode
+    crash_active, crash_msg = chaos_engine.is_crash_mode_active()
+    if crash_active:
+        REQ.labels(op, "error").inc()
+        log("ERROR", op=op, msg=crash_msg)
+        raise HTTPException(status_code=500, detail=crash_msg)
+
+    # Check for deployment regression bug
+    if STATE.get("bug") and op == "div":
+        REQ.labels(op, "error").inc()
+        err_msg = f"v{STATE['version']} regression: div handler crashed"
+        log("ERROR", op=op, msg=err_msg)
+        raise HTTPException(status_code=500, detail=err_msg)
+
+    # Attempt forwarding to standalone Code-Agent Calculator microservice
     target_url = os.getenv("DEVOPS_APP_URL", "http://127.0.0.1:8100").rstrip("/")
     try:
         import requests
-        resp = requests.get(f"{target_url}/calc/{op}", params={"a": a, "b": b}, timeout=1.5)
+        resp = requests.get(f"{target_url}/calc/{op}", params={"a": a, "b": b}, timeout=3.0)
         if resp.status_code in (200, 400, 404, 500):
             status_tag = "ok" if resp.status_code == 200 else "client_error" if resp.status_code == 400 else "error"
             REQ.labels(op, status_tag).inc()
@@ -129,26 +150,13 @@ def calc(op: str, a: float, b: float = 0.0):
     except (requests.RequestException, HTTPException) as re_exc:
         if isinstance(re_exc, HTTPException):
             raise re_exc
-        # Microservice on 8100 not reachable; fallback to control plane pipeline
+        # Microservice not reachable; fallback to control plane local execution
         pass
 
     if op not in OPS:
         raise HTTPException(404, "unknown op")
     start = time.time()
     try:
-        # Check for real chaos latency or legacy scenario latency
-        chaos_delay = chaos_engine.get_active_latency()
-        injected_delay = max(chaos_delay, scenarios.get_injected_latency())
-        if injected_delay > 0:
-            time.sleep(injected_delay)
-
-        # Check for real chaos crash mode
-        crash_active, crash_msg = chaos_engine.is_crash_mode_active()
-        if crash_active:
-            raise RuntimeError(crash_msg)
-
-        if STATE["bug"] and op == "div":
-            raise RuntimeError(f"v{STATE['version']} regression: div handler crashed")
         fn = OPS[op]
         sig = inspect.signature(fn)
         if len(sig.parameters) == 1:
@@ -218,7 +226,8 @@ def deploy(version: str, bug: bool = False):
     STATE.update(version=version, bug=bug)
     STATE["history"].append({"version": version, "ts": time.time()})
     log("INFO", msg=f"deployed v{version}")
-    return {"deployed": version}
+    remote_app_client.remote_deploy(version=version, bug=bug)
+    return {"deployed": version, "bug": bug}
 
 @app.post("/admin/rollback")
 def rollback():
@@ -227,6 +236,8 @@ def rollback():
     STATE["history"].append({"version": prev, "ts": time.time()})
     scenarios.reset_scenario(calculator_state=STATE)
     log("INFO", msg=f"rolled back to v{prev}")
+    remote_app_client.remote_rollback()
+    remote_app_client.remote_reset_faults()
     return {"rolled_back_to": prev}
 
 

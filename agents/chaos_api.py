@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from agents.chaos_engine import chaos_engine
+from agents import remote_app_client
 
 logger = logging.getLogger("chaos_api")
 
@@ -45,6 +46,7 @@ def get_chaos_status() -> dict[str, Any]:
 @router.post("/stress/cpu", summary="Trigger real physical CPU stress")
 def stress_cpu(req: CpuStressRequest = CpuStressRequest()) -> dict[str, Any]:
     """Spawn real threads executing CPU-bound calculations to elevate physical CPU load."""
+    remote_app_client.remote_stress_cpu(duration_seconds=req.duration_seconds, num_threads=req.num_threads)
     return chaos_engine.trigger_cpu_stress(
         duration_seconds=req.duration_seconds,
         num_threads=req.num_threads,
@@ -54,6 +56,7 @@ def stress_cpu(req: CpuStressRequest = CpuStressRequest()) -> dict[str, Any]:
 @router.post("/stress/memory", summary="Trigger real physical memory pressure")
 def stress_memory(req: MemoryStressRequest = MemoryStressRequest()) -> dict[str, Any]:
     """Allocate real memory byte arrays to induce genuine host memory pressure."""
+    remote_app_client.remote_stress_memory(megabytes=req.megabytes, duration_seconds=req.duration_seconds)
     return chaos_engine.trigger_memory_stress(
         megabytes=req.megabytes,
         duration_seconds=req.duration_seconds,
@@ -63,6 +66,7 @@ def stress_memory(req: MemoryStressRequest = MemoryStressRequest()) -> dict[str,
 @router.post("/inject/latency", summary="Inject real HTTP response latency")
 def inject_latency(req: LatencyInjectionRequest = LatencyInjectionRequest()) -> dict[str, Any]:
     """Add genuine I/O delay to application endpoints."""
+    remote_app_client.remote_inject_latency(seconds=req.latency_seconds)
     return chaos_engine.trigger_latency_spike(
         latency_seconds=req.latency_seconds,
         duration_seconds=req.duration_seconds,
@@ -72,6 +76,7 @@ def inject_latency(req: LatencyInjectionRequest = LatencyInjectionRequest()) -> 
 @router.post("/trigger/crash", summary="Arm real application crash mode")
 def arm_crash(req: CrashModeRequest = CrashModeRequest()) -> dict[str, Any]:
     """Arm the application to raise genuine unhandled Python exceptions on incoming requests."""
+    remote_app_client.remote_inject_crash(active=req.arm, message=req.message)
     return chaos_engine.trigger_crash_mode(active=req.arm, message=req.message)
 
 
@@ -84,5 +89,6 @@ def run_security_audit() -> dict[str, Any]:
 @router.post("/stop", summary="Stop all active chaos experiments")
 def stop_all_chaos() -> dict[str, Any]:
     """Immediately halt CPU stress, release memory, and clear injected latency."""
+    remote_app_client.remote_reset_faults()
     return chaos_engine.stop_all()
 

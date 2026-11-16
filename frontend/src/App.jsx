@@ -123,7 +123,7 @@ function DashboardHome({ data, counters, history, onNavigate, onSelectIncident }
             <ServiceIndicator label="Ollama runtime" status={data.ollama ? "online" : "unavailable"} detail={data.ollama?.models?.length != null ? `${data.ollama.models.length} models available` : null} />
             <ServiceIndicator label="Docker Compose" status={data.composeTopology?.status === "ok" ? "online" : "unavailable"} detail={data.composeTopology?.total_services ? `${data.composeTopology.total_services} services configured` : null} />
             <ServiceIndicator label="Git Repository" status={data.gitTelemetry?.status === "ok" ? "online" : "unavailable"} detail={data.gitTelemetry?.branch ? `branch ${data.gitTelemetry.branch}` : null} />
-            <ServiceIndicator label="Prometheus" status={data.prometheusService ? promStatus || "online" : "unavailable"} />
+            <ServiceIndicator label="Prometheus" status={data.prometheusService ? "online" : "unavailable"} detail={promStatus && promStatus !== "unavailable" ? `metrics ${promStatus}` : "connected"} />
             <ServiceIndicator label="Grafana" status={data.grafana ? "online" : "unavailable"} />
             <ServiceIndicator label="GitHub API" status={data.integrations?.github?.status || "disabled"} detail={data.integrations?.github?.repo || "Read-only API"} />
             <ServiceIndicator label="CI Pipeline" status={data.ciRun?.conclusion || data.ciRun?.status || "unavailable"} detail={data.ciRun?.workflow_name || null} />
@@ -526,7 +526,7 @@ export default function App() {
           {page === "monitoring" && <MetricsPage data={data} counters={counters} />}
           {page === "telemetry" && <LogsAndTracesView integrations={data.integrations} />}
           {page === "audit" && <section className="panel"><SectionTitle eyebrow="APPEND-ONLY LOCAL RECORDS" title="Incident audit events" action={<span className="pill pill-muted">{data.audit?.length || 0} events</span>} />{data.errors?.audit && <p className="inline-warning">Audit API unavailable: {data.errors.audit}</p>}<AuditLog events={data.audit || []} onSelectIncident={selectIncident} /></section>}
-          <footer className="page-footer"><span>OpsPilot · Local DevOps Monitoring</span><span>Backend <code>127.0.0.1:8100</code> · Refresh interval 30s</span></footer>
+          <footer className="page-footer"><span>OpsPilot · Local DevOps Monitoring</span><span>Backend <code>127.0.0.1:8000</code> · Refresh interval 30s</span></footer>
         </div>
       </main>
     </div>

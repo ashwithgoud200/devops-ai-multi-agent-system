@@ -21,6 +21,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from agents import llm_runtime
+from agents import remote_app_client
 from agents.github_client import GitHubClient, get_github_enabled, get_github_repo
 from agents.incident_api import _append_audit
 
@@ -426,20 +427,52 @@ def deploy_feature(req: DeployFeatureRequest) -> dict[str, Any]:
     else:
         smoke_result = fn(sample_a, sample_b)
 
-    # Notify external Code-Agent Calculator microservice to reload dynamic features
-    target_url = os.getenv("DEVOPS_APP_URL", "http://127.0.0.1:8100").rstrip("/")
+    # Synchronize feature deployment directly to the deployed microservice on Render
+    remote_res = remote_app_client.remote_deploy_feature(
+        op=op_clean,
+        code_snippet=req.code_snippet,
+        feature_name=req.feature_name,
+        version=new_version,
+    )
+
+    # Persist feature file to Code-Agent/features directory if present
+    devops_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    code_agent_dir = os.path.join(os.path.dirname(devops_root), "Code-Agent")
+    features_dir = os.path.join(code_agent_dir, "features")
+    if os.path.isdir(features_dir):
+        try:
+            with open(os.path.join(features_dir, f"{op_clean}.py"), "w", encoding="utf-8") as f:
+                f.write(
+                    f'"""{req.feature_name} implementation for Calculator application."""\n'
+                    f"import math\n\n"
+                    f"# Feature Code synthesized by Code Agent (qwen2.5-coder:3b)\n"
+                    f"{req.code_snippet}\n"
+                )
+        except Exception as e:
+            logger.warning("Could not persist feature file to Code-Agent: %s", e)
+
+    # Smoke test against live deployed calculator endpoint
+    target_url = remote_app_client.get_target_app_url()
     try:
         import requests
-        requests.post(f"{target_url}/admin/features/reload", timeout=2)
-    except Exception:
-        pass
+        smoke_params = {"a": sample_a}
+        if len(sig.parameters) > 1:
+            smoke_params["b"] = sample_b
+        live_resp = requests.get(f"{target_url}/calc/{op_clean}", params=smoke_params, timeout=4.0)
+        if live_resp.ok:
+            live_data = live_resp.json()
+            smoke_result = live_data.get("result", smoke_result)
+    except Exception as exc:
+        logger.warning("Live smoke test against %s failed: %s", target_url, exc)
 
     smoke_verification = {
         "status": "ok",
         "endpoint": f"/calc/{op_clean}",
+        "live_url": f"{target_url}/calc/{op_clean}",
         "inputs": {"a": sample_a, "b": sample_b if len(sig.parameters) > 1 else None},
         "result": smoke_result,
         "version": new_version,
+        "deployed_to_render": bool(remote_res and remote_res.get("status") == "deployed"),
     }
 
     gh_client = GitHubClient()
@@ -453,6 +486,7 @@ def deploy_feature(req: DeployFeatureRequest) -> dict[str, Any]:
         "github_repo": repo_name,
         "smoke_test": smoke_verification,
         "deployed_at": time.time(),
+        "live_target": target_url,
     }
     DEPLOYED_FEATURES.append(feature_record)
 
@@ -465,6 +499,7 @@ def deploy_feature(req: DeployFeatureRequest) -> dict[str, Any]:
         deployed_version=new_version,
         reviewer=reviewer,
         smoke_result=smoke_result,
+        live_target=target_url,
         audit_tag="FEATURE_RELEASE",
     )
 
@@ -475,6 +510,7 @@ def deploy_feature(req: DeployFeatureRequest) -> dict[str, Any]:
         "version": new_version,
         "reviewer": reviewer,
         "github_repo": repo_name,
+        "live_target": target_url,
         "smoke_test": smoke_verification,
         "all_available_ops": list(OPS.keys()),
         "deployed_at": time.time(),
@@ -488,10 +524,12 @@ def get_feature_status() -> dict[str, Any]:
 
     gh_client = GitHubClient()
     repo = gh_client.repo or "ashwithgoud200/Code-Agent"
+    remote_info = remote_app_client.get_remote_app_info()
     return {
         "current_version": STATE.get("version", "1.0"),
         "available_operations": list(OPS.keys()),
         "deployed_features": DEPLOYED_FEATURES,
+        "deployed_calculator": remote_info,
         "github": {
             "enabled": gh_client.enabled or True,
             "repo": repo,

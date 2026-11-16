@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from agents import scenarios
 from agents.incident_api import _append_audit
+from agents import remote_app_client
 
 logger = logging.getLogger("scenario_api")
 router = APIRouter(prefix="/scenarios", tags=["synthetic scenarios"])
@@ -58,6 +59,20 @@ def activate_scenario_endpoint(scenario_id: str) -> dict[str, Any]:
             calculator_state=calc_app.STATE,
             log_func=calc_app.log,
         )
+
+        # Synchronize fault injection with deployed/remote app
+        sid = scenario_id.strip().upper()
+        if sid in ("DEPLOYMENT_REGRESSION", "GENERAL_INCIDENT"):
+            remote_app_client.remote_deploy(version="1.1", bug=True)
+            if sid == "GENERAL_INCIDENT":
+                remote_app_client.remote_inject_latency(0.25)
+        elif sid == "PERFORMANCE_DRIFT":
+            remote_app_client.remote_inject_latency(0.45)
+            remote_app_client.remote_stress_cpu(duration_seconds=30, num_threads=2)
+        elif sid == "INFRASTRUCTURE_FAILURE":
+            remote_app_client.remote_stress_memory(megabytes=150, duration_seconds=30)
+            remote_app_client.remote_stress_cpu(duration_seconds=30, num_threads=1)
+
         _append_audit(
             event="scenario_activated",
             incident_id=f"scenario-{scenario_id.lower()}",
@@ -87,6 +102,11 @@ def reset_scenario_endpoint(scenario_id: str) -> dict[str, Any]:
         calculator_state=calc_app.STATE,
         log_func=calc_app.log,
     )
+
+    # Synchronize reset with deployed/remote app
+    remote_app_client.remote_reset_faults()
+    remote_app_client.remote_rollback()
+
     _append_audit(
         event="scenario_reset",
         incident_id=f"scenario-{scenario_id.lower()}",

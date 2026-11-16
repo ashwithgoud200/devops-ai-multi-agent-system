@@ -193,6 +193,17 @@ export default function FeatureStudioView({ onFeatureDeployed }) {
         {/* Live system metadata */}
         <div className="feature-stats-bar">
           <div className="stat-pill">
+            <span className="pill-label">Live Deployed App:</span>
+            <a
+              href={status?.deployed_calculator?.url || "https://calculator-live-app.onrender.com"}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#34d399", textDecoration: "underline", fontWeight: 600 }}
+            >
+              {status?.deployed_calculator?.status === "online" ? "● Render (Online)" : "calculator-live-app.onrender.com"}
+            </a>
+          </div>
+          <div className="stat-pill">
             <span className="pill-label">Target GitHub Repo:</span>
             <a
               href={`https://github.com/${ghRepo}`}
@@ -204,12 +215,12 @@ export default function FeatureStudioView({ onFeatureDeployed }) {
             </a>
           </div>
           <div className="stat-pill">
-            <span className="pill-label">App Version:</span>
-            <strong>v{status?.current_version || "1.1"}</strong>
+            <span className="pill-label">Live Version:</span>
+            <strong>v{status?.deployed_calculator?.version || status?.current_version || "1.0"}</strong>
           </div>
           <div className="stat-pill">
             <span className="pill-label">Operations:</span>
-            <strong>{status?.available_operations?.length || 5} active</strong>
+            <strong>{status?.deployed_calculator?.active_operations?.length || status?.available_operations?.length || 5} active</strong>
           </div>
           <div className="stat-pill">
             <span className="pill-label">CI/CD Pipeline:</span>
@@ -512,6 +523,17 @@ export default function FeatureStudioView({ onFeatureDeployed }) {
               <div>
                 <span className="eyebrow">Approved By</span>
                 <strong>{deployResult.reviewer}</strong>
+              </div>
+              <div>
+                <span className="eyebrow">Live Target URL</span>
+                <a
+                  href={`${deployResult.live_target || "https://calculator-live-app.onrender.com"}/calc/${deployResult.op}?a=${playA}${paramCount === 2 ? `&b=${playB}` : ""}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#34d399", textDecoration: "underline", fontWeight: 600 }}
+                >
+                  {deployResult.live_target || "calculator-live-app.onrender.com"} ↗
+                </a>
               </div>
             </div>
           </div>
